@@ -766,10 +766,18 @@
                                             style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle; width: 170px;">
                                             <div class="mb-1 font-weight-bold"
                                                 style="font-size: 0.85rem; letter-spacing: 0.5px;">LOKASI</div>
-                                            <input type="text" id="filter-lokasi-inventaris"
-                                                class="form-control form-control-sm mx-auto text-center"
-                                                placeholder="Cari..."
-                                                style="border-radius: 20px; font-weight: 700; width: 140px; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                            <select id="filter-lokasi-inventaris"
+                                                class="form-control form-control-sm mx-auto"
+                                                style="border-radius: 20px; font-weight: 700; text-align: center; text-align-last: center; width: 140px; cursor: pointer; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                                <option value="all">-- Semua --</option>
+                                                <option value="Ruang depan">Ruang depan</option>
+                                                <option value="Kamar Mandi Bawah">Kamar Mandi Bawah</option>
+                                                <option value="Ruang kelas/ aula">Ruang kelas/ aula</option>
+                                                <option value="Kamar atas">Kamar atas</option>
+                                                <option value="Ruang atas">Ruang atas</option>
+                                                <option value="Kamar bawah">Kamar bawah</option>
+                                                <option value="Kamar mandi atas">Kamar mandi atas</option>
+                                            </select>
                                         </th>
                                         <th class="text-center"
                                             style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle; width: 170px;">
@@ -803,21 +811,6 @@
                                             style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important;">
                                             KETERANGAN</th>
                                         <th class="text-center"
-                                            style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle; width: 170px;">
-                                            <div class="mb-1 font-weight-bold"
-                                                style="font-size: 0.85rem; letter-spacing: 0.5px;">Ceklist Perbaikan</div>
-                                            <select id="filter-ceklist-inventaris"
-                                                class="form-control form-control-sm mx-auto"
-                                                style="border-radius: 20px; font-weight: 700; text-align: center; text-align-last: center; width: 140px; cursor: pointer; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                                <option value="all">-- Semua --</option>
-                                                <option value="sudah">Sudah</option>
-                                                <option value="belum">Belum</option>
-                                            </select>
-                                        </th>
-                                        <th class="text-center"
-                                            style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important;">
-                                            TANGGAL PERBAIKAN</th>
-                                        <th class="text-center"
                                             style="width: 50px; background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important;">
                                         </th>
                                     </tr>
@@ -829,8 +822,33 @@
 
                                             <td class="text-center font-weight-bold align-middle"
                                                 style="background: #fff;">
-                                                <textarea class="form-control-inline text-center font-weight-bold inventaris-live-edit auto-resize"
-                                                    data-field="lokasi" rows="1" placeholder="(Tulis Lokasi)">{{ $item->lokasi }}</textarea>
+                                                <select
+                                                    class="form-control-inline text-center font-weight-bold inventaris-live-edit status-dropdown"
+                                                    data-field="lokasi"
+                                                    style="background-color: #fff !important; color: #000 !important; border: 1px solid rgba(0,0,0,0.1) !important; min-width: 150px;">
+                                                    <option value="">-- Pilih Lokasi --</option>
+                                                    <option value="Ruang depan"
+                                                        {{ $item->lokasi == 'Ruang depan' ? 'selected' : '' }}>Ruang depan
+                                                    </option>
+                                                    <option value="Kamar Mandi Bawah"
+                                                        {{ $item->lokasi == 'Kamar Mandi Bawah' ? 'selected' : '' }}>Kamar
+                                                        Mandi Bawah</option>
+                                                    <option value="Ruang kelas/ aula"
+                                                        {{ $item->lokasi == 'Ruang kelas/ aula' ? 'selected' : '' }}>Ruang
+                                                        kelas/ aula</option>
+                                                    <option value="Kamar atas"
+                                                        {{ $item->lokasi == 'Kamar atas' ? 'selected' : '' }}>Kamar atas
+                                                    </option>
+                                                    <option value="Ruang atas"
+                                                        {{ $item->lokasi == 'Ruang atas' ? 'selected' : '' }}>Ruang atas
+                                                    </option>
+                                                    <option value="Kamar bawah"
+                                                        {{ $item->lokasi == 'Kamar bawah' ? 'selected' : '' }}>Kamar bawah
+                                                    </option>
+                                                    <option value="Kamar mandi atas"
+                                                        {{ $item->lokasi == 'Kamar mandi atas' ? 'selected' : '' }}>Kamar
+                                                        mandi atas</option>
+                                                </select>
                                             </td>
 
                                             <td>
@@ -856,7 +874,8 @@
                                                     <option value="Normal"
                                                         {{ $item->status == 'Normal' ? 'selected' : '' }}
                                                         class="bg-status-selesai">Normal</option>
-                                                    <option value="Rusak" {{ $item->status == 'Rusak' ? 'selected' : '' }}
+                                                    <option value="Rusak"
+                                                        {{ $item->status == 'Rusak' ? 'selected' : '' }}
                                                         class="bg-status-tidak">Rusak</option>
                                                     <option value="Perbaikan"
                                                         {{ $item->status == 'Perbaikan' ? 'selected' : '' }}
@@ -867,22 +886,6 @@
                                                 <textarea class="form-control-inline inventaris-live-edit auto-resize" data-field="keterangan" rows="1">{{ $item->keterangan }}</textarea>
                                             </td>
                                             <td class="text-center">
-                                                <div class="custom-control custom-checkbox">
-                                                    <input type="checkbox"
-                                                        class="custom-control-input inventaris-checkbox-edit"
-                                                        id="ceklist-{{ $item->id }}" data-id="{{ $item->id }}"
-                                                        {{ $item->ceklist_perbaikan ? 'checked' : '' }}>
-                                                    <label class="custom-control-label"
-                                                        for="ceklist-{{ $item->id }}"></label>
-                                                </div>
-                                            </td>
-                                            <td class="text-center">
-                                                <input type="date"
-                                                    class="form-control-inline text-center inventaris-live-edit"
-                                                    data-field="tanggal_perbaikan"
-                                                    value="{{ $item->tanggal_perbaikan }}">
-                                            </td>
-                                            <td class="text-center">
                                                 <button class="btn btn-link text-danger p-0 delete-inventaris-btn"
                                                     data-id="{{ $item->id }}">
                                                     <i class="fas fa-trash-alt"></i>
@@ -891,7 +894,7 @@
                                         </tr>
                                     @empty
                                         <tr class="empty-inventaris-row">
-                                            <td colspan="9" class="text-center py-5 text-muted">Belum ada data
+                                            <td colspan="7" class="text-center py-5 text-muted">Belum ada data
                                                 inventaris kantor.</td>
                                         </tr>
                                     @endforelse
@@ -1451,16 +1454,14 @@
                     let className = 'filtered-empty-row';
 
                     if (tableBodyId === 'inventaris-table-body') {
-                        colspan = 9;
+                        colspan = 7;
                         const statusFilter = $('#filter-status-inventaris').val() || 'all';
-                        const ceklistFilter = $('#filter-ceklist-inventaris').val() || 'all';
-                        const lokasiFilter = ($('#filter-lokasi-inventaris').val() || '').trim();
+                        const lokasiFilter = $('#filter-lokasi-inventaris').val() || 'all';
                         const peralatanFilter = ($('#filter-peralatan-inventaris').val() || '').trim();
 
                         let filtersApplied = [];
                         if (statusFilter !== 'all') filtersApplied.push(`status "${statusFilter}"`);
-                        if (ceklistFilter !== 'all') filtersApplied.push(`ceklist "${ceklistFilter}"`);
-                        if (lokasiFilter !== '') filtersApplied.push(`lokasi "${lokasiFilter}"`);
+                        if (lokasiFilter !== 'all') filtersApplied.push(`lokasi "${lokasiFilter}"`);
                         if (peralatanFilter !== '') filtersApplied.push(`peralatan "${peralatanFilter}"`);
 
                         msg = 'Tidak ada data inventaris';
@@ -2170,7 +2171,16 @@
                         <tr data-id="${item.id}">
                             <td class="text-center no-col">${rowCount}</td>
                             <td class="text-center font-weight-bold align-middle" style="background: #fff;">
-                                <textarea class="form-control-inline text-center font-weight-bold inventaris-live-edit auto-resize" data-field="lokasi" rows="1" placeholder="(Tulis Lokasi)"></textarea>
+                                <select class="form-control-inline text-center font-weight-bold inventaris-live-edit status-dropdown" data-field="lokasi" style="background-color: #fff !important; color: #000 !important; border: 1px solid rgba(0,0,0,0.1) !important; min-width: 150px;">
+                                    <option value="">-- Pilih Lokasi --</option>
+                                    <option value="Ruang depan">Ruang depan</option>
+                                    <option value="Kamar Mandi Bawah">Kamar Mandi Bawah</option>
+                                    <option value="Ruang kelas/ aula">Ruang kelas/ aula</option>
+                                    <option value="Kamar atas">Kamar atas</option>
+                                    <option value="Ruang atas">Ruang atas</option>
+                                    <option value="Kamar bawah">Kamar bawah</option>
+                                    <option value="Kamar mandi atas">Kamar mandi atas</option>
+                                </select>
                             </td>
                             <td>
                                 <textarea class="form-control-inline text-center inventaris-live-edit auto-resize" data-field="nama_peralatan" rows="1" placeholder="(Tulis Barang)"></textarea>
@@ -2187,15 +2197,6 @@
                             </td>
                             <td>
                                 <textarea class="form-control-inline inventaris-live-edit auto-resize" data-field="keterangan" rows="1"></textarea>
-                            </td>
-                            <td class="text-center">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input inventaris-checkbox-edit" id="ceklist-${item.id}" data-id="${item.id}">
-                                    <label class="custom-control-label" for="ceklist-${item.id}"></label>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <input type="date" class="form-control-inline text-center inventaris-live-edit" data-field="tanggal_perbaikan">
                             </td>
                             <td class="text-center">
                                 <button class="btn btn-link text-danger p-0 delete-inventaris-btn" data-id="${item.id}">
@@ -2280,26 +2281,6 @@
                 });
             });
 
-            $(document).on('change', '.inventaris-checkbox-edit', function() {
-                const checkbox = $(this);
-                const id = checkbox.data('id');
-                const isChecked = checkbox.is(':checked');
-
-                $.ajax({
-                    url: "/inventaris-kantor/update/" + id,
-                    type: "POST",
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        _method: "PUT",
-                        ceklist_perbaikan: isChecked
-                    },
-                    success: function() {
-                        // Trigger dynamic row filtering if checkbox changed
-                        applyInventarisFilters();
-                    }
-                });
-            });
-
             $(document).on('click', '.delete-inventaris-btn', function() {
                 const btn = $(this);
                 const tr = btn.closest('tr');
@@ -2330,7 +2311,7 @@
                                         ).length === 0) {
                                         $('#inventaris-table-body').append(`
                                         <tr class="empty-inventaris-row">
-                                            <td colspan="9" class="text-center py-5 text-muted">Belum ada data inventaris kantor.</td>
+                                            <td colspan="7" class="text-center py-5 text-muted">Belum ada data inventaris kantor.</td>
                                         </tr>
                                     `);
                                     }
@@ -2341,11 +2322,10 @@
                 });
             });
 
-            // ====================== FILTER INVENTARIS HANDLER (STATUS, CEKLIST, LOKASI, PERALATAN) ======================
+            // ====================== FILTER INVENTARIS HANDLER (STATUS, LOKASI, PERALATAN) ======================
             function applyInventarisFilters() {
                 const statusFilter = $('#filter-status-inventaris').val() || 'all';
-                const ceklistFilter = $('#filter-ceklist-inventaris').val() || 'all';
-                const lokasiSearch = ($('#filter-lokasi-inventaris').val() || '').toLowerCase().trim();
+                const lokasiFilter = $('#filter-lokasi-inventaris').val() || 'all';
                 const peralatanSearch = ($('#filter-peralatan-inventaris').val() || '').toLowerCase().trim();
 
                 $('#inventaris-table-body tr').each(function() {
@@ -2354,24 +2334,15 @@
                         return;
 
                     const rowStatus = tr.find('[data-field="status"]').val();
-                    const isChecked = tr.find('.inventaris-checkbox-edit').is(':checked');
-                    const rowLokasi = (tr.find('[data-field="lokasi"]').val() || '').toLowerCase().trim();
+                    const rowLokasi = tr.find('[data-field="lokasi"]').val() || '';
                     const rowPeralatan = (tr.find('[data-field="nama_peralatan"]').val() || '')
                         .toLowerCase().trim();
 
                     let matchesStatus = (statusFilter === 'all' || rowStatus === statusFilter);
-                    let matchesCeklist = true;
-
-                    if (ceklistFilter === 'sudah') {
-                        matchesCeklist = isChecked;
-                    } else if (ceklistFilter === 'belum') {
-                        matchesCeklist = !isChecked;
-                    }
-
-                    let matchesLokasi = rowLokasi.includes(lokasiSearch);
+                    let matchesLokasi = (lokasiFilter === 'all' || rowLokasi === lokasiFilter);
                     let matchesPeralatan = rowPeralatan.includes(peralatanSearch);
 
-                    if (matchesStatus && matchesCeklist && matchesLokasi && matchesPeralatan) {
+                    if (matchesStatus && matchesLokasi && matchesPeralatan) {
                         tr.removeClass('filtered-out');
                     } else {
                         tr.addClass('filtered-out');
@@ -2381,11 +2352,11 @@
                 updatePagination('inventaris-table-body', 'inventaris-pagination', 1);
             }
 
-            $('#filter-status-inventaris, #filter-ceklist-inventaris').on('change', function() {
+            $('#filter-status-inventaris, #filter-lokasi-inventaris').on('change', function() {
                 applyInventarisFilters();
             });
 
-            $('#filter-lokasi-inventaris, #filter-peralatan-inventaris').on('input', function() {
+            $('#filter-peralatan-inventaris').on('input', function() {
                 applyInventarisFilters();
             });
 
