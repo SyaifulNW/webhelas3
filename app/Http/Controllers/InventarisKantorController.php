@@ -21,15 +21,7 @@ class InventarisKantorController extends Controller
     public function update(Request $request, $id)
     {
         $item = InventarisKantor::findOrFail($id);
-        
-        // Handle checkbox
-        if ($request->has('ceklist_perbaikan')) {
-            $data = $request->all();
-            $data['ceklist_perbaikan'] = $request->ceklist_perbaikan == 'true' || $request->ceklist_perbaikan == 1 ? 1 : 0;
-            $item->update($data);
-        } else {
-            $item->update($request->all());
-        }
+        $item->update($request->all());
         
         return response()->json(['success' => true, 'data' => $item]);
     }

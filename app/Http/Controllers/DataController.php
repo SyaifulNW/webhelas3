@@ -147,10 +147,14 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $request->merge(['view_type' => 'chapter']);
             $viewType = 'chapter';
         }
+        // Adjust view type role filters to respect cs and chapter specific filters
         if ($viewType === 'cs') {
             $query->where('created_by_role', 'cs-mbc');
         } elseif ($viewType === 'chapter') {
-            $query->whereIn('created_by_role', ['chapter', 'reseller', 'agen']);
+            // Only apply chapter role restriction when no specific user or chapter filter is set
+            if (empty($csFilter) && empty($chapterFilter)) {
+                $query->whereIn('created_by_role', ['chapter', 'reseller', 'agen']);
+            }
         } elseif ($userRole === 'cs-mbc') {
             // Default behavior for CS-MBC role
             $query->whereNotIn('created_by_role', ['chapter', 'reseller', 'agen']);
@@ -206,30 +210,12 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $query->where('created_by', $csFilter);
         }
 
-        // Filter Chapter
+        // Filter Chapter: Only include records created by the selected Chapter user
         if (!empty($chapterFilter)) {
             $selectedChapter = \App\Models\User::find($chapterFilter);
             if ($selectedChapter) {
-                $query->where(function($q) use ($selectedChapter) {
-                    // Semua inputan dia
-                    $q->where('created_by', $selectedChapter->name);
-
-                    // Tambahan agen di bawah chapter ini:
-                    $downlines = \App\Models\User::where('created_by', $selectedChapter->id)->pluck('name')->toArray();
-                    if (!empty($downlines)) {
-                        $q->orWhereIn('created_by', $downlines);
-                    }
-                    
-                    // Semua data dengan kota yang sama dengan wilayah chapter
-                    if (!empty($selectedChapter->chapter)) {
-                        $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
-                        $q->orWhere(function($sq) use ($selectedChapter, $excludeNames) {
-                            $sq->where('kota_nama', 'like', '%' . $selectedChapter->chapter . '%')
-                               ->whereNotIn('created_by', $excludeNames)
-                               ->where('created_by_role', '!=', 'cs-mbc');
-                        });
-                    }
-                });
+                // Directly filter by the creator's name (or could use ID if stored)
+                $query->where('created_by', $selectedChapter->name);
             }
         }
 
@@ -370,17 +356,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
 
 
-        // Chapter Role -> filter by user's chapter city
+        // Chapter Role – filter by user's chapter city and exclude certain CS-MBC names
         if ($userRole === 'chapter') {
-            $query->where(function($q) use ($user) {
-                // Daftar CS-MBC yang harus disembunyikan dari Chapter
-                $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
-
-                $q->where(function($sq) use ($user, $excludeNames) {
-                    $sq->where('kota_nama', 'like', '%' . $user->chapter . '%')
-                       ->whereNotIn('created_by', $excludeNames)
-                       ->where('created_by_role', '!=', 'cs-mbc');
-                })->orWhere('created_by', $user->name);
+            $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+            $query->where(function($q) use ($user, $excludeNames) {
+                $q->where('kota_nama', 'like', '%' . $user->chapter . '%')
+                  ->whereNotIn('created_by', $excludeNames)
+                  ->where('created_by_role', '!=', 'cs-mbc');
             });
         } elseif (in_array($userRole, ['reseller', 'agen'])) {
             // Reseller/Agen: See own data + downline data
@@ -416,6 +398,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // Filter User (Dropdown)
         if (!empty($csFilter)) {
             $kpiQuery->where('created_by', $csFilter);
+        }
+        // KPI Query Chapter filter: only include records created by the selected Chapter user
+        if (!empty($chapterFilter)) {
+            $selectedChapter = \App\Models\User::find($chapterFilter);
+            if ($selectedChapter) {
+                $kpiQuery->where('created_by', $selectedChapter->name);
+            }
         }
         // Strict CS View
         // Strict CS View
@@ -541,45 +530,16 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             } elseif ($statusFilter === 'database_baru') {
                 $query->whereYear('created_at', $statsYear)
                       ->whereMonth('created_at', $statsMonth);
-            } elseif (in_array($userRole, ['chapter', 'reseller', 'agen'])) {
-                if ($statusFilter === 'potensi') {
-                    $query->whereHas('salesplan', function($q) {
-                        $q->whereIn('status', ['cold', 'tertarik', 'mau_transfer']);
-                    });
-                } else {
-                    $query->whereHas('salesplan', function($q) use ($statusFilter) {
-                        $q->where('status', $statusFilter);
-                    });
-                }
+            } elseif ($statusFilter === 'potensi') {
+                // Show entries with any potential status (cold, tertarik, mau_transfer)
+                $query->whereHas('salesplan', function($q) {
+                    $q->whereIn('status', ['cold', 'tertarik', 'mau_transfer']);
+                });
             } else {
-                // For cs-mbc, administrator, etc.
-                if ($statusFilter === 'potensi') {
-                    if (!empty($daftarKelasFilter)) {
-                        $query->whereHas('salesplan', function($q) use ($daftarKelasFilter) {
-                            $q->where('kelas_id', $daftarKelasFilter)->whereIn('status', ['cold', 'tertarik', 'mau_transfer']);
-                        });
-                    } else {
-                        $query->whereHas('salesplan', function($q) {
-                            $q->whereIn('status', ['cold', 'tertarik', 'mau_transfer']);
-                        });
-                    }
-                } else {
-                    if (!empty($daftarKelasFilter)) {
-                        if ($statusFilter === 'cold') {
-                            $query->whereHas('salesplan', function($sq) use ($daftarKelasFilter) {
-                                $sq->where('kelas_id', $daftarKelasFilter)->where('status', 'cold');
-                            });
-                        } else {
-                            $query->whereHas('salesplan', function($q) use ($daftarKelasFilter, $statusFilter) {
-                                $q->where('kelas_id', $daftarKelasFilter)->where('status', $statusFilter);
-                            });
-                        }
-                    } else {
-                        $query->whereHas('salesplan', function($q) use ($statusFilter) {
-                            $q->where('status', $statusFilter);
-                        });
-                    }
-                }
+                // Filter by specific salesplan status
+                $query->whereHas('salesplan', function($q) use ($statusFilter) {
+                    $q->where('status', $statusFilter);
+                });
             }
         }
 
