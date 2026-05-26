@@ -2147,7 +2147,7 @@ $(document).ready(function() {
                         if ($userRole == 'cs-mbc') {
                             $targetOmsetVal = 50000000;
                         } elseif (!request('created_by')) {
-                            $targetOmsetVal = 125000000;
+                            $targetOmsetVal = 105000000;
                         } elseif ($kelasFilter == 'Start-Up Muda Indonesia' || $kelasFilter == 'Start-Up Muslim Indonesia') {
                             $targetOmsetVal = isset($targetOmsetSmi) && $targetOmsetSmi > 0 ? $targetOmsetSmi : 50000000;
                         } else {

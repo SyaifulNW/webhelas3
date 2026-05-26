@@ -118,8 +118,8 @@ class PenjualanController extends Controller
                 return (float) str_replace('.', '', $plan->nominal ?: 0);
             }) + (($type === 'all' || $type === 'm1t') ? $this->calculateSppAchievements('all', $tahun)['total'] : 0) + ($type === 'all' ? \App\Models\LabaRugi::where('tahun', $tahun)->where('keterangan', 'Pendapatan Lainnya')->where('type', 'pendapatan')->sum('jumlah') : 0);
 
-        // Global Target (Sync dengan dashboard admin: 125 Juta)
-        $targetBulanan = 125_000_000;
+        // Global Target (Sync dengan dashboard admin: 105 Juta)
+        $targetBulanan = 105_000_000;
 
         $realisasi = $totalBulanan;
         $persentaseCapaian = $targetBulanan > 0 ? round(($realisasi / $targetBulanan) * 100, 1) : 0;
@@ -203,8 +203,9 @@ class PenjualanController extends Controller
                 $userCount = $m1tCount + $mbcCount;
             }
 
-            // Target per CS (Default 50 Juta)
-            $uTarget = ($bulan === 'all') ? 50000000 * 12 : 50000000;
+            // Target per CS (Default 50 Juta, Shafa Zahra 5 Juta)
+            $defaultTarget = (stripos($user->name, 'Shafa') !== false) ? 5000000 : 50000000;
+            $uTarget = ($bulan === 'all') ? $defaultTarget * 12 : $defaultTarget;
 
             $totalLeads = SalesPlan::where('created_by', $user->id)
                 ->whereYear('updated_at', $tahun)
@@ -374,7 +375,7 @@ class PenjualanController extends Controller
             'role' => 'system',
             'penjualan' => null,
             'total_nominal' => $totalChapterAchievement,
-            'target' => array_sum(array_column($salesDataChapter, 'target')),
+            'target' => 0,
             'realisasi' => 0, // Calculated below
             'conversion_rate' => 0,
             'komisi' => 0,

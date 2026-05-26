@@ -164,7 +164,7 @@
                 </td>
                 @if(!($isChapter ?? false))
                     <td class="text-end px-3 text-muted fw-medium" style="font-size: 1rem;">
-                        @if(!($sales['is_spp_row'] ?? false) && !($sales['is_lainnya_row'] ?? false))
+                        @if(!($sales['is_spp_row'] ?? false) && !($sales['is_lainnya_row'] ?? false) && !($sales['is_chapter_summary_row'] ?? false))
                             Rp {{ number_format($sales['target'], 0, ',', '.') }}
                         @else
                             -

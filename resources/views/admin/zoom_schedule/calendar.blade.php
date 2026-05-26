@@ -5,7 +5,7 @@
     <!-- Header -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800 font-weight-bold">
-            <i class="fas fa-video text-primary mr-2"></i> Monitoring Jadwal Zoom One-on-One
+            <i class="fas fa-video text-primary mr-2"></i> Monitoring Jadwal Zoom One-on-One - {{ auth()->user()->name }}
         </h1>
     </div>
 
@@ -48,17 +48,7 @@
                                     </small>
                                 </div>
                             @else
-                                <div class="d-flex align-items-center justify-content-md-end" style="gap: 12px;">
-                                    <div class="text-left">
-                                        <label class="small font-weight-bold text-white mb-1 d-block opacity-75">FILTER TIM CS</label>
-                                        <select id="filterCs" class="form-control form-control-sm border-0 shadow-sm" style="min-width: 200px; border-radius: 8px; font-weight: 600;">
-                                            <option value="">-- Tampilkan Semua CS --</option>
-                                            @foreach($csUsers as $cs)
-                                                <option value="{{ $cs->id }}">{{ $cs->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
+                                <input type="hidden" id="filterCs" value="{{ auth()->id() }}">
                             @endif
                         </div>
                     </div>

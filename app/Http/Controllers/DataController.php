@@ -109,6 +109,8 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $csQuery->where('id', $userId);
         }
 
+        $csQuery->where('name', 'not like', '%umum%');
+
         $csList = $csQuery->select('id', 'name')->orderBy('name')->get();
 
         // --- Ambil filter ---

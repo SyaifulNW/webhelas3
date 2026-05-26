@@ -18,6 +18,9 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <style>
         /* Premium FullCalendar Customizer inside Modal */
+        #modalZoomCalendar {
+            font-size: 11px !important;
+        }
         #modalZoomCalendar .fc-theme-standard .fc-scrollgrid {
             border-radius: 12px;
             overflow: hidden;
@@ -26,13 +29,15 @@
         #modalZoomCalendar .fc .fc-toolbar-title {
             font-weight: 800;
             color: #333333;
-            font-size: 1.15rem !important;
+            font-size: 1rem !important;
         }
         #modalZoomCalendar .fc .fc-button-primary {
             background-color: #2a5298 !important;
             border-color: #2a5298 !important;
             font-weight: 700;
             border-radius: 8px;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
             transition: all 0.2s;
         }
         #modalZoomCalendar .fc .fc-button-primary:hover {
@@ -42,21 +47,21 @@
         #modalZoomCalendar .fc-daygrid-day-number {
             font-weight: 700;
             color: #555555;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
         }
         #modalZoomCalendar .fc-col-header-cell-cushion {
             font-weight: 800;
             color: #333333;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             letter-spacing: 0.5px;
         }
         #modalZoomCalendar .fc-event {
             cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 6px;
+            padding: 1px 4px;
+            border-radius: 4px;
             font-weight: 700;
-            font-size: 0.72rem;
+            font-size: 0.65rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
     </style>
@@ -674,7 +679,12 @@
                         $user = auth()->user();
                         $csList = collect();
                         if (in_array(strtolower($user->role), ['administrator', 'manager', 'marketing', 'operasional']) || $user->name === 'Agus Setyo' || $user->name === 'Linda') {
-                            $csList = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'customer_service'])->where('is_active', 1)->select('id', 'name')->orderBy('name')->get();
+                            $csList = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'customer_service'])
+                                ->where('is_active', 1)
+                                ->where('name', 'not like', '%umum%')
+                                ->select('id', 'name')
+                                ->orderBy('name')
+                                ->get();
                             $chapterList = \App\Models\User::whereIn('role', ['chapter', 'reseller', 'agen'])->select('id', 'name', 'chapter', 'role')->orderBy('role')->orderBy('name')->get();
                         }
                     @endphp
@@ -2801,6 +2811,14 @@
                             $btnZoom.closest('tr').find('.checkbox-ikut-zoom').prop('checked', true);
                         }
                     }
+
+                    // [USER_REQUEST] Dynamically update calendar events & jump to rescheduled date without full page reload
+                    if (window.modalCalendar) {
+                        window.modalCalendar.refetchEvents();
+                        if (dateVal) {
+                            window.modalCalendar.gotoDate(dateVal);
+                        }
+                    }
                 } else {
                     alert(r.message || 'Gagal menyimpan jadwal');
                 }
@@ -3960,14 +3978,14 @@
 
 <!-- MODAL JADWAL ZOOM ONE-ON-ONE (CALENDAR) -->
 <div class="modal fade" id="modalJadwalZoomHariIni" tabindex="-1" role="dialog" aria-labelledby="modalJadwalZoomHariIniLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 950px; width: 95%;">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 1280px; width: 98%;">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.2) !important;">
             <!-- Modal Header -->
             <div class="modal-header border-0 text-white p-4" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                 <div class="d-flex align-items-center justify-content-between w-100">
                     <div>
                         <h5 class="modal-title font-weight-bold mb-1 d-flex align-items-center" id="modalJadwalZoomHariIniLabel" style="font-size: 1.25rem; letter-spacing: 0.5px;">
-                            <i class="fas fa-video mr-2"></i> Monitoring Jadwal Zoom One-on-One
+                            <i class="fas fa-video mr-2"></i> Monitoring Jadwal Zoom One-on-One - {{ auth()->user()->name }}
                         </h5>
                         <p class="mb-0 text-white-50 small">Pantau pencapaian target harian dan sebaran jadwal Zoom seluruh tim CS secara real-time.</p>
                     </div>
@@ -3979,18 +3997,10 @@
             
             <!-- Modal Body -->
             <div class="modal-body p-4 bg-light">
-                <!-- CS Filter and Legend Row -->
+                <!-- Legend Row -->
                 <div class="row align-items-center mb-4">
-                    <div class="col-md-5">
-                        <label class="small font-weight-bold text-muted mb-1 d-block">FILTER TIM CS</label>
-                        <select id="modalFilterCs" class="form-select form-select-sm border shadow-sm" style="border-radius: 8px; font-weight: 600; height: 38px; color: #000;">
-                            <option value="">-- Tampilkan Semua CS --</option>
-                            @foreach($csList as $cs)
-                                <option value="{{ $cs->id }}">{{ $cs->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-7 mt-3 mt-md-0 d-flex justify-content-md-end align-items-center" style="gap: 15px; font-size: 0.8rem; font-weight: 700; color: #333;">
+                    <input type="hidden" id="modalFilterCs" value="{{ auth()->id() }}">
+                    <div class="col-12 d-flex justify-content-end align-items-center" style="gap: 15px; font-size: 0.8rem; font-weight: 700; color: #333;">
                         <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle" style="width: 10px; height: 10px; background-color: #25799E; display: inline-block;"></span> Scheduled</span>
                         <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle" style="width: 10px; height: 10px; background-color: #3CDE1D; display: inline-block;"></span> Done / Sukses</span>
                         <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle" style="width: 10px; height: 10px; background-color: #E61717; display: inline-block;"></span> Cancelled</span>
@@ -4044,19 +4054,11 @@
                         <small class="text-muted d-block text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">WAKTU PELAKSANAAN</small>
                         <span id="modalDetailTime" class="font-weight-bold text-primary" style="font-size: 0.9rem;">-</span>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted d-block text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">LINK PERTEMUAN ZOOM</small>
-                        <a id="modalDetailZoomLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm mt-1 px-3 d-inline-flex align-items-center" style="border-radius: 8px; font-weight: 700; font-size: 0.78rem;">
-                            <i class="fas fa-video mr-1.5"></i> Buka Zoom Meeting
-                        </a>
-                        <span id="modalDetailZoomLinkEmpty" class="text-muted small d-block font-italic mt-1">- Belum diset -</span>
-                    </div>
-                    <div>
-                        <small class="text-muted d-block text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">CATATAN / TINDAK LANJUT</small>
-                        <p id="modalDetailNotes" class="mb-0 text-muted small mt-1 font-italic">-</p>
-                    </div>
                 </div>
                 
+                <button type="button" id="btnRescheduleZoom" class="btn btn-primary btn-block border-0 shadow-sm py-2 font-weight-bold mb-2 btn-zoom-bant" style="border-radius: 10px; font-size: 0.85rem; background: linear-gradient(45deg, #1e3c72, #2a5298); display: none;">
+                    <i class="fas fa-calendar-alt mr-1"></i> Reschedule Jadwal
+                </button>
                 <button type="button" class="btn btn-secondary btn-block border-0 shadow-sm py-2 font-weight-bold" onclick="$('#modalModalEventDetail').modal('hide')" style="border-radius: 10px; font-size: 0.85rem;">
                     Tutup Rincian
                 </button>
@@ -5239,7 +5241,7 @@ function handleDetailSimpan() {
     }
 
         // Handler for showing Today's Zoom Schedule Modal
-        let modalCalendar = null;
+        window.modalCalendar = null;
 
         $(document).on('click', '#btnLihatJadwalZoomHariIni', function () {
             $('#modalJadwalZoomHariIni').modal('show');
@@ -5254,6 +5256,8 @@ function handleDetailSimpan() {
                 modalCalendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
                     locale: 'id',
+                    height: 480,
+                    aspectRatio: 2.1,
                     headerToolbar: {
                         left: 'prev,next today',
                         center: 'title',
@@ -5301,15 +5305,27 @@ function handleDetailSimpan() {
                         }
                         $('#modalDetailTime').text(timeStr);
                         
-                        if (props.zoom_link) {
-                            $('#modalDetailZoomLink').attr('href', props.zoom_link).show();
-                            $('#modalDetailZoomLinkEmpty').hide();
+                        // [USER_REQUEST] Populate and show Reschedule Button with proper data properties
+                        let $resBtn = $('#btnRescheduleZoom');
+                        if (props.data_id) {
+                            $resBtn.data('id', props.data_id);
+                            $resBtn.data('nama', props.participant || '');
+                            $resBtn.attr('data-kelas-nama', props.kelas_nama || '');
+                            $resBtn.data('no-wa', props.no_wa || '');
+                            $resBtn.data('can-edit', 1);
+                            $resBtn.attr('data-schedule-date', props.scheduled_at || '');
+                            $resBtn.attr('data-schedule-link', props.zoom_link || '');
+                            $resBtn.attr('data-schedule-status', (props.status || 'scheduled').toLowerCase());
+                            $resBtn.attr('data-schedule-notes', props.notes || '');
+                            $resBtn.data('salesplan-id', props.salesplan_id || '');
+                            $resBtn.attr('data-ikut-zoom', props.ikut_zoom || 0);
+                            $resBtn.attr('data-bant-budget', props.bant_budget || 0);
+                            $resBtn.attr('data-bant-authority', props.bant_authority || 0);
+                            $resBtn.attr('data-bant-time', props.bant_time || 0);
+                            $resBtn.show();
                         } else {
-                            $('#modalDetailZoomLink').hide();
-                            $('#modalDetailZoomLinkEmpty').show();
+                            $resBtn.hide();
                         }
-
-                        $('#modalDetailNotes').text(props.notes || '-');
 
                         let status = (props.status || 'Scheduled').toLowerCase();
                         let badge = $('#modalDetailStatusBadge');
@@ -5340,6 +5356,10 @@ function handleDetailSimpan() {
                 modalCalendar.updateSize();
                 modalCalendar.refetchEvents();
             }
+        });
+
+        $(document).on('click', '#btnRescheduleZoom', function() {
+            $('#modalModalEventDetail').modal('hide');
         });
         </script>
 @endsection

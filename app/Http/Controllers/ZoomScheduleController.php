@@ -110,7 +110,10 @@ class ZoomScheduleController extends Controller
         // Load all CS users for Admin filter
         $csUsers = [];
         if ($isAdmin) {
-            $csUsers = User::whereIn('role', ['cs', 'marketing', 'user'])->where('is_active', 1)->get();
+            $csUsers = User::whereIn('role', ['cs', 'marketing', 'user'])
+                ->where('is_active', 1)
+                ->where('name', 'not like', '%umum%')
+                ->get();
         }
 
         // Target progress calculation for the active CS (target: 4 Zoom per day)
@@ -157,7 +160,10 @@ class ZoomScheduleController extends Controller
 
         $events = [];
         foreach ($schedules as $schedule) {
-            $participantName = $schedule->data ? $schedule->data->nama : 'Umum';
+            if (!$schedule->data || empty($schedule->data->nama) || stripos($schedule->data->nama, 'umum') !== false) {
+                continue;
+            }
+            $participantName = $schedule->data->nama;
             $csName = $schedule->cs ? $schedule->cs->name : 'Unknown CS';
 
             // Determine dynamic coloring based on status
