@@ -6,6 +6,12 @@
     $isChapterView = ($userRole === 'chapter' || $userRole === 'reseller' || (in_array($userRole, ['administrator', 'operasional']) && $viewType === 'chapter'));
     $isAdminCSView = ($userRole === 'administrator' && $viewType !== 'chapter');
     $isCSMBCView = ($userRole === 'cs-mbc');
+    
+    $chapterList = \App\Models\User::whereIn('role', ['chapter', 'reseller', 'agen'])
+        ->select('id', 'name', 'chapter', 'role')
+        ->orderBy('role')
+        ->orderBy('name')
+        ->get();
 @endphp
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
@@ -669,7 +675,7 @@
                         $csList = collect();
                         if (in_array(strtolower($user->role), ['administrator', 'manager', 'marketing', 'operasional']) || $user->name === 'Agus Setyo' || $user->name === 'Linda') {
                             $csList = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'customer_service'])->where('is_active', 1)->select('id', 'name')->orderBy('name')->get();
-                            $chapterList = \App\Models\User::where('role', 'chapter')->select('id', 'name', 'chapter')->orderBy('name')->get();
+                            $chapterList = \App\Models\User::whereIn('role', ['chapter', 'reseller', 'agen'])->select('id', 'name', 'chapter', 'role')->orderBy('role')->orderBy('name')->get();
                         }
                     @endphp
                     @if($userRole === 'cs-mbc' || $isAdminCSView)
@@ -928,11 +934,13 @@
                             <i class="fas fa-file-pdf"></i> Follow Up
                         </button>
                         
+                        @if(!(auth()->user()->role === 'operasional' && stripos(auth()->user()->name, 'Rafi') !== false))
                          <button type="button" id="btnLihatJadwalZoomHariIni"
                             class="btn btn-info d-flex align-items-center gap-2 px-3 shadow-sm rounded-pill ml-2"
                             style="background: linear-gradient(45deg, #0dcaf0, #0bacce); border: none; font-weight: 600; color: #fff;">
                             <i class="fas fa-calendar-day"></i> Lihat Jadwal Zoom
                         </button>
+                        @endif
                         
                         @if(in_array($userRole, ['chapter', 'reseller']) || (request('view_type') == 'chapter' && $userRole == 'administrator'))
                             <div class="ml-2 px-2 py-1 bg-light border rounded-pill shadow-sm d-flex align-items-center">
@@ -1094,7 +1102,7 @@
                                                 <option value="">ALL Chapter</option>
                                                 @if(isset($chapterList))
                                                     @foreach($chapterList as $ch)
-                                                        <option value="{{ $ch->id }}" {{ request('chapter_id') == $ch->id ? 'selected' : '' }}>{{ strtoupper($ch->name) }}</option>
+                                                        <option value="{{ $ch->id }}" {{ request('chapter_id') == $ch->id ? 'selected' : '' }}>{{ strtoupper($ch->name) }} {{ in_array(strtolower($ch->role), ['reseller', 'agen']) ? '(AGEN)' : '(CHAPTER)' }}</option>
                                                     @endforeach
                                                 @endif
                                             </select>
