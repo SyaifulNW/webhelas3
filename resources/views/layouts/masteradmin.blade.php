@@ -805,12 +805,12 @@
                             </a>
                         </li>
 
-                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                        <!-- <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('peserta-smi.index') }}">
                                 <i class="fas fa-fw fa-user-graduate"></i>
                                 <span><strong>PESERTA M1T</strong></span>
                             </a>
-                        </li>
+                        </li> -->
 
                         <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('programkerja.index') }}">
@@ -819,12 +819,12 @@
                             </a>
                         </li>
 
-                        <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
+                        <!-- <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('gantt.index') }}">
                                 <i class="fas fa-fw fa-project-diagram"></i>
                                 <span><strong>GANCHART</strong></span>
                             </a>
-                        </li>
+                        </li> -->
 
                         <li class="nav-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.keuangan.pengajuan-anggaran') }}">
@@ -833,12 +833,12 @@
                             </a>
                         </li>
 
-                        <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
+                        <!-- <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.kelas.index') }}">
                                 <i class="fas fa-fw fa-calendar-alt"></i>
                                 <span><strong>SETTING JADWAL KELAS</strong></span>
                             </a>
-                        </li>
+                        </li> -->
 
 
                     @endif
