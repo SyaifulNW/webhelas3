@@ -840,7 +840,7 @@
                                     </li>
                                 @endif
 
-                                @if(!in_array($userRole, ['chapter', 'agen']))
+                                @if(!in_array($userRole, ['chapter', 'agen', 'cs-mbc']))
                                     <li class="nav-item {{ request()->routeIs('zoom-schedule.calendar') ? 'active' : '' }}">
                                         <a class="nav-link" href="{{ route('zoom-schedule.calendar') }}">
                                             <i class="fas fa-fw fa-video"></i>
@@ -859,6 +859,17 @@
                                     <span>DAILY ACTIVITY</span>
                                 </a>
                             </li>
+                        @endif
+
+                        @if($userRole === 'cs-mbc')
+                            @if(\App\Models\Menu::isActive('sales_plan'))
+                                <li class="nav-item {{ request()->routeIs('admin.data-peserta.unified') ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('admin.data-peserta.unified') }}" title="DATA PESERTA">
+                                        <i class="fas fa-fw fa-id-card"></i>
+                                        <span><strong>DATA PESERTA</strong></span>
+                                    </a>
+                                </li>
+                            @endif
                         @endif
 
                         {{-- Menu Khusus Chapter & Reseller --}}
@@ -918,7 +929,7 @@
                             @else
 
                                 {{-- SALES PLAN MBC (LAINNYA) --}}
-                                @if(!in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional']) && !in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo']))
+                                @if(!in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional', 'cs-mbc']) && !in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo']))
                                     @if($userRole === 'cs-mbc')
                                         {{-- Simple link for CS-MBC (same as administrator) --}}
                                         <li class="nav-item {{ request('type') == 'mbc' ? 'active' : '' }}">
@@ -976,12 +987,14 @@
                                         {{-- Do nothing --}}
                                     @elseif(in_array($userName, ['Yasmin', 'Linda']))
                                         {{-- 1. DATA PESERTA M1T (Sales Plan) --}}
-                                        <li class="nav-item {{ (request('type') == 'smi' && request('kelas') == 'Start-Up Muslim Indonesia') ? 'active' : '' }}">
-                                            <a class="nav-link" href="{{ route('admin.salesplan.index', ['type' => 'smi', 'kelas' => 'Start-Up Muslim Indonesia']) }}" title="DATA PESERTA M1T">
-                                                <i class="fas fa-fw fa-users"></i>
-                                                <span style="text-transform: none;"><strong>DATA PESERTA M1T</strong></span>
-                                            </a>
-                                        </li>
+                                        @if($userRole !== 'cs-mbc')
+                                            <li class="nav-item {{ (request('type') == 'smi' && request('kelas') == 'Start-Up Muslim Indonesia') ? 'active' : '' }}">
+                                                <a class="nav-link" href="{{ route('admin.salesplan.index', ['type' => 'smi', 'kelas' => 'Start-Up Muslim Indonesia']) }}" title="DATA PESERTA M1T">
+                                                    <i class="fas fa-fw fa-users"></i>
+                                                    <span style="text-transform: none;"><strong>DATA PESERTA M1T</strong></span>
+                                                </a>
+                                            </li>
+                                        @endif
 
                                         {{-- 2. PESERTA M1T (Peserta SMI) --}}
                                         <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
@@ -1152,23 +1165,36 @@
 
 
                     @if ($userRole === 'administrator' || in_array($userName, ['Linda', 'Yasmin', 'Agus Setyo']))
-                        @if(\App\Models\Menu::isActive('program_kerja') && $userRole !== 'administrator')
-                            {{-- Program Kerja --}}
-                            <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('programkerja.index') }}" title="Program Kerja">
-                                    <i class="fas fa-fw fa-tasks"></i>
-                                    <span>Program Kerja</span>
-                                </a>
-                            </li>
-                        @endif
-                        @if(\App\Models\Menu::isActive('ganchart') && $userRole !== 'administrator')
-                            {{-- Ganchart --}}
-                            <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('gantt.index') }}" title="Ganchart">
-                                    <i class="fas fa-fw fa-project-diagram"></i>
-                                    <span>Ganchart</span>
-                                </a>
-                            </li>
+                        @if(in_array($userName, ['Linda', 'Yasmin']))
+                            {{-- Unified Program Kerja & Gantt Chart --}}
+                            @if((\App\Models\Menu::isActive('program_kerja') || \App\Models\Menu::isActive('ganchart')) && $userRole !== 'administrator')
+                                <li class="nav-item {{ request()->routeIs('programkerja.unified') ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('programkerja.unified') }}" title="PROGRAM KERJA">
+                                        <i class="fas fa-fw fa-tasks"></i>
+                                        <span><strong>PROGRAM KERJA</strong></span>
+                                    </a>
+                                </li>
+                            @endif
+                        @else
+                            {{-- Standard separate menus --}}
+                            @if(\App\Models\Menu::isActive('program_kerja') && $userRole !== 'administrator')
+                                {{-- Program Kerja --}}
+                                <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('programkerja.index') }}" title="Program Kerja">
+                                        <i class="fas fa-fw fa-tasks"></i>
+                                        <span>Program Kerja</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if(\App\Models\Menu::isActive('ganchart') && $userRole !== 'administrator')
+                                {{-- Ganchart --}}
+                                <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('gantt.index') }}" title="Ganchart">
+                                        <i class="fas fa-fw fa-project-diagram"></i>
+                                        <span>Ganchart</span>
+                                    </a>
+                                </li>
+                            @endif
                         @endif
 
                         @if(\App\Models\Menu::isActive('jadwal_kelas') && auth()->user()->name !== 'Agus Setyo' && $userRole !== 'administrator')
@@ -1688,41 +1714,45 @@
                             if (currentCount > lastCount) {
                                 let diff = currentCount - lastCount;
                                 
-                                if (isOnDatabasePage) {
-                                    // CS is on the database page. Show a premium toast alert to notify them!
-                                    Swal.fire({
-                                        toast: true,
-                                        position: 'top-end',
-                                        icon: 'info',
-                                        title: 'Ada ' + diff + ' data baru masuk via Link!',
-                                        showConfirmButton: true,
-                                        confirmButtonText: 'Segarkan Halaman',
-                                        timer: 15000,
-                                        timerProgressBar: true,
-                                        showCloseButton: true,
-                                        didOpen: (toast) => {
-                                            toast.addEventListener('mouseenter', Swal.stopTimer)
-                                            toast.addEventListener('mouseleave', Swal.resumeTimer)
-                                        }
-                                    }).then((result) => {
-                                        if (result.isConfirmed) {
-                                            window.location.reload();
-                                        }
-                                    });
-                                    // Update last count so we don't spam the toast
-                                    localStorage.setItem(lastCountKey, currentCount);
-                                } else {
-                                    // CS is on another page. Update tab title and sidebar pulsing badge!
-                                    document.title = '(' + diff + ') ' + originalTitle;
+                                // CS is on another page or database page. Update tab title and sidebar pulsing badge!
+                                document.title = '(' + diff + ') ' + originalTitle;
 
-                                    $('a[href*="database"]').each(function () {
-                                        let $badge = $(this).find('.db-pulse-badge');
-                                        if ($badge.length) {
-                                            $badge.text(diff);
-                                        } else {
-                                            $(this).prepend('<span class="db-pulse-badge">' + diff + '</span>');
-                                        }
-                                    });
+                                $('a[href*="database"]').each(function () {
+                                    let $badge = $(this).find('.db-pulse-badge');
+                                    if ($badge.length) {
+                                        $badge.text(diff);
+                                    } else {
+                                        $(this).prepend('<span class="db-pulse-badge">' + diff + '</span>');
+                                    }
+                                });
+
+                                if (isOnDatabasePage) {
+                                    // CS is on the database page. Show a premium toast alert to notify them once!
+                                    let lastShownToastCount = sessionStorage.getItem('last_shown_toast_count');
+                                    if (lastShownToastCount === null || parseInt(lastShownToastCount) < currentCount) {
+                                        sessionStorage.setItem('last_shown_toast_count', currentCount);
+                                        
+                                        Swal.fire({
+                                            toast: true,
+                                            position: 'top-end',
+                                            icon: 'info',
+                                            title: 'Ada ' + diff + ' data baru masuk via Link!',
+                                            showConfirmButton: true,
+                                            confirmButtonText: 'Segarkan Halaman',
+                                            timer: 15000,
+                                            timerProgressBar: true,
+                                            showCloseButton: true,
+                                            didOpen: (toast) => {
+                                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                            }
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                localStorage.setItem(lastCountKey, currentCount);
+                                                window.location.reload();
+                                            }
+                                        });
+                                    }
                                 }
                             } else {
                                 // If they are on the database page and no new data is present, synchronize localStorage
