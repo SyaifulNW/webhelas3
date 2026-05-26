@@ -344,4 +344,9 @@ class ProgramKerjaController extends Controller
 
         return view('marketing.produksi.performance', compact('stats'));
     }
+
+    public function programKerjaUnified(Request $request)
+    {
+        return view('marketing.programkerja.unified');
+    }
 }

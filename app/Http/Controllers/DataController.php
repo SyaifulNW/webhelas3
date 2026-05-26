@@ -1347,18 +1347,17 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
     public function formM1t($identifier)
     {
         if (strtolower($identifier) === 'cs-mbc') {
-            // Rotator ratio: Yasmin (40%), Linda (40%), Shafa Zahra (20%)
-            // Sequence of 5 items: Yasmin: 2, Linda: 2, Shafa Zahra: 1
-            $sequence = ['Yasmin', 'Linda', 'Yasmin', 'Linda', 'Shafa Zahra'];
+            // Equal Rotator between Linda, Shafa Zahra, and Yasmin
+            $sequence = ['Linda', 'Shafa Zahra', 'Yasmin'];
             try {
                 $index = \Illuminate\Support\Facades\Cache::get('form_m1t_rotator_index', 0);
-                \Illuminate\Support\Facades\Cache::put('form_m1t_rotator_index', ($index + 1) % 5, 43200); // Store for 30 days (43200 mins)
+                \Illuminate\Support\Facades\Cache::put('form_m1t_rotator_index', ($index + 1) % count($sequence), 43200); // Store for 30 days
             } catch (\Exception $e) {
-                $index = rand(0, 4);
+                $index = rand(0, count($sequence) - 1);
             }
             
             $selectedCsName = $sequence[$index];
-            $user = \App\Models\User::where('name', $selectedCsName)->first();
+            $user = \App\Models\User::where('name', 'LIKE', '%' . $selectedCsName . '%')->first();
             
             // Fallback to any cs-mbc if not found
             if (!$user) {
@@ -1390,7 +1389,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             abort(404, 'User/Chapter tidak ditemukan.');
         }
 
-        return view('admin.database.form_m1t', compact('user'));
+        return response()
+            ->view('admin.database.form_m1t', compact('user'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Sat, 01 Jan 1990 00:00:00 GMT');
     }
 
     public function storeFormM1t(Request $request)
@@ -1479,6 +1482,67 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             } catch (\Exception $e) {
                 // Ignore formatting exceptions
             }
+        }
+
+        // Send WhatsApp Notification to the assigned CS (Rotator or Specific Form Owner)
+        try {
+            $waNumberMap = [
+                'Linda' => '08561490495',
+                'Shafa' => '089602710354',
+                'Yasmin' => '088228814769'
+            ];
+            
+            $waNumber = '088228814769'; // Default fallback to Yasmin
+            foreach ($waNumberMap as $nameKey => $phone) {
+                if (stripos($user->name, $nameKey) !== false) {
+                    $waNumber = $phone;
+                    break;
+                }
+            }
+            
+            $zoomTanggal = $request->input('jadwal_zoom_tanggal') ?? '-';
+            $zoomJam = $request->input('jadwal_zoom_jam') ?? '-';
+            $namaUsaha = $data->nama_bisnis ?? '-';
+            
+            $message = "*Notifikasi ADS Masuk*\n"
+                     . "*Database Calon Peserta M1T*\n\n"
+                     . "*A. DATA DIRI*\n"
+                     . "- *Nama Lengkap:* " . $data->nama . "\n"
+                     . "- *No. WhatsApp:* " . $data->no_wa . "\n"
+                     . "- *Nama Usaha:* " . $namaUsaha . "\n\n"
+                     . "*B. JADWAL SESI ZOOM*\n"
+                     . "- *Tanggal:* " . $zoomTanggal . "\n"
+                     . "- *Jam:* " . $zoomJam . "\n\n"
+                     . "----------------------------------------\n"
+                     . "_Data ini masuk otomatis dari Form M1T " . $user->name . "_";
+
+            $token = env('FONNTE_TOKEN');
+            if ($token) {
+                $curl = curl_init();
+                curl_setopt_array($curl, array(
+                  CURLOPT_URL => 'https://api.fonnte.com/send',
+                  CURLOPT_RETURNTRANSFER => true,
+                  CURLOPT_ENCODING => '',
+                  CURLOPT_MAXREDIRS => 10,
+                  CURLOPT_TIMEOUT => 0,
+                  CURLOPT_FOLLOWLOCATION => true,
+                  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                  CURLOPT_CUSTOMREQUEST => 'POST',
+                  CURLOPT_POSTFIELDS => array(
+                    'target' => $waNumber,
+                    'message' => $message,
+                    'countryCode' => '62',
+                  ),
+                  CURLOPT_HTTPHEADER => array(
+                    'Authorization: ' . $token
+                  ),
+                ));
+                
+                $response = curl_exec($curl);
+                curl_close($curl);
+            }
+        } catch (\Exception $e) {
+            \Log::error("Failed to send WhatsApp notification: " . $e->getMessage());
         }
 
         return redirect()->back()->with('success', 'Data Open House M1T berhasil disubmit.');

@@ -320,6 +320,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Program Kerja
     Route::get('/programkerja', [ProgramKerjaController::class, 'index'])->name('programkerja.index');
+    Route::get('/programkerja/unified', [ProgramKerjaController::class, 'programKerjaUnified'])->name('programkerja.unified');
     Route::post('/programkerja', [ProgramKerjaController::class, 'store'])->name('programkerja.store');
     Route::delete('/programkerja/{id}', [ProgramKerjaController::class, 'destroy'])->name('programkerja.destroy');
     Route::post('/programkerja/update-inline', [ProgramKerjaController::class, 'updateInline'])->name('programkerja.updateInline');
