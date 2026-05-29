@@ -44,7 +44,7 @@
                             <table class="table table-bordered table-hover mb-0">
                                 <thead class="bg-secondary text-white">
                                     <tr>
-                                        <th style="width: 50px;">ID</th>
+                                        <th style="width: 50px;">No.</th>
                                         <th>Nama</th>
                                         <th>Email</th>
                                         <th>Role</th>
@@ -56,7 +56,7 @@
                                 <tbody>
                                     @foreach($usersPusat as $u)
                                         <tr>
-                                            <td>{{ $u->id }}</td>
+                                            <td>{{ $loop->iteration }}</td>
                                             <td class="font-weight-bold">{{ $u->name }}</td>
                                             <td>{{ $u->email }}</td>
                                             <td>
@@ -112,10 +112,10 @@
                             <table class="table table-bordered table-hover mb-0">
                                 <thead class="bg-primary text-white">
                                     <tr>
-                                        <th style="width: 50px;">ID</th>
+                                        <th style="width: 50px;">No.</th>
                                         <th>Nama</th>
                                         <th>Email</th>
-                                        <th>Role / Lokasi</th>
+                                        <th>Role & Jumlah Agen</th>
                                         <th>Status</th>
                                         <th class="text-center">Transfer Database</th>
                                         <th class="text-right">Aksi</th>
@@ -137,17 +137,22 @@
                                             @if($staff->count() > 0) data-toggle="collapse" data-target="#members-{{ $chapterId }}" @endif
                                             style="cursor: pointer; transition: all 0.2s;">
                                             <td class="text-center">
-                                                @if($staff->count() > 0)
-                                                    <span class="btn btn-xs btn-primary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 22px; height: 22px; padding: 0; font-size: 10px;">
-                                                        <i class="fas fa-plus toggle-icon"></i>
-                                                    </span>
-                                                @else
-                                                    <span class="text-muted">{{ $leader ? $leader->id : '-' }}</span>
-                                                @endif
+                                                <span class="text-muted font-weight-bold">{{ $loop->iteration }}</span>
                                             </td>
                                             <td class="font-weight-bold">
-                                                {{ $leader ? $leader->name : 'N/A' }} 
-                                                <small class="text-muted d-block">{{ $chapterName ?: 'Tanpa Lokasi' }}</small>
+                                                <div class="d-flex align-items-center">
+                                                    <div>
+                                                        <div class="d-flex align-items-center">
+                                                            <span>{{ $leader ? $leader->name : 'N/A' }}</span>
+                                                            @if($staff->count() > 0)
+                                                                <span class="btn btn-xs btn-primary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm ml-2" style="width: 22px; height: 22px; padding: 0; font-size: 10px; flex-shrink: 0;">
+                                                                    <i class="fas fa-plus toggle-icon"></i>
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                        <small class="text-muted d-block">{{ $chapterName ?: 'Tanpa Lokasi' }}</small>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td>{{ $leader ? $leader->email : '-' }}</td>
                                             <td>
@@ -200,7 +205,18 @@
                                                         <tbody style="border-left: 5px solid #4e73df;">
                                                             @foreach($staff as $u)
                                                                 <tr>
-                                                                    <td style="width: 50px; padding-left: 30px;">{{ $u->id }}</td>
+                                                                    <td style="width: 50px; padding-left: 30px;" class="text-muted font-weight-bold">
+                                                                        @php
+                                                                            $resellerIndex = '';
+                                                                            $temp = $loop->iteration;
+                                                                            while ($temp > 0) {
+                                                                                $mod = ($temp - 1) % 26;
+                                                                                $resellerIndex = chr(65 + $mod) . $resellerIndex;
+                                                                                $temp = intval(($temp - $mod) / 26);
+                                                                            }
+                                                                        @endphp
+                                                                        {{ $resellerIndex }}.
+                                                                    </td>
                                                                     <td style="width: 25%;">
                                                                         <i class="fas fa-level-up-alt fa-rotate-90 text-muted mr-2"></i>
                                                                         {{ $u->name }}
@@ -330,7 +346,7 @@
                             <div class="chapter-select-wrapper">
                                 <select name="chapter" class="form-control chapter-select" data-current="">
                                     <option value="">-- Pilih / Tulis Chapter --</option>
-                                    @foreach(['Cirebon', 'Kalimantan Timur', 'Depok', 'Jakarta', 'Makassar', 'Tangerang', 'Lampung', 'Kediri'] as $chap)
+                                    @foreach($takenChapters as $chap)
                                         <option value="{{ $chap }}">{{ $chap }}</option>
                                     @endforeach
                                 </select>

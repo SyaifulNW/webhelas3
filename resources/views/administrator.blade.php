@@ -69,9 +69,8 @@
             <iframe id="iframe-keuangan" data-src="{{ route('admin.keuangan.laba-rugi') }}?embed=true" style="width:100%; height:950px; border:none; border-radius: 0 0 10px 10px;" onload="resizeIframe(this); hideLoading();"></iframe>
         </div>
         
-        <!-- Operasional -->
         <div class="tab-pane fade" id="operasional" role="tabpanel" aria-labelledby="operasional-tab">
-            <iframe data-src="{{ route('admin.operasional') }}?embed=true" style="width:100%; height:950px; border:none; border-radius: 0 0 10px 10px;" onload="resizeIframe(this); hideLoading();"></iframe>
+            <iframe data-src="{{ route('admin.operasional.dashboard') }}?embed=true" style="width:100%; height:950px; border:none; border-radius: 0 0 10px 10px;" onload="resizeIframe(this); hideLoading();"></iframe>
         </div>
         
         <!-- Marketing -->

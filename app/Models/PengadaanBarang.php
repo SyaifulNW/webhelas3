@@ -11,6 +11,7 @@ class PengadaanBarang extends Model
         'jumlah',
         'progress',
         'budget',
-        'acc'
+        'acc',
+        'bukti_transfer',
     ];
 }

@@ -944,7 +944,7 @@
                             <i class="fas fa-file-pdf"></i> Follow Up
                         </button>
                         
-                        @if(!(auth()->user()->role === 'operasional' && stripos(auth()->user()->name, 'Rafi') !== false))
+                        @if(!(auth()->user()->role === 'operasional' && stripos(auth()->user()->name, 'Rafi') !== false) && !($userRole === 'administrator' && request('view_type') == 'chapter'))
                          <button type="button" id="btnLihatJadwalZoomHariIni"
                             class="btn btn-info d-flex align-items-center gap-2 px-3 shadow-sm rounded-pill ml-2"
                             style="background: linear-gradient(45deg, #0dcaf0, #0bacce); border: none; font-weight: 600; color: #fff;">
@@ -1641,7 +1641,6 @@
                                     <th style="width: 220px;">Situasi Bisnis</th>
                                     <th style="width: 150px; text-align:center;">Potensi Ikut Kelas</th>
                                     <th style="width: 120px; text-align:center;">CS PIC</th>
-                                    <th style="width: 80px; text-align:center;">Action</th>
                                 
                                 {{-- Header for CS-MBC role --}}
                                 @elseif($isCSMBCView)

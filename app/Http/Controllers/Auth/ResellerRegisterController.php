@@ -22,7 +22,15 @@ class ResellerRegisterController extends Controller
 
     public function showRegistrationForm()
     {
-        return view('auth.register-reseller');
+        $chapters = User::where('role', 'chapter')
+            ->whereNotNull('chapter')
+            ->distinct()
+            ->pluck('chapter')
+            ->sort()
+            ->values()
+            ->toArray();
+
+        return view('auth.register-reseller', compact('chapters'));
     }
 
     protected function validator(array $data)

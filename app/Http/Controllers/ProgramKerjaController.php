@@ -284,7 +284,7 @@ class ProgramKerjaController extends Controller
     /**
      * Hapus program kerja
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         try {
             $programKerja = ProgramKerja::findOrFail($id);
@@ -293,8 +293,16 @@ class ProgramKerjaController extends Controller
             $programKerja->inisiatifs()->delete();
             $programKerja->delete();
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Program Kerja berhasil dihapus!']);
+            }
+
             return redirect()->route('programkerja.index')->with('success', 'Program Kerja berhasil dihapus!');
         } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menghapus: ' . $e->getMessage()], 500);
+            }
+
             return redirect()->back()->with('error', 'Gagal menghapus Program Kerja: ' . $e->getMessage());
         }
     }

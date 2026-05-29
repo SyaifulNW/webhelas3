@@ -42,7 +42,7 @@
                         <div class="chapter-select-wrapper">
                             <select name="chapter" class="form-control chapter-select" data-current="{{ $u->chapter }}">
                                 <option value="">-- Pilih / Tulis Chapter --</option>
-                                @foreach(['Cirebon', 'Kalimantan Timur', 'Depok', 'Jakarta', 'Makassar', 'Tangerang', 'Lampung', 'Kediri'] as $chap)
+                                @foreach($takenChapters as $chap)
                                     <option value="{{ $chap }}" {{ ($u->chapter ?? '') == $chap ? 'selected' : '' }}>
                                         {{ $chap }}
                                     </option>

@@ -46,7 +46,10 @@ class SettingController extends Controller
         // Chapters taken by 'chapter' role users
         $takenChapters = \App\Models\User::where('role', 'chapter')
             ->whereNotNull('chapter')
+            ->distinct()
             ->pluck('chapter')
+            ->sort()
+            ->values()
             ->toArray();
 
         // Define roles

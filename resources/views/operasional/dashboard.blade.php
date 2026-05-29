@@ -1,6 +1,79 @@
 @extends('layouts.masteradmin')
 
 @section('content')
+    @if (strtolower(auth()->user()->role) === 'administrator')
+        <style>
+            /* Hide all "Tambah" buttons */
+            #btnTambahInventarisInline,
+            #btnTambahPerbaikanInline,
+            #btnTambahPengadaanInline,
+            .delete-inventaris-btn,
+            .delete-btn,
+            .delete-pengadaan-btn,
+            .fa-trash-alt,
+            .fa-upload,
+            a[onclick*="openUploadModal"],
+            button[onclick*="openUploadModal"] {
+                display: none !important;
+            }
+
+            /* Hide the empty action column (last th/td) in all 3 tables */
+            .table-monitoring thead tr th:last-child,
+            .table-monitoring tbody tr td:last-child,
+            .table-monitoring tfoot tr td:last-child {
+                display: none !important;
+            }
+
+            /* Style disabled fields so they don't look disabled, but are clean read-only */
+            .table-monitoring tbody select:disabled,
+            .table-monitoring tbody textarea:disabled,
+            .table-monitoring tbody input:disabled {
+                background-color: transparent !important;
+                border: none !important;
+                color: #333 !important;
+                cursor: default !important;
+                resize: none !important;
+                appearance: none !important;
+                /* Hide select dropdown arrow if disabled */
+                -webkit-appearance: none !important;
+                -moz-appearance: none !important;
+            }
+        </style>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                // Disable all inputs, textareas, selects inside table bodies ONLY (keep header filters active!)
+                function disableAllFields() {
+                    document.querySelectorAll(
+                        '.table-monitoring tbody input, .table-monitoring tbody textarea, .table-monitoring tbody select'
+                        ).forEach(function(el) {
+                        el.disabled = true;
+                    });
+                    // Hide any upload or delete elements
+                    document.querySelectorAll(
+                        '.delete-inventaris-btn, .delete-btn, .delete-pengadaan-btn, a[onclick*="openUploadModal"], button[onclick*="openUploadModal"]'
+                        ).forEach(function(el) {
+                        el.style.setProperty('display', 'none', 'important');
+                    });
+                }
+
+                // Initial call
+                disableAllFields();
+
+                // MutationObserver to watch for pagination or dynamic row redraws
+                const observer = new MutationObserver(function(mutations) {
+                    disableAllFields();
+                });
+
+                document.querySelectorAll('.table-monitoring').forEach(function(table) {
+                    observer.observe(table, {
+                        childList: true,
+                        subtree: true
+                    });
+                });
+            });
+        </script>
+    @endif
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -695,15 +768,17 @@
     </style>
 
     <div class="dashboard-container">
-        <div class="row align-items-center mb-4">
-            <div class="col-md-6">
-                <h1 class="h3 text-gray-800 font-weight-bold">Dashboard Operasional</h1>
-                <p class="text-muted">Selamat datang kembali, {{ $csName }}!</p>
+        @if (auth()->user()->role !== 'administrator')
+            <div class="row align-items-center mb-4">
+                <div class="col-md-6">
+                    <h1 class="h3 text-gray-800 font-weight-bold">Dashboard Operasional</h1>
+                    <p class="text-muted">Selamat datang kembali, {{ $csName }}!</p>
+                </div>
+                <div class="col-md-6 text-right">
+                    <!-- Filter removed -->
+                </div>
             </div>
-            <div class="col-md-6 text-right">
-                <!-- Filter removed -->
-            </div>
-        </div>
+        @endif
 
 
         <!-- Navigation Tabs (Main) -->

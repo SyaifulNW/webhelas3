@@ -194,60 +194,53 @@
     {{-- 8. CS PIC --}}
     <td class="text-center" style="vertical-align: middle;">
         <span class="badge badge-light border text-dark fw-bold" style="font-size: 0.75rem; padding: 6px 12px;">{{ $item->createdBy?->name ?? $item->created_by ?? '-' }}</span>
-    </td>
+        
+        {{-- Hidden button for modal trigger --}}
+        @php
+            $today = \Carbon\Carbon::now()->startOfDay();
+            $kelasJson = $kelas->filter(function($k) use ($today) {
+                if (!$k->tanggal_selesai) return true;
+                try {
+                    return \Carbon\Carbon::parse($k->tanggal_selesai)->startOfDay()->greaterThanOrEqualTo($today);
+                } catch (\Exception $e) {
+                    return true;
+                }
+            })->map(function($k) {
+                return ['id' => $k->id, 'nama' => $k->nama_kelas];
+            })->values()->toJson(JSON_HEX_APOS | JSON_HEX_QUOT);
 
-    {{-- 9. Action --}}
-    <td class="text-center" style="vertical-align: middle;">
-        <div class="d-flex flex-column align-items-center">
-            @php
-                $today = \Carbon\Carbon::now()->startOfDay();
-                $kelasJson = $kelas->filter(function($k) use ($today) {
-                    if (!$k->tanggal_selesai) return true;
-                    try {
-                        return \Carbon\Carbon::parse($k->tanggal_selesai)->startOfDay()->greaterThanOrEqualTo($today);
-                    } catch (\Exception $e) {
-                        return true;
-                    }
-                })->map(function($k) {
-                    return ['id' => $k->id, 'nama' => $k->nama_kelas];
-                })->values()->toJson(JSON_HEX_APOS | JSON_HEX_QUOT);
-
-                $spJson = $item->salesplan->map(function($sp) {
-                    return [
-                        'kelas_id' => $sp->kelas_id,
-                        'kelas' => $sp->kelas->nama_kelas ?? 'N/A',
-                        'status' => $sp->status,
-                        'nominal' => $sp->nominal
-                    ];
-                })->toJson(JSON_HEX_APOS | JSON_HEX_QUOT);
-            @endphp
-            <button type="button" class="btn btn-sm btn-detail-peserta text-white d-none" 
-                style="background:#25799E; border-radius:8px; width:100px;" 
-                data-id="{{ $item->id }}" 
-                data-nama="{{ $item->nama }}" 
-                data-no-wa="{{ $item->no_wa }}" 
-                data-status="{{ $statusKey }}" 
-                data-nominal="{{ $nominalVal }}"
-                data-can-edit="0" {{-- Strict Read-Only --}}
-                data-input-oleh="{{ $item->createdBy->name ?? $item->created_by ?? '-' }}"
-                data-updated-at="{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '-' }}"
-                data-potensi="{{ $item->potensi }}"
-                data-kelas-id="{{ $item->kelas_id }}"
-                data-kelas='{!! $kelasJson !!}'
-                data-salesplan='{!! $spJson !!}'
-                data-bant-budget="{{ $item->bant_budget }}"
-                data-bant-authority="{{ $item->bant_authority }}"
-                data-bant-time="{{ $item->bant_time }}"
-                data-ikut-zoom="{{ $item->ikut_zoom }}"
-                data-keterangan-spin="{{ $item->keterangan_spin }}"
-                @for($i=1; $i<=10; $i++)
-                    data-fu{{$i}}-hasil="{{ $item->{'fu'.$i.'_hasil'} }}"
-                    data-fu{{$i}}-at="{{ $item->{'fu'.$i.'_at'} ? $item->{'fu'.$i.'_at'}->format('d/m/Y H:i') : '' }}"
-                    data-fu{{$i}}-tindak-lanjut="{{ $item->{'fu'.$i.'_tindak_lanjut'} }}"
-                @endfor
-            >
-                <i class="fas fa-eye"></i> Prospek
-            </button>
-        </div>
+            $spJson = $item->salesplan->map(function($sp) {
+                return [
+                    'kelas_id' => $sp->kelas_id,
+                    'kelas' => $sp->kelas->nama_kelas ?? 'N/A',
+                    'status' => $sp->status,
+                    'nominal' => $sp->nominal
+                ];
+            })->toJson(JSON_HEX_APOS | JSON_HEX_QUOT);
+        @endphp
+        <button type="button" class="btn btn-sm btn-detail-peserta text-white d-none" 
+            data-id="{{ $item->id }}" 
+            data-nama="{{ $item->nama }}" 
+            data-no-wa="{{ $item->no_wa }}" 
+            data-status="{{ $statusKey }}" 
+            data-nominal="{{ $nominalVal }}"
+            data-can-edit="0" {{-- Strict Read-Only --}}
+            data-input-oleh="{{ $item->createdBy->name ?? $item->created_by ?? '-' }}"
+            data-updated-at="{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '-' }}"
+            data-potensi="{{ $item->potensi }}"
+            data-kelas-id="{{ $item->kelas_id }}"
+            data-kelas='{!! $kelasJson !!}'
+            data-salesplan='{!! $spJson !!}'
+            data-bant-budget="{{ $item->bant_budget }}"
+            data-bant-authority="{{ $item->bant_authority }}"
+            data-bant-time="{{ $item->bant_time }}"
+            data-ikut-zoom="{{ $item->ikut_zoom }}"
+            data-keterangan-spin="{{ $item->keterangan_spin }}"
+            @for($i=1; $i<=10; $i++)
+                data-fu{{$i}}-hasil="{{ $item->{'fu'.$i.'_hasil'} }}"
+                data-fu{{$i}}-at="{{ $item->{'fu'.$i.'_at'} ? $item->{'fu'.$i.'_at'}->format('d/m/Y H:i') : '' }}"
+                data-fu{{$i}}-tindak-lanjut="{{ $item->{'fu'.$i.'_tindak_lanjut'} }}"
+            @endfor
+        ></button>
     </td>
 </tr>

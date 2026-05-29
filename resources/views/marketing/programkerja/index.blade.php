@@ -435,11 +435,11 @@
                                     <td>
                                         @if (!$rowReadOnly)
                                             <form action="{{ route('programkerja.destroy', $program->id) }}" method="POST"
-                                                onsubmit="return confirm('Yakin ingin menghapus seluruh program kerja ini? Semua inisiatif di dalamnya juga akan terhapus.')"
-                                                style="display:inline;">
+                                                class="form-hapus-program" style="display:inline;">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                <button type="button" class="btn btn-danger btn-sm btn-hapus-program"
+                                                    data-judul="{{ $program->judul }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -457,20 +457,27 @@
                                         // 2. Pembuat program ($isCreator)
                                         // 3. Chapter / Yasmin / Linda
                                         // 4. PIC dari inisiatif ini
-                                        $canActionInisiatif = $isFullAccess || $isCreator || $isChapter || $isYasminLinda || (stripos($inisiatif->pic, Auth::user()->name) !== false);
+                                        $canActionInisiatif =
+                                            $isFullAccess ||
+                                            $isCreator ||
+                                            $isChapter ||
+                                            $isYasminLinda ||
+                                            stripos($inisiatif->pic, Auth::user()->name) !== false;
                                         $inisiatifReadOnly = !$canActionInisiatif;
                                     @endphp
                                     <tr class="inisiatif-row" data-id="{{ $inisiatif->id }}">
                                         <td>{{ $no + 1 }}</td>
 
-                                        <td contenteditable="{{ $inisiatifReadOnly ? 'false' : 'true' }}" data-field="judul">
+                                        <td contenteditable="{{ $inisiatifReadOnly ? 'false' : 'true' }}"
+                                            data-field="judul">
                                             {{ $inisiatif->judul }}
                                         </td>
 
                                         <td>
                                             @if ($isChapter || $isYasminLinda)
                                                 <input type="text" class="form-control form-control-sm" data-field="pic"
-                                                    value="{{ $inisiatif->pic }}" {{ $inisiatifReadOnly ? 'disabled' : '' }}>
+                                                    value="{{ $inisiatif->pic }}"
+                                                    {{ $inisiatifReadOnly ? 'disabled' : '' }}>
                                             @else
                                                 <select class="form-select form-select-sm" data-field="pic"
                                                     {{ $inisiatifReadOnly ? 'disabled' : '' }}>
@@ -507,7 +514,8 @@
                                             </td>
                                             <td>
                                                 <input type="date" class="form-control form-control-sm"
-                                                    data-field="tanggal_selesai" value="{{ $inisiatif->tanggal_selesai }}"
+                                                    data-field="tanggal_selesai"
+                                                    value="{{ $inisiatif->tanggal_selesai }}"
                                                     {{ $inisiatifReadOnly ? 'disabled' : '' }}>
                                             </td>
                                             <td contenteditable="{{ $isReadOnly ? 'false' : 'true' }}"
@@ -722,49 +730,155 @@
     <!-- Hapus Inisiatif -->
     <script>
         document.addEventListener("click", function(e) {
+            // === HAPUS PROGRAM KERJA ===
+            const hapusProgramBtn = e.target.closest(".btn-hapus-program");
+            if (hapusProgramBtn) {
+                const form = hapusProgramBtn.closest(".form-hapus-program");
+                const judul = hapusProgramBtn.dataset.judul || 'program kerja ini';
+                const actionUrl = form.getAttribute('action');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+                Swal.fire({
+                    title: 'Hapus Program Kerja?',
+                    html: `Yakin ingin menghapus <strong>"${judul}"</strong>?<br><span class="text-danger" style="font-size:0.9rem;">Semua inisiatif di dalamnya juga akan terhapus.</span>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e74a3b',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-trash mr-1"></i> Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    focusCancel: true,
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        return fetch(actionUrl, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken,
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (!data.success) {
+                                    Swal.showValidationMessage(data.message ||
+                                        'Gagal menghapus data.');
+                                }
+                                return data;
+                            })
+                            .catch(() => {
+                                Swal.showValidationMessage('Terjadi kesalahan jaringan.');
+                            });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed && result.value?.success) {
+                        // Hapus semua baris program kerja ini dari DOM
+                        const programRow = hapusProgramBtn.closest('tr.program-row');
+                        if (programRow) {
+                            // Kumpulkan semua baris terkait (inisiatif + tambah inisiatif)
+                            const rowsToRemove = [programRow];
+                            let next = programRow.nextElementSibling;
+                            while (next && !next.classList.contains('program-row')) {
+                                rowsToRemove.push(next);
+                                next = next.nextElementSibling;
+                            }
+                            // Fade out lalu hapus
+                            rowsToRemove.forEach(r => {
+                                r.style.transition = 'opacity 0.4s';
+                                r.style.opacity = '0';
+                            });
+                            setTimeout(() => {
+                                rowsToRemove.forEach(r => r.remove());
+                                // Re-number sisa program rows
+                                document.querySelectorAll('#program-table tbody .program-row')
+                                    .forEach((row, i) => {
+                                        row.querySelector('td').textContent = i + 1;
+                                    });
+                            }, 400);
+                        }
+
+                        Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true,
+                        }).fire({
+                            icon: 'success',
+                            title: 'Program Kerja dihapus',
+                        });
+                    }
+                });
+                return;
+            }
+
+            // === HAPUS INISIATIF ===
             const btn = e.target.closest(".delete-inisiatif");
             if (!btn) return;
 
             const id = btn.dataset.id;
 
-            if (!confirm("Yakin ingin menghapus inisiatif ini?")) return;
+            Swal.fire({
+                title: 'Hapus Inisiatif?',
+                text: 'Yakin ingin menghapus inisiatif ini? Tindakan ini tidak dapat dibatalkan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74a3b',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-trash mr-1"></i> Ya, Hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                focusCancel: true,
+            }).then((result) => {
+                if (!result.isConfirmed) return;
 
-            fetch("{{ route('inisiatif.delete') }}", {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-                        "Accept": "application/json" // penting supaya Laravel return JSON
-                    },
-                    body: JSON.stringify({
-                        id
+                fetch("{{ route('inisiatif.delete') }}", {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify({
+                            id
+                        })
                     })
-                })
-                .then(async res => {
-                    // Pastikan response JSON, jika HTML tangkap error
-                    const contentType = res.headers.get("content-type");
-                    if (!contentType || !contentType.includes("application/json")) {
-                        const text = await res.text();
-                        throw new Error("Server tidak merespon JSON: " + text);
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // Efek animasi fade-out sebelum dihapus
-                        const row = btn.closest("tr");
-                        row.style.transition = "opacity 0.4s";
-                        row.style.opacity = "0";
+                    .then(async res => {
+                        const contentType = res.headers.get("content-type");
+                        if (!contentType || !contentType.includes("application/json")) {
+                            const text = await res.text();
+                            throw new Error("Server tidak merespon JSON: " + text);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            const row = btn.closest("tr");
+                            row.style.transition = "opacity 0.4s";
+                            row.style.opacity = "0";
+                            setTimeout(() => row.remove(), 400);
 
-                        setTimeout(() => row.remove(), 400);
-                    } else {
-                        alert(data.message || "Gagal menghapus data!");
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Terjadi error: " + err.message);
-                });
+                            Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true,
+                            }).fire({
+                                icon: 'success',
+                                title: 'Inisiatif dihapus',
+                            });
+                        } else {
+                            Swal.fire('Gagal', data.message || 'Gagal menghapus data!', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'Terjadi error: ' + err.message, 'error');
+                    });
+            });
         });
     </script>
 
@@ -835,10 +949,10 @@
                     </select>
                   </td>
                   ${!isOperasional ? `
-                          <td><input type="number" class="form-control form-control-sm target-field" data-field="target" value="1"></td>
-                          <td><input type="number" class="form-control form-control-sm realisasi-field" data-field="realisasi" value="0"></td>
-                          <td><input type="text" class="form-control form-control-sm persentase-field" readonly value="0"></td>
-                          ` : ''}
+                                                  <td><input type="number" class="form-control form-control-sm target-field" data-field="target" value="1"></td>
+                                                  <td><input type="number" class="form-control form-control-sm realisasi-field" data-field="realisasi" value="0"></td>
+                                                  <td><input type="text" class="form-control form-control-sm persentase-field" readonly value="0"></td>
+                                                  ` : ''}
                   <td><input type="date" class="form-control form-control-sm" data-field="tanggal_mulai"></td>
                   <td>
                     <div style="display:flex; gap:6px; align-items:center;">

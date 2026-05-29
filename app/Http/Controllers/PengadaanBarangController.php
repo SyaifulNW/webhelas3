@@ -35,37 +35,31 @@ class PengadaanBarangController extends Controller
 
         $item = PengadaanBarang::findOrFail($id);
 
-        if ($request->hasFile('bukti_transfer')) {
-            // Ultra-Detect: Cek folder publik yang sedang digunakan oleh web server
-            $basePublic = public_path();
-            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
-                $basePublic = $_SERVER['DOCUMENT_ROOT'];
-            } elseif (is_dir(base_path('public_html'))) {
-                $basePublic = base_path('public_html');
-            }
-
-            $subFolder = 'uploads/bukti_transfer';
-            $destinationPath = rtrim($basePublic, '/') . '/' . $subFolder;
-
-            // Delete old file if exists
-            if ($item->bukti_transfer && file_exists(rtrim($basePublic, '/') . '/' . $item->bukti_transfer)) {
-                @unlink(rtrim($basePublic, '/') . '/' . $item->bukti_transfer);
-            }
-
-            $file = $request->file('bukti_transfer');
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
-            $safeName = \Illuminate\Support\Str::slug($originalName) . '.' . $extension;
-            $filename = 'bukti_trans_' . time() . '_' . $safeName;
-
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
-            }
-
-            $file->move($destinationPath, $filename);
-
-            $item->update(['bukti_transfer' => $subFolder . '/' . $filename]);
+        if (!$request->hasFile('bukti_transfer')) {
+            return response()->json(['success' => false, 'message' => 'File tidak ditemukan.'], 422);
         }
+
+        $subFolder = 'uploads/bukti_transfer';
+        $destinationPath = public_path($subFolder);
+
+        // Delete old file if exists
+        if ($item->bukti_transfer && file_exists(public_path($item->bukti_transfer))) {
+            @unlink(public_path($item->bukti_transfer));
+        }
+
+        $file = $request->file('bukti_transfer');
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+        $safeName = \Illuminate\Support\Str::slug($originalName) . '.' . $extension;
+        $filename = 'bukti_trans_' . time() . '_' . $safeName;
+
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0755, true);
+        }
+
+        $file->move($destinationPath, $filename);
+
+        $item->update(['bukti_transfer' => $subFolder . '/' . $filename]);
 
         if ($request->ajax()) {
             return response()->json([

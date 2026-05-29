@@ -78,7 +78,7 @@
     <div class="row g-4">
         <!-- Inventaris Kantor -->
         <div class="col-xl-4 col-md-6 mb-4">
-            <a href="#" class="text-decoration-none h-100 d-block">
+            <a href="javascript:void(0)" id="btn-inventaris-kantor" class="text-decoration-none h-100 d-block">
                 <div class="card op-card h-100 shadow border-0" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%) !important;">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start">
@@ -133,5 +133,46 @@
             </a>
         </div>
     </div>
+
+    <!-- Dashboard Operasional Container (Hidden by default) -->
+    <div id="dashboard-operasional-container" class="mt-5 shadow border" style="display: none; border-radius: 15px; background: #fff; padding: 20px;">
+        <div class="mb-3 px-3">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="fas fa-boxes mr-2 text-primary"></i> DETAIL INVENTARIS & OPERASIONAL KANTOR
+            </h5>
+        </div>
+        <iframe id="iframe-dashboard-operasional" src="about:blank" style="width:100%; height:900px; border:none; border-radius: 10px;"></iframe>
+    </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const inventarisCard = document.querySelector("#btn-inventaris-kantor");
+        if (inventarisCard) {
+            inventarisCard.addEventListener("click", function(e) {
+                e.preventDefault();
+                const container = document.getElementById("dashboard-operasional-container");
+                const iframe = document.getElementById("iframe-dashboard-operasional");
+                
+                if (container && iframe) {
+                    if (iframe.src === "about:blank" || iframe.getAttribute("data-loaded") !== "true") {
+                        iframe.src = "{{ route('admin.operasional.dashboard') }}?embed=true";
+                        iframe.setAttribute("data-loaded", "true");
+                    }
+                    
+                    // Show with smooth animation and scroll to view
+                    $(container).slideDown(500, function() {
+                        $('html, body').animate({
+                            scrollTop: $(container).offset().top - 20
+                        }, 500);
+                    });
+                }
+            });
+        }
+    });
+
+    function hideDashboardOperasional() {
+        $("#dashboard-operasional-container").slideUp(500);
+    }
+</script>
 @endsection

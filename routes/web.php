@@ -153,11 +153,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/monitoring-perbaikan/store', [\App\Http\Controllers\MonitoringPerbaikanController::class, 'store'])->name('monitoring-perbaikan.store');
     Route::put('/monitoring-perbaikan/update/{id}', [\App\Http\Controllers\MonitoringPerbaikanController::class, 'update'])->name('monitoring-perbaikan.update');
     Route::delete('/monitoring-perbaikan/destroy/{id}', [\App\Http\Controllers\MonitoringPerbaikanController::class, 'destroy'])->name('monitoring-perbaikan.destroy');
+    Route::post('/monitoring-perbaikan/{id}/upload-bukti', [\App\Http\Controllers\MonitoringPerbaikanController::class, 'uploadBukti'])->name('monitoring-perbaikan.upload-bukti');
 
     // Pengadaan Barang
     Route::post('/pengadaan-barang/store', [\App\Http\Controllers\PengadaanBarangController::class, 'store'])->name('pengadaan-barang.store');
     Route::put('/pengadaan-barang/update/{id}', [\App\Http\Controllers\PengadaanBarangController::class, 'update'])->name('pengadaan-barang.update');
     Route::delete('/pengadaan-barang/destroy/{id}', [\App\Http\Controllers\PengadaanBarangController::class, 'destroy'])->name('pengadaan-barang.destroy');
+    Route::post('/pengadaan-barang/{id}/upload-bukti', [\App\Http\Controllers\PengadaanBarangController::class, 'uploadBukti'])->name('pengadaan-barang.upload-bukti');
 
     // Inventaris Kantor
     Route::post('/inventaris-kantor/store', [\App\Http\Controllers\InventarisKantorController::class, 'store'])->name('inventaris-kantor.store');
@@ -260,6 +262,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Monitoring & Activity
         Route::get('/operasional', [DashboardController::class, 'operasional'])->name('operasional');
+        Route::get('/operasional/dashboard', [\App\Http\Controllers\HomeController::class, 'operasionalDashboard'])->name('operasional.dashboard');
         Route::get('/dailyactivity/index', [DailyController::class, 'index'])->name('dailyactivity.index');
         Route::post('/daily-activity', [DailyController::class, 'store'])->name('daily-activity.store');
         Route::get('/daily-activity/export-pdf/{bulan}', [DailyController::class, 'exportPdf'])->name('daily-activity.exportPdf');

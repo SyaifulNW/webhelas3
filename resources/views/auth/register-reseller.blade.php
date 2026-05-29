@@ -178,16 +178,9 @@
                         <select id="chapter" class="form-control @error('chapter') is-invalid @enderror" name="chapter"
                             required>
                             <option value="">-- Pilih Chapter --</option>
-                            <option value="Cirebon" {{ old('chapter') == 'Cirebon' ? 'selected' : '' }}>Cirebon</option>
-                            <option value="Kalimantan Timur" {{ old('chapter') == 'Kalimantan Timur' ? 'selected' : '' }}>
-                                Kalimantan Timur</option>
-                            <option value="Depok" {{ old('chapter') == 'Depok' ? 'selected' : '' }}>Depok</option>
-                            <option value="Jakarta" {{ old('chapter') == 'Jakarta' ? 'selected' : '' }}>Jakarta</option>
-                            <option value="Makasar" {{ old('chapter') == 'Makasar' ? 'selected' : '' }}>Makasar</option>
-                            <option value="Tanggerang" {{ old('chapter') == 'Tanggerang' ? 'selected' : '' }}>Tanggerang
-                            </option>
-                            <option value="Lampung" {{ old('chapter') == 'Lampung' ? 'selected' : '' }}>Lampung</option>
-                            <option value="Kediri" {{ old('chapter') == 'Kediri' ? 'selected' : '' }}>Kediri</option>
+                            @foreach($chapters as $chap)
+                                <option value="{{ $chap }}" {{ old('chapter') == $chap ? 'selected' : '' }}>{{ $chap }}</option>
+                            @endforeach
                         </select>
                         @error('chapter')
                             <span class="invalid-feedback d-block">{{ $message }}</span>
