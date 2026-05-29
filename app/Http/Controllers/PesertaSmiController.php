@@ -422,7 +422,7 @@ class PesertaSmiController extends Controller
         // 2. DISPLAY FILTERS (Only affects the Table below, not the Cards)
         $sppStatus = $request->get('filter_spp_status', 'all'); // 1 = lunas, 0 = belum
         if ($sppMonth !== 'all') {
-            // NOTE: Do NOT filter spp_N here � Blue Checklist is computed in-memory below.
+            // NOTE: Do NOT filter spp_N here — Blue Checklist is computed in-memory below.
             // Filtering by spp_N = 0 would incorrectly exclude Blue Checklist participants.
             $month = (int)$sppMonth;
         } else {
@@ -1151,7 +1151,7 @@ class PesertaSmiController extends Controller
         $kelasList = $semuaKelas; // Alias for compatibility
         $statusFilter = request('filter_status'); // Alias for compatibility
 
-        // 🚀 Add $salesplans, $csList, $kelasList, and $statusFilter to avoid undefined variable errors in view
+        // ðŸš€ Add $salesplans, $csList, $kelasList, and $statusFilter to avoid undefined variable errors in view
         // [USER_REQUEST] Populate PIC filter from actual data in the PIC column
         $picsFromCsName = \App\Models\PesertaSmi::whereNotNull('cs_name')->where('cs_name', '!=', '')->distinct()->pluck('cs_name')->toArray();
         $picsFromUsers = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'administrator', 'marketing', 'Advertising'])->pluck('name')->toArray();
@@ -1207,6 +1207,763 @@ class PesertaSmiController extends Controller
         ]);
     }
 
+    public function exportPdf(Request $request)
+    {
+        $m1tClasses = \App\Models\Kelas::whereIn('nama_kelas', [
+            'Start-Up Muslim Indonesia',
+            'Grow Up',
+            'Mentoring 1 Tahun',
+            'Mentoring 1 Tahun (M1T)',
+            'M1T - Grow Up',
+            'M1T - Start-Up'
+        ])->pluck('id')->toArray();
+
+        $query = \App\Models\PesertaSmi::whereHas('salesPlan', function($q) use ($m1tClasses) {
+            $q->whereIn('kelas_id', $m1tClasses);
+        });
+
+        // Role Based scope filter
+        $user = auth()->user();
+        $role = strtolower($user->role);
+        
+        if ($role === 'chapter' || in_array($role, ['reseller', 'agen'])) {
+            $chapterName = $user->chapter;
+            $userId = $user->id;
+                
+            $resellerMembersIds = \App\Models\User::whereIn('role', ['reseller', 'agen'])
+                ->where('created_by', $userId)
+                ->pluck('id');
+            $allTeamIds = $resellerMembersIds->merge([$userId])->unique();
+            
+            $query->where(function ($q) use ($chapterName, $userId, $allTeamIds) {
+                $q->whereIn('closing_cs_id', $allTeamIds)
+                  ->orWhereIn('created_by', $allTeamIds)
+                  ->orWhereHas('salesPlan', function($sq) use ($allTeamIds) {
+                      $sq->whereIn('created_by', $allTeamIds);
+                  });
+
+                if ($chapterName) {
+                    $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
+                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+
+                    $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
+                        $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
+                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
+                                $ssq->where('kota_nama', 'LIKE', '%' . $chapterName . '%')
+                                    ->orWhere('kota_nama', 'LIKE', '%' . $cleanChapter . '%');
+                            })
+                            ->whereNotIn('created_by', $excludeNames)
+                            ->where('created_by_role', '!=', 'cs-mbc');
+                        });
+
+                        $sq->orWhereHas('closingCs', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
+                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
+                                $ssq->where('chapter', 'LIKE', '%' . $chapterName . '%')
+                                    ->orWhere('chapter', 'LIKE', '%' . $cleanChapter . '%');
+                            })
+                            ->whereNotIn('name', $excludeNames)
+                            ->where('role', '!=', 'cs-mbc');
+                        });
+                    });
+                }
+            });
+        }
+
+        if ($request->has('filter_entry_year') && $request->filter_entry_year && $request->filter_entry_year !== 'all') {
+            $query->whereYear('tanggal_masuk', $request->filter_entry_year);
+        }
+        if ($request->has('filter_entry_month') && $request->filter_entry_month && $request->filter_entry_month !== 'all') {
+            $query->whereMonth('tanggal_masuk', $request->filter_entry_month);
+        }
+
+        if ($request->has('filter_chapter') && $request->filter_chapter && $request->filter_chapter !== 'all') {
+            $chapter = $request->filter_chapter;
+            $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapter));
+
+            $directChapterUsers = \App\Models\User::where(function($q) use ($chapter, $cleanChapter) {
+                    $q->where('chapter', 'LIKE', '%' . $chapter . '%')
+                      ->orWhere('chapter', 'LIKE', '%' . $cleanChapter . '%')
+                      ->orWhere('name', 'LIKE', '%' . $chapter . '%')
+                      ->orWhere('name', 'LIKE', '%' . $cleanChapter . '%');
+                })
+                ->pluck('id')->toArray();
+            
+            $allChapterTeamIds = $directChapterUsers;
+            
+            $level1 = \App\Models\User::whereIn('created_by', $allChapterTeamIds)->pluck('id')->toArray();
+            if (!empty($level1)) {
+                $allChapterTeamIds = array_unique(array_merge($allChapterTeamIds, $level1));
+                $level2 = \App\Models\User::whereIn('created_by', $level1)->pluck('id')->toArray();
+                if (!empty($level2)) {
+                    $allChapterTeamIds = array_unique(array_merge($allChapterTeamIds, $level2));
+                    $level3 = \App\Models\User::whereIn('created_by', $level2)->pluck('id')->toArray();
+                    if (!empty($level3)) {
+                        $allChapterTeamIds = array_unique(array_merge($allChapterTeamIds, $level3));
+                    }
+                }
+            }
+
+            $query->where(function($q) use ($chapter, $cleanChapter, $allChapterTeamIds) {
+                $q->whereHas('salesPlan.data', function($sq) use ($chapter, $cleanChapter) {
+                    $sq->where('kota_nama', 'LIKE', '%' . $chapter . '%')
+                       ->orWhere('kota_nama', 'LIKE', '%' . $cleanChapter . '%');
+                });
+                
+                $q->orWhere('nama', 'LIKE', '%' . $chapter . '%')
+                  ->orWhere('nama', 'LIKE', '%' . $cleanChapter . '%');
+
+                $q->orWhereIn('closing_cs_id', $allChapterTeamIds)
+                  ->orWhereIn('created_by', $allChapterTeamIds)
+                  ->orWhereHas('salesPlan', function($sq) use ($allChapterTeamIds) {
+                      $sq->whereIn('created_by', $allChapterTeamIds);
+                  });
+
+                $q->orWhere('cs_name', 'LIKE', '%' . $chapter . '%')
+                  ->orWhere('cs_name', 'LIKE', '%' . $cleanChapter . '%');
+            });
+        }
+
+        if ($request->has('filter_cs_pusat') && $request->filter_cs_pusat && $request->filter_cs_pusat !== 'all') {
+            $csName = $request->filter_cs_pusat;
+            $query->where(function($q) use ($csName) {
+                $q->where('cs_name', 'LIKE', '%' . $csName . '%')
+                  ->orWhereHas('closingCs', function($sq) use ($csName) {
+                      $sq->where('name', 'LIKE', '%' . $csName . '%');
+                  });
+            });
+        }
+
+        $sppMonth = $request->get('filter_spp_month', date('n'));
+        $yearFilter = $request->get('filter_year', date('Y'));
+
+        $globalQuery = clone $query;
+        
+        $mNum = ($sppMonth !== 'all') ? (int)$sppMonth : null;
+        $yNum = ($yearFilter !== 'all') ? (int)$yearFilter : (int)date('Y');
+        
+        if ($sppMonth !== 'all') {
+            $month = (int) $sppMonth;
+            if ($month >= 1 && $month <= 12) {
+                if ($yearFilter !== 'all') {
+                    $dateStart = \Carbon\Carbon::createFromDate($yearFilter, $month, 1)->startOfMonth()->format('Y-m-d');
+                    $dateEnd = \Carbon\Carbon::createFromDate($yearFilter, $month, 1)->endOfMonth()->format('Y-m-d');
+
+                    $query->where(function ($q) use ($dateStart, $dateEnd) {
+                        $q->whereDate('tanggal_masuk', '<=', $dateEnd)
+                            ->where(function ($sq) use ($dateStart) {
+                                $sq->whereDate('tanggal_selesai', '>=', $dateStart)
+                                    ->orWhereNull('tanggal_selesai');
+                            });
+                    });
+                }
+            }
+        } else {
+            if ($yearFilter !== 'all') {
+                $dateStart = \Carbon\Carbon::createFromDate($yearFilter, 1, 1)->startOfYear()->format('Y-m-d');
+                $dateEnd = \Carbon\Carbon::createFromDate($yearFilter, 12, 31)->endOfYear()->format('Y-m-d');
+
+                $query->where(function ($q) use ($dateStart, $dateEnd) {
+                    $q->whereDate('tanggal_masuk', '<=', $dateEnd)
+                        ->where(function ($sq) use ($dateStart) {
+                            $sq->whereDate('tanggal_selesai', '>=', $dateStart)
+                                ->orWhereNull('tanggal_selesai');
+                        });
+                });
+            }
+        }
+
+        if ($request->has('filter_approval') && $request->filter_approval && $request->filter_approval !== 'all') {
+            $fApp = $request->filter_approval;
+            
+            if ($fApp === 'Pending') {
+                $query->where(function($q) {
+                    $q->where('approval_status', 'Pending')
+                      ->orWhereNull('approval_status');
+                });
+            } else {
+                $query->where('approval_status', $fApp);
+            }
+            
+            if ($fApp === 'Pending') {
+                $query->where(function ($q) {
+                    $roles = ['reseller', 'chapter', 'agen', 'chapter '];
+                    $q->whereHas('closingCs', function ($sq) use ($roles) {
+                        $sq->whereIn('role', $roles);
+                    })->orWhereHas('createdBy', function ($sq) use ($roles) {
+                        $sq->whereIn('role', $roles);
+                    })->orWhereHas('salesPlan.createdBy', function ($sq) use ($roles) {
+                        $sq->whereIn('role', $roles);
+                    });
+                });
+            }
+        }
+
+        // DB level filters
+        $sppStatus = $request->get('filter_spp_status', 'all');
+        if ($sppMonth === 'all') {
+             if ($sppStatus === '1') {
+                $query->where(function ($q) {
+                    $q->where('is_lunas', 1)
+                        ->orWhereRaw("((CASE WHEN spp_1>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_2>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_3>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_4>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_5>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_6>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_7>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_8>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_9>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_10>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_11>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_12>=1000000 THEN 1 ELSE 0 END)) >= 6");
+                });
+            } elseif ($sppStatus === '0') {
+                $query->where('is_lunas', 0)
+                    ->whereRaw("((CASE WHEN spp_1>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_2>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_3>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_4>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_5>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_6>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_7>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_8>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_9>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_10>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_11>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_12>=1000000 THEN 1 ELSE 0 END)) < 6");
+            }
+        }
+
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nama_2', 'like', "%{$search}%")
+                    ->orWhere('cs_name', 'like', "%{$search}%")
+                    ->orWhere('level', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->has('filter_status') && $request->filter_status && $request->filter_status !== 'all') {
+            if ($request->filter_status === 'Lunas') {
+                $query->where(function ($q) {
+                    $q->where('is_lunas', 1)
+                      ->orWhereRaw("((CASE WHEN spp_1>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_2>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_3>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_4>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_5>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_6>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_7>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_8>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_9>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_10>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_11>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_12>=1000000 THEN 1 ELSE 0 END)) >= 6");
+                });
+            } else {
+                $query->where('status', $request->filter_status);
+            }
+        }
+
+        $data = $query->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
+
+        $reqApproval = $request->get('filter_approval', 'all');
+        if ($reqApproval === 'all') {
+            $data = $data->filter(function($p) {
+                $creatorRole = strtolower($p->closingCs->role ?? $p->createdBy->role ?? $p->salesPlan->createdBy->role ?? '');
+                $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+                if ($needsApproval && $p->approval_status !== 'Approved') {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        if ($sppMonth !== 'all' || $sppStatus !== 'all') {
+            $mNum = ($sppMonth !== 'all') ? (int)$sppMonth : (int)date('n');
+            $yNum = (int)$yearFilter;
+            $data = $data->filter(function($p) use ($mNum, $yNum, $sppStatus) {
+                if ($p->status === 'Cuti' && request()->get('filter_status') !== 'Cuti') {
+                    return false;
+                }
+
+                $reqApproval = request()->get('filter_approval', 'all');
+                if ($reqApproval === 'all') {
+                    $creatorRole = strtolower($p->closingCs->role ?? $p->createdBy->role ?? $p->salesPlan->createdBy->role ?? '');
+                    $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+                    if ($needsApproval && $p->approval_status !== 'Approved') {
+                        return false;
+                    }
+                }
+
+                $paidMonthsCount = 0;
+                for ($i = 1; $i <= 12; $i++) {
+                    if ((float) ($p->{"spp_$i"} ?? 0) >= 1000000)
+                        $paidMonthsCount++;
+                }
+                $isLunasBadge = ($p->is_lunas == 1 || $paidMonthsCount >= 6);
+
+                if ($isLunasBadge && request()->get('filter_status') !== 'Lunas') {
+                    return false;
+                }
+
+                $val = 0;
+                $tglSpp = $p->{"tanggal_spp_$mNum"};
+                $paymentYear = $tglSpp ? \Carbon\Carbon::parse($tglSpp)->format('Y') : null;
+                if (($p->{"spp_$mNum"} ?? 0) > 0 && (!$paymentYear || $paymentYear == $yNum)) {
+                    $val = (float) $p->{"spp_$mNum"};
+                }
+
+                $effectiveDate = null;
+                if ($p->salesPlan) {
+                    if ($p->salesPlan->tanggal_closing) {
+                        $effectiveDate = \Carbon\Carbon::parse($p->salesPlan->tanggal_closing);
+                    } else {
+                        $effectiveDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
+                    }
+                } else {
+                    $effectiveDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
+                }
+
+                $effM = (int)$effectiveDate->month;
+                $effY = (int)$effectiveDate->year;
+                $isClosing = ($effM == $mNum && $effY == $yNum);
+
+                $isPlanned = false;
+                $customSch = $p->spp_custom_schedule ?? [];
+                foreach ((array)$customSch as $sch) {
+                    if ((int)($sch['month'] ?? 0) === $mNum && (int)($sch['year'] ?? $yNum) === $yNum) {
+                        $isPlanned = true;
+                        break;
+                    }
+                }
+                if (!$isPlanned && $p->salesPlan) {
+                    $sel = $p->salesPlan->selected_months;
+                    if (is_string($sel)) $sel = json_decode($sel, true) ?? [];
+                    if (isset($sel[$yNum]) && in_array($mNum, (array)$sel[$yNum])) {
+                        $isPlanned = true;
+                    }
+                }
+
+                $isBlue = $isClosing || $isPlanned;
+
+                if ($sppStatus === 'menunggak') {
+                    if ($p->status !== 'Aktif' || $isLunasBadge || $mNum === 'all') {
+                        return false;
+                    }
+                    $joinMonth = 1;
+                    if ($p->tanggal_masuk) {
+                        try {
+                            $joinDate = \Carbon\Carbon::parse($p->tanggal_masuk);
+                            if ($joinDate->year == $yNum) {
+                                $joinMonth = (int)$joinDate->month;
+                            }
+                        } catch (\Exception $e) {}
+                    }
+                    
+                    $hasArrears = false;
+                    for ($m = $joinMonth; $m < $mNum; $m++) {
+                        $isClosingInMonth = false;
+                        if ($p->salesPlan) {
+                            $effDate = null;
+                            if ($p->salesPlan->tanggal_closing) {
+                                $effDate = \Carbon\Carbon::parse($p->salesPlan->tanggal_closing);
+                            } else {
+                                $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
+                            }
+                            if ($effDate && (int)$effDate->month === $m && (int)$effDate->year == $yNum) {
+                                $isClosingInMonth = true;
+                            }
+                        } else {
+                            $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
+                            if ($effDate && (int)$effDate->month === $m && (int)$effDate->year == $yNum) {
+                                $isClosingInMonth = true;
+                            }
+                        }
+                        
+                        $isPlannedInMonth = false;
+                        $customSch = $p->spp_custom_schedule ?? [];
+                        foreach ((array)$customSch as $sch) {
+                            if ((int)($sch['month'] ?? 0) === $m && (int)($sch['year'] ?? $yNum) === $yNum) {
+                                $isPlannedInMonth = true;
+                                break;
+                            }
+                        }
+                        if (!$isPlannedInMonth && $p->salesPlan) {
+                            $sel = $p->salesPlan->selected_months;
+                            if (is_string($sel)) $sel = json_decode($sel, true) ?? [];
+                            if (isset($sel[$yNum]) && in_array($m, (array)$sel[$yNum])) {
+                                $isPlannedInMonth = true;
+                            }
+                        }
+                        
+                        $isBlueInMonth = $isClosingInMonth || $isPlannedInMonth;
+                        
+                        $pLevel = strtolower($p->level ?: ($p->salesPlan->level ?? ''));
+                        $levelNominal = str_contains($pLevel, 'grow') ? 1500000 : 1000000;
+                        
+                        $paidInMonth = (float)($p->{"spp_$m"} ?? 0);
+                        if ($paidInMonth < $levelNominal) {
+                            if (!$isBlueInMonth) {
+                                $hasArrears = true;
+                                break;
+                            }
+                        }
+                    }
+                    return $hasArrears;
+                }
+
+                if ($sppStatus === '1') {
+                    return !$isBlue && $val > 0;
+                }
+                if ($sppStatus === '0') {
+                    return $p->status === 'Aktif' && !$isBlue && $val == 0;
+                }
+                if ($sppStatus === 'blue') {
+                    return $isClosing;
+                }
+                if ($sppStatus === 'total_month') {
+                    return $isClosing || (!$isBlue && $val > 0) || ($p->status === 'Aktif' && !$isBlue && $val == 0);
+                }
+
+                return true;
+            });
+        }
+
+        // Sorting
+        $data = $data->map(function ($item) {
+            $isManualLunas = ($item->is_lunas == 1);
+            $countPaid = 0;
+            for ($m = 1; $m <= 12; $m++) {
+                if (($item->{"spp_$m"} ?? 0) >= 1000000)
+                    $countPaid++;
+            }
+            $item->is_all_paid = $isManualLunas || ($countPaid >= 6);
+
+            $weight = 0;
+            if ($item->is_all_paid)
+                $weight = 1;
+            if ($item->status === 'Cuti')
+                $weight = 2;
+            if ($item->status === 'Lulus')
+                $weight = 3;
+
+            $item->sort_weight = $weight;
+            return $item;
+        });
+
+        if ($request->get('filter_spp_status') === '0') {
+            $data = $data->reject(fn($item) => $item->is_all_paid);
+        }
+
+        $sort = $request->get('filter_sort', 'priority');
+        if ($sort === 'name_asc') {
+            $data = $data->sortBy('nama', SORT_NATURAL | SORT_FLAG_CASE);
+        } elseif ($sort === 'name_desc') {
+            $data = $data->sortByDesc('nama', SORT_NATURAL | SORT_FLAG_CASE);
+        } elseif ($sort === 'newest') {
+            $data = $data->sortByDesc('id');
+        } elseif ($sort === 'oldest') {
+            $data = $data->sortBy('id');
+        } else {
+            $data = $data->sort(function ($a, $b) {
+                if ($a->sort_weight === $b->sort_weight) {
+                    return $b->id <=> $a->id;
+                }
+                return $a->sort_weight <=> $b->sort_weight;
+            });
+        }
+        $data = $data->values();
+
+        $monthsRaw = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+
+        // --- CUMULATIVE STATS ---
+        $globalStats = (clone $globalQuery)->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
+        $totalStats = (clone $query)->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
+
+        $globalStats = $globalStats->filter(function($item) {
+            $creatorRole = strtolower($item->closingCs->role ?? $item->createdBy->role ?? $item->salesPlan->createdBy->role ?? '');
+            $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+            if ($needsApproval) {
+                return $item->approval_status === 'Approved';
+            }
+            return true;
+        });
+        $totalStats = $totalStats->filter(function($item) {
+            $creatorRole = strtolower($item->closingCs->role ?? $item->createdBy->role ?? $item->salesPlan->createdBy->role ?? '');
+            $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+            if ($needsApproval) {
+                return $item->approval_status === 'Approved';
+            }
+            return true;
+        });
+
+        $lunasCount = 0;
+        foreach ($globalStats as $item) {
+            $isManualLunas = ($item->is_lunas == 1);
+            $itemLevel = strtolower($item->level ?? $item->salesPlan->level ?? '');
+            $levelNominal = str_contains($itemLevel, 'grow') ? 1500000 : 1000000;
+            $countPaid = 0;
+            for ($m = 1; $m <= 12; $m++) {
+                if (($item->{"spp_$m"} ?? 0) >= $levelNominal) {
+                    $countPaid++;
+                }
+            }
+            if ($isManualLunas || $countPaid >= 6) {
+                $lunasCount++;
+            }
+        }
+
+        $pendingCountQuery = \App\Models\PesertaSmi::where(function($q) {
+            $q->where('approval_status', 'Pending')
+              ->orWhereNull('approval_status');
+        })
+        ->where(function($q) {
+            $q->whereHas('closingCs', function($sq) {
+                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+            })->orWhereHas('createdBy', function($sq) {
+                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+            })->orWhereHas('salesPlan.createdBy', function($sq) {
+                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+            });
+        });
+
+        if ($role === 'chapter' || in_array($role, ['reseller', 'agen'])) {
+            $pendingCountQuery->where(function ($q) use ($chapterName, $userId, $allTeamIds) {
+                $q->whereIn('closing_cs_id', $allTeamIds)
+                  ->orWhereIn('created_by', $allTeamIds)
+                  ->orWhereHas('salesPlan', function($sq) use ($allTeamIds) {
+                      $sq->whereIn('created_by', $allTeamIds);
+                  });
+
+                if ($chapterName) {
+                    $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
+                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+
+                    $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
+                        $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
+                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
+                                $ssq->where('kota_nama', 'LIKE', '%' . $chapterName . '%')
+                                    ->orWhere('kota_nama', 'LIKE', '%' . $cleanChapter . '%');
+                            })
+                            ->whereNotIn('created_by', $excludeNames)
+                            ->where('created_by_role', '!=', 'cs-mbc');
+                        });
+
+                        $sq->orWhereHas('closingCs', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
+                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
+                                $ssq->where('chapter', 'LIKE', '%' . $chapterName . '%')
+                                    ->orWhere('chapter', 'LIKE', '%' . $cleanChapter . '%');
+                            })
+                            ->whereNotIn('name', $excludeNames)
+                            ->where('role', '!=', 'cs-mbc');
+                        });
+                    });
+                }
+            });
+        }
+        
+        $pendingCount = $pendingCountQuery->count();
+
+        $activeMonth = ($sppMonth !== 'all') ? (int)$sppMonth : (int)date('n');
+        $stats = [
+            'total' => $globalStats->count(),
+            'aktif' => $globalStats->where('status', 'Aktif')->count(),
+            'cuti' => $globalStats->where('status', 'Cuti')->count(),
+            'lunas' => $lunasCount,
+            'pending' => $pendingCount,
+            'count_closing' => 0,
+            'nominal_closing' => 0,
+            'count_spp' => 0,
+            'nominal_spp' => 0,
+            'count_belum' => 0,
+            'nominal_belum' => 0,
+            'count_menunggak' => 0,
+            'nominal_menunggak' => 0,
+            'count_total_spp' => 0,
+            'nominal_total_spp' => 0,
+            'count_total_income' => 0,
+            'nominal_total_income' => 0,
+            'is_month_filter' => true,
+            'filter_month_name' => ($monthsRaw[$activeMonth] ?? '')
+        ];
+
+        $mNum = $activeMonth;
+
+        foreach ($totalStats as $p) {
+            $entryMonth = null;
+            $entryYear = null;
+            try {
+                $entryDate = \Carbon\Carbon::parse($p->tanggal_masuk);
+                $entryMonth = $entryDate->month;
+                $entryYear = $entryDate->year;
+            } catch (\Exception $e) {
+            }
+
+            $paidMonthsCount = 0;
+            for ($i = 1; $i <= 12; $i++) {
+                if ((float) ($p->{"spp_$i"} ?? 0) >= 1000000)
+                    $paidMonthsCount++;
+            }
+            $isLunasBadge = ($p->is_lunas == 1 || $paidMonthsCount >= 6);
+
+            if ($isLunasBadge)
+                continue;
+
+            $val = 0;
+            $tglSpp = $p->{"tanggal_spp_$mNum"};
+            $paymentYear = $tglSpp ? \Carbon\Carbon::parse($tglSpp)->format('Y') : null;
+            
+            if (($p->{"spp_$mNum"} ?? 0) > 0 && (!$paymentYear || $paymentYear == $yearFilter)) {
+                $val = (float) $p->{"spp_$mNum"};
+            }
+
+            $effectiveDate = null;
+            if ($p->salesPlan) {
+                if ($p->salesPlan->tanggal_closing) {
+                    $effectiveDate = \Carbon\Carbon::parse($p->salesPlan->tanggal_closing);
+                } else {
+                    $effectiveDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
+                }
+            } else {
+                $effectiveDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
+            }
+
+            $effM = (int)$effectiveDate->month;
+            $effY = (int)$effectiveDate->year;
+
+            $isClosing = ($effM == $mNum && $effY == $yearFilter);
+            
+            $customSch = $p->spp_custom_schedule ?? [];
+            $isPlanned = false;
+            foreach ($customSch as $sch) {
+                if ((int)$sch['month'] === $mNum && (int)($sch['year'] ?? $yearFilter) === (int)$yearFilter) {
+                    $isPlanned = true;
+                    break;
+                }
+            }
+
+            if (!$isPlanned && $p->salesPlan) {
+                $selectedMonths = $p->salesPlan->selected_months;
+                if (is_string($selectedMonths)) {
+                    $selectedMonths = json_decode($selectedMonths, true) ?? [];
+                }
+                if (isset($selectedMonths[$yearFilter]) && is_array($selectedMonths[$yearFilter])) {
+                    if (in_array($mNum, $selectedMonths[$yearFilter])) {
+                        $isPlanned = true;
+                    }
+                }
+            }
+
+            $isBlue = $isClosing || $isPlanned;
+
+            $pLevel = strtolower($p->level ?: ($p->salesPlan->level ?? ''));
+            $levelNominal = str_contains($pLevel, 'grow') ? 1500000 : 1000000;
+
+            if ($p->status === 'Aktif' && !$isLunasBadge && $sppMonth !== 'all') {
+                $joinMonth = 1;
+                if ($p->tanggal_masuk) {
+                    try {
+                        $joinDate = \Carbon\Carbon::parse($p->tanggal_masuk);
+                        if ($joinDate->year == $yearFilter) {
+                            $joinMonth = (int)$joinDate->month;
+                        }
+                    } catch (\Exception $e) {}
+                }
+                
+                $currentActiveMonth = (int)$sppMonth;
+                $hasArrears = false;
+                $arrearsNominal = 0;
+                
+                for ($m = $joinMonth; $m < $currentActiveMonth; $m++) {
+                    $isClosingInMonth = false;
+                    if ($p->salesPlan) {
+                        $effDate = null;
+                        if ($p->salesPlan->tanggal_closing) {
+                            $effDate = \Carbon\Carbon::parse($p->salesPlan->tanggal_closing);
+                        } else {
+                            $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
+                        }
+                        if ($effDate && (int)$effDate->month === $m && (int)$effDate->year == $yearFilter) {
+                            $isClosingInMonth = true;
+                        }
+                    } else {
+                        $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
+                        if ($effDate && (int)$effDate->month === $m && (int)$effDate->year == $yearFilter) {
+                            $isClosingInMonth = true;
+                        }
+                    }
+                    
+                    $isPlannedInMonth = false;
+                    $customSch = $p->spp_custom_schedule ?? [];
+                    foreach ($customSch as $sch) {
+                        if ((int)$sch['month'] === $m && (int)($sch['year'] ?? $yearFilter) === (int)$yearFilter) {
+                            $isPlannedInMonth = true;
+                            break;
+                        }
+                    }
+                    if (!$isPlannedInMonth && $p->salesPlan) {
+                        $selectedMonths = $p->salesPlan->selected_months;
+                        if (is_string($selectedMonths)) {
+                            $selectedMonths = json_decode($selectedMonths, true) ?? [];
+                        }
+                        if (isset($selectedMonths[$yearFilter]) && is_array($selectedMonths[$yearFilter])) {
+                            if (in_array($m, $selectedMonths[$yearFilter])) {
+                                $isPlannedInMonth = true;
+                            }
+                        }
+                    }
+                    
+                    $isBlueInMonth = $isClosingInMonth || $isPlannedInMonth;
+                    
+                    $paidInMonth = (float)($p->{"spp_$m"} ?? 0);
+                    if ($paidInMonth < $levelNominal) {
+                        if (!$isBlueInMonth) {
+                            $hasArrears = true;
+                            $arrearsNominal += ($levelNominal - $paidInMonth);
+                        }
+                    }
+                }
+                
+                if ($hasArrears && $arrearsNominal > 0) {
+                    $stats['count_menunggak']++;
+                    $stats['nominal_menunggak'] += $arrearsNominal;
+                }
+            }
+
+            if ($p->status === 'Cuti') {
+                continue;
+            }
+
+            if ($isBlue) {
+                if ($isClosing) {
+                    $stats['count_closing']++;
+                    $closingNominal = (float)($p->biaya_pendaftaran ?? $p->salesPlan->nominal ?? 0);
+                    if (isset($p->pembayaran_spp) && (float)$p->pembayaran_spp > 0) {
+                        $closingNominal += (float)$p->pembayaran_spp;
+                    }
+                    $stats['nominal_closing'] += $closingNominal;
+                }
+            } elseif ($val > 0) {
+                $stats['count_spp']++;
+                $stats['nominal_spp'] += $val;
+            } else {
+                if ($p->status === 'Aktif' && !$isBlue) {
+                    $stats['count_belum']++;
+                    $stats['nominal_belum'] += $levelNominal;
+                }
+            }
+        }
+
+        $stats['nominal_total_paid'] = $stats['nominal_closing'] + $stats['nominal_spp'];
+        $stats['count_total_spp'] = $stats['count_spp'] + $stats['count_belum'];
+        $stats['nominal_total_spp'] = $stats['nominal_spp'] + $stats['nominal_belum'];
+        $stats['count_total_income'] = $stats['count_closing'] + $stats['count_spp'];
+        $stats['nominal_total_income'] = $stats['nominal_total_paid'];
+        $stats['sudah_bayar'] = $stats['count_spp'];
+        $stats['belum_bayar'] = $stats['count_belum'];
+
+        // Format Dynamic Title
+        $monthName = ($sppMonth !== 'all' && isset($monthsRaw[(int)$sppMonth])) ? $monthsRaw[(int)$sppMonth] : 'Seluruh Periode';
+        
+        if ($sppMonth === 'all' && $yearFilter === 'all') {
+            $pdfTitle = "Rekap Data Pembayaran SPP Peserta M1T Seluruh Periode";
+        } elseif ($sppMonth === 'all') {
+            $pdfTitle = "Rekap Data Pembayaran SPP Peserta M1T Tahun " . $yearFilter;
+        } elseif ($yearFilter === 'all') {
+            $pdfTitle = "Rekap Data Pembayaran SPP Peserta M1T Bulan " . $monthName;
+        } else {
+            $pdfTitle = "Rekap Data Pembayaran SPP Peserta M1T Bulan " . $monthName . " " . $yearFilter;
+        }
+
+        // Generate PDF using Barryvdh\DomPDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.peserta-smi.pdf', compact('data', 'monthsRaw', 'pdfTitle', 'sppMonth', 'yearFilter', 'stats'));
+        $pdf->setPaper('F4', 'landscape');
+        
+        $safeFileName = str_replace([' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $pdfTitle) . '_' . date('YmdHis') . '.pdf';
+        return $pdf->download($safeFileName);
+    }
 
     public function store(Request $request)
     {

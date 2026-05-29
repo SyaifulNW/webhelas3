@@ -78,6 +78,8 @@
                         $statusClass = 'status-cuti';
                     elseif ($item->status == 'Lulus')
                         $statusClass = 'status-lulus';
+                    elseif ($item->status == 'OFF' || $item->status == 'off')
+                        $statusClass = 'status-off';
                     
                     // Use calculated is_all_paid from controller if available, fallback to manual check
                     $isAllPaid = property_exists($item, 'is_all_paid') ? $item->is_all_paid : $isAllPaid;
@@ -92,12 +94,10 @@
                 @if($isStatusVisible)
                 <select class="badge-status {{ $statusClass }}" onchange="quickUpdateField(this, {{ $item->id }}, 'status')"
                     style="width: 70px; font-size: 0.65rem; padding: 2px 6px;">
-                    <option value="Aktif" {{ $item->status == 'Aktif' ? 'selected' : '' }} class="text-dark bg-white">Aktif
-                    </option>
-                    <option value="Cuti" {{ $item->status == 'Cuti' ? 'selected' : '' }} class="text-dark bg-white">Cuti
-                    </option>
-                    <option value="Lulus" {{ $item->status == 'Lulus' ? 'selected' : '' }} class="text-dark bg-white">Lulus
-                    </option>
+                    <option value="Aktif" {{ $item->status == 'Aktif' ? 'selected' : '' }} class="text-dark bg-white">Aktif</option>
+                    <option value="Lulus" {{ $item->status == 'Lulus' ? 'selected' : '' }} class="text-dark bg-white">Lulus</option>
+                    <option value="Cuti" {{ $item->status == 'Cuti' ? 'selected' : '' }} class="text-dark bg-white">Cuti</option>
+                    <option value="OFF" {{ ($item->status == 'OFF' || $item->status == 'off') ? 'selected' : '' }} class="text-dark bg-white">OFF</option>
                 </select>
                 @else
                     <span class="badge badge-warning opacity-50" style="font-size: 0.65rem; padding: 3px 8px;">Menunggu Verifikasi</span>

@@ -88,6 +88,10 @@
                 background-color: #4e73df !important;
             }
 
+            .status-off {
+                background-color: #858796 !important;
+            }
+
             .status-pending {
                 background-color: #f6c23e !important;
             }
@@ -635,9 +639,12 @@
                             style="width: 20px; height: 20px; background-color: #1cc88a; border-radius: 4px; margin-right: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(28,200,138,0.2);">
                             <i class="fas fa-check-circle text-white" style="font-size: 0.7rem;"></i>
                         </div>
-                        <span class="text-dark"><b style="color: #1cc88a;">Checklist Hijau:</b> Pembayaran Bulanan
-                            (Manual)</span>
+                        <span class="text-dark"><b style="color: #1cc88a;">Checklist Hijau:</b> Pembayaran Bulanan (Manual)</span>
                     </div>
+                    
+                    <button type="button" onclick="exportSmiPdf()" class="btn btn-danger btn-sm font-weight-bold ml-auto shadow-sm d-flex align-items-center" style="border-radius: 6px; font-size: 0.8rem; background-color: #e74a3b; border-color: #e74a3b; padding: 6px 12px; gap: 6px; transition: all 0.2s ease;">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
                 </div>
             </div>
         </div>
@@ -697,14 +704,15 @@
 
                                     <th colspan="12" id="sppMainHeader"
                                         class="text-center font-weight-bold text-uppercase border-bottom px-2">
-                                        <div class="d-flex align-items-center justify-content-center">
-                                            <button type="button" class="btn btn-xs btn-light text-primary mr-2"
-                                                id="btn-toggle-spp" onclick="toggleSpp()" title="Expand/Collapse SPP">
-                                                <i class="fas fa-compress-alt"></i>
+                                        <div class="d-flex align-items-center justify-content-center" style="gap: 15px;">
+                                            <!-- Left Month Navigation Button -->
+                                            <button type="button" class="btn btn-link text-white p-0" onclick="navigateSppMonth(-1)" title="Bulan Sebelumnya" style="font-size: 1rem; text-decoration: none; transition: all 0.2s; cursor: pointer; opacity: 0.85;" onmouseover="this.style.opacity='1'; this.style.transform='scale(1.2)';" onmouseout="this.style.opacity='0.85'; this.style.transform='scale(1)';">
+                                                <i class="fas fa-chevron-left"></i>
                                             </button>
+                                            
                                             <a href="{{ route('admin.keuangan.laba-rugi', ['bulan' => str_pad(request('filter_spp_month', 'all'), 2, '0', STR_PAD_LEFT), 'tahun' => request('filter_year', 'all')]) }}"
-                                                class="text-white text-decoration-none mr-2 font-weight-bold"
-                                                id="sppHeaderTitle" title="Buka Laporan Laba Rugi M1T">
+                                                class="text-white text-decoration-none font-weight-bold"
+                                                id="sppHeaderTitle" title="Buka Laporan Laba Rugi M1T" style="letter-spacing: 0.5px;">
                                                 Monitoring SPP
                                                 @if(request('filter_spp_month') == 'all' || request('filter_year') == 'all')
                                                     Seluruh Periode
@@ -713,6 +721,11 @@
                                                     {{ request('filter_year', date('Y')) }}
                                                 @endif
                                             </a>
+                                            
+                                            <!-- Right Month Navigation Button -->
+                                            <button type="button" class="btn btn-link text-white p-0" onclick="navigateSppMonth(1)" title="Bulan Berikutnya" style="font-size: 1rem; text-decoration: none; transition: all 0.2s; cursor: pointer; opacity: 0.85;" onmouseover="this.style.opacity='1'; this.style.transform='scale(1.2)';" onmouseout="this.style.opacity='0.85'; this.style.transform='scale(1)';">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </button>
                                         </div>
                                     </th>
                                     <th rowspan="2" class="align-middle text-center border-left" style="width: 5%">Aksi</th>
@@ -839,6 +852,56 @@
             }
         }
 
+        function navigateSppMonth(direction) {
+            const monthSelect = document.getElementById('smi_filter_spp_month');
+            const yearSelect = document.getElementById('smi_filter_year');
+            if (!monthSelect || !yearSelect) return;
+
+            let currentMonth = monthSelect.value;
+            let currentYear = yearSelect.value;
+
+            if (currentMonth === 'all') {
+                currentMonth = new Date().getMonth() + 1;
+            } else {
+                currentMonth = parseInt(currentMonth);
+            }
+
+            if (currentYear === 'all') {
+                currentYear = new Date().getFullYear();
+            } else {
+                currentYear = parseInt(currentYear);
+            }
+
+            let newMonth = currentMonth + direction;
+            let newYear = currentYear;
+
+            if (newMonth < 1) {
+                newMonth = 12;
+                newYear -= 1;
+            } else if (newMonth > 12) {
+                newMonth = 1;
+                newYear += 1;
+            }
+
+            monthSelect.value = newMonth.toString();
+
+            // Check if the target year exists in the dropdown options
+            let yearExists = false;
+            for (let i = 0; i < yearSelect.options.length; i++) {
+                if (yearSelect.options[i].value === newYear.toString()) {
+                    yearExists = true;
+                    break;
+                }
+            }
+
+            if (yearExists) {
+                yearSelect.value = newYear.toString();
+            }
+
+            // Trigger the filters to update the view
+            updateSmiFilters();
+        }
+
         function toggleSpp() {
             const header = document.getElementById('sppMainHeader');
             const extras = document.querySelectorAll('.spp-extra');
@@ -875,7 +938,7 @@
 
             // For status dropdown, update class
             if (fieldName === 'status') {
-                element.classList.remove('status-aktif', 'status-cuti', 'status-lulus');
+                element.classList.remove('status-aktif', 'status-cuti', 'status-lulus', 'status-off');
                 element.classList.add('status-' + value.toLowerCase());
                 const sink = document.getElementById('sink-status-' + id);
                 if (sink) sink.value = value;
@@ -1142,7 +1205,7 @@
 
         function updateStatusColor(select, id) {
             // ... kept for compatibility with other fields if needed ...
-            select.classList.remove('status-aktif', 'status-cuti', 'status-lulus');
+            select.classList.remove('status-aktif', 'status-cuti', 'status-lulus', 'status-off');
             select.classList.add('status-' + select.value.toLowerCase());
             const sink = document.getElementById('sink-status-' + id);
             if (sink) sink.value = select.value;
@@ -1317,6 +1380,26 @@
                     if (typeof initCurrencyInputs === 'function') initCurrencyInputs();
                     highlightActiveCard();
                 });
+        }
+
+        function exportSmiPdf() {
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.value : 'all';
+            };
+            const params = new URLSearchParams({
+                filter_chapter: getVal('smi_filter_chapter'),
+                filter_cs_pusat: getVal('smi_filter_cs_pusat'),
+                filter_status: getVal('smi_filter_status'),
+                filter_approval: getVal('smi_filter_approval'),
+                filter_spp_month: getVal('smi_filter_spp_month'),
+                filter_spp_status: getVal('smi_filter_spp_status'),
+                filter_year: getVal('smi_filter_year'),
+                filter_sort: getVal('smi_filter_sort'),
+                filter_level: getVal('smi_filter_level'),
+                search: getVal('smi_search')
+            });
+            window.open(`{{ route('peserta-smi.export-pdf') }}?${params.toString()}`, '_blank');
         }
 
         function filterByStat(type) {

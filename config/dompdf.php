@@ -13,7 +13,7 @@ return array(
     */
     'show_warnings' => false,   // Throw an Exception on warnings from dompdf
 
-'public_path' => '/home/helascor/public_html',
+'public_path' => is_dir('/home/helascor/public_html') ? '/home/helascor/public_html' : public_path(),
 
 
     /*
@@ -81,7 +81,7 @@ return array(
          */
 "chroot" => [
     base_path(),
-    '/home/helascor/public_html',
+    is_dir('/home/helascor/public_html') ? '/home/helascor/public_html' : public_path(),
 ],
         /**
          * Protocol whitelist

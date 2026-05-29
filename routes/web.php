@@ -360,6 +360,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/peserta-smi/{id}/restore', [PesertaSmiController::class, 'restore'])->name('peserta-smi.restore');
     Route::post('/peserta-smi/{id}/upload-bukti', [PesertaSmiController::class, 'uploadBuktiTransfer'])->name('peserta-smi.upload-bukti');
     Route::post('/peserta-smi/{id}/approve-bukti', [PesertaSmiController::class, 'approveBuktiTransfer'])->name('peserta-smi.approve-bukti');
+    Route::get('/peserta-smi/export-pdf', [PesertaSmiController::class, 'exportPdf'])->name('peserta-smi.export-pdf');
     Route::resource('peserta-smi', PesertaSmiController::class)->names('peserta-smi');
 
     // Ads Activity
