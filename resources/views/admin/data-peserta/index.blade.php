@@ -49,8 +49,13 @@
                 </div>
                 <h6 class="text-secondary font-weight-bold">Memuat Panel Data Peserta M1T...</h6>
             </div>
-            <iframe id="iframe-m1t" onload="iframeLoaded(this)" src="{{ route('admin.salesplan.index', ['type' => 'smi', 'kelas' => 'Start-Up Muslim Indonesia', 'embed' => 1]) }}" 
-                    style="width: 100%; border: none; min-height: 82vh; opacity: 0; transition: opacity 0.3s ease;"></iframe>
+            @if(auth()->check() && strtolower(auth()->user()->role) === 'administrator')
+                <iframe id="iframe-m1t" onload="iframeLoaded(this)" src="{{ route('peserta-smi.index', ['embed' => 1]) }}" 
+                        style="width: 100%; border: none; min-height: 82vh; opacity: 0; transition: opacity 0.3s ease;"></iframe>
+            @else
+                <iframe id="iframe-m1t" onload="iframeLoaded(this)" src="{{ route('admin.salesplan.index', ['type' => 'smi', 'kelas' => 'Start-Up Muslim Indonesia', 'embed' => 1]) }}" 
+                        style="width: 100%; border: none; min-height: 82vh; opacity: 0; transition: opacity 0.3s ease;"></iframe>
+            @endif
         </div>
     </div>
 </div>

@@ -55,6 +55,13 @@
         {{-- Filter Section Moved to Table Header --}}
 
         <style>
+            .spp-menunggak-border {
+                border: 2px solid #e74a3b !important;
+                border-radius: 4px;
+                background-color: #fdf2f2 !important;
+                box-shadow: 0 0 4px rgba(231, 74, 59, 0.2);
+            }
+
             /* Status Badges */
             .badge-status {
                 padding: 5px 10px;
@@ -357,10 +364,19 @@
             .stat-card-premium .card-body {
                 padding: 0.6rem 0.75rem !important;
             }
+            #smi_search::placeholder {
+                color: rgba(255, 255, 255, 0.75);
+            }
+            #smi_search:focus {
+                background: rgba(255, 255, 255, 0.25) !important;
+                outline: none;
+                box-shadow: none;
+                color: white;
+            }
         </style>
 
         <!-- Filter Card Section (At the Very Top) -->
-        <div class="col-12 mb-3">
+        <div class="col-12 mb-3 @if(auth()->check() && strtolower(auth()->user()->role) === 'administrator') d-none @endif">
             <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
                 <div class="card-header py-2 d-flex flex-row align-items-center justify-content-start bg-primary text-white" style="gap: 20px;">
                     <div class="d-flex align-items-center mr-2">
@@ -405,6 +421,7 @@
                                 <option value="1" {{ request('filter_spp_status') === '1' ? 'selected' : '' }}>Lunas</option>
                                 <option value="0" {{ request('filter_spp_status') === '0' ? 'selected' : '' }}>Belum</option>
                                 <option value="blue" {{ request('filter_spp_status') === 'blue' ? 'selected' : '' }}>Closing Baru</option>
+                                <option value="menunggak" {{ request('filter_spp_status') === 'menunggak' ? 'selected' : '' }}>Menunggak</option>
                                 <option value="total_month" {{ request('filter_spp_status') === 'total_month' ? 'selected' : '' }}>Total Keseluruhan</option>
                             </select>
                         </div>
@@ -442,7 +459,7 @@
                         {{-- Search Block --}}
                         <div class="d-flex flex-column" style="gap: 2px;">
                             <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">CARI NAMA</label>
-                            <input type="text" name="search" id="smi_search" class="form-control form-control-sm border-0 bg-light" style="width: 150px; height: 30px; border-radius: 5px; font-size: 0.75rem;" placeholder="Cari nama..." value="{{ request('search') }}">
+                            <input type="text" name="search" id="smi_search_old" class="form-control form-control-sm border-0 bg-light smi-search-input" style="width: 150px; height: 30px; border-radius: 5px; font-size: 0.75rem;" placeholder="Cari nama..." value="{{ request('search') }}">
                         </div>
                         <button type="button" class="btn btn-warning btn-sm font-weight-bold shadow-sm px-3" onclick="updateSmiFilters()" style="height: 30px; border-radius: 5px; font-size: 0.7rem; color: #2e59d9;">
                             <i class="fas fa-search mr-1"></i> TAMPILKAN DATA
@@ -472,7 +489,7 @@
                                 <tbody>
                                     <tr id="row-stat-all" onclick="filterByStat && filterByStat('all')" style="cursor: pointer;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-users text-primary mr-2" style="width: 16px;"></i>Total Peserta
+                                            <i class="fas fa-users text-primary mr-2" style="width: 16px;"></i>Total Peserta Keseluruhan (Aktif & Cuti)
                                         </td>
                                         <td class="text-center">
                                             <span class="badge badge-primary font-weight-bold px-2.5 py-1" id="stat-total" style="font-size: 0.85rem; border-radius: 4px;">{{ number_format($stats['total']) }}</span>
@@ -480,7 +497,7 @@
                                     </tr>
                                     <tr id="row-stat-aktif" onclick="filterByStat && filterByStat('aktif')" style="cursor: pointer;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-user-check text-success mr-2" style="width: 16px;"></i>Peserta Aktif
+                                            <i class="fas fa-user-check text-success mr-2" style="width: 16px;"></i>Total Peserta Aktif
                                         </td>
                                         <td class="text-center">
                                             <span class="badge badge-success font-weight-bold px-2.5 py-1" id="stat-aktif" style="font-size: 0.85rem; border-radius: 4px;">{{ number_format($stats['aktif']) }}</span>
@@ -488,7 +505,7 @@
                                     </tr>
                                     <tr id="row-stat-cuti" onclick="filterByStat && filterByStat('cuti')" style="cursor: pointer;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-user-slash text-danger mr-2" style="width: 16px;"></i>Peserta Cuti
+                                            <i class="fas fa-user-slash text-danger mr-2" style="width: 16px;"></i>Total Peserta Cuti
                                         </td>
                                         <td class="text-center">
                                             <span class="badge badge-danger font-weight-bold px-2.5 py-1" id="stat-cuti" style="font-size: 0.85rem; border-radius: 4px;">{{ number_format($stats['cuti']) }}</span>
@@ -496,10 +513,18 @@
                                     </tr>
                                     <tr id="row-stat-lunas" onclick="filterByStat && filterByStat('lunas')" style="cursor: pointer;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-check-double text-info mr-2" style="width: 16px;"></i>Peserta Lunas
+                                            <i class="fas fa-check-double text-info mr-2" style="width: 16px;"></i>Peserta Lunas Keseluruhan
                                         </td>
                                         <td class="text-center">
                                             <span class="badge badge-info font-weight-bold px-2.5 py-1" id="stat-lunas" style="font-size: 0.85rem; border-radius: 4px;">{{ number_format($stats['lunas'] ?? 0) }}</span>
+                                        </td>
+                                    </tr>
+                                    <tr id="row-stat-pending" onclick="filterByStat && filterByStat('pending')" style="cursor: pointer;">
+                                        <td class="pl-3 font-weight-bold text-gray-800">
+                                            <i class="fas fa-clock text-warning mr-2" style="width: 16px;"></i>Peserta Belum Approve
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-warning font-weight-bold px-2.5 py-1" id="stat-pending" style="font-size: 0.85rem; border-radius: 4px;">{{ number_format($stats['pending'] ?? 0) }}</span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -513,64 +538,77 @@
                     $monthName = $stats['filter_month_name'] ?? '';
                 @endphp
                 <div class="col-lg-7 mb-3">
-                    <div class="card stat-card shadow-sm border-0 h-100" style="border-radius: 12px; overflow: hidden;">
+                    <div class="card stat-card shadow-sm border-0 h-100" style="border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
                         <div class="card-header bg-gradient-info text-white py-2 px-3 border-0 d-flex align-items-center justify-content-between">
                             <h6 class="m-0 font-weight-bold text-white">
                                 <i class="fas fa-wallet mr-2"></i>Keuangan Keanggotaan
                             </h6>
                         </div>
-                        <div class="table-responsive h-100">
-                            <table class="table table-bordered stat-table table-hover align-middle mb-0" style="font-size: 0.85rem;">
-                                <thead class="bg-light text-uppercase" style="font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;">
+                        <div class="table-responsive" style="flex: 1;">
+                            <table class="table table-bordered stat-table table-hover align-middle mb-0" style="font-size: 0.82rem;">
+                                <thead class="bg-light text-uppercase" style="font-size: 0.68rem; font-weight: 800; letter-spacing: 0.5px;">
                                     <tr>
                                         <th class="pl-3">Kategori</th>
-                                        <th class="text-center" style="width: 100px;">Jumlah</th>
-                                        <th class="text-right pr-3" style="width: 160px;">Nominal</th>
+                                        <th class="text-center" style="width: 90px;">Jumlah</th>
+                                        <th class="text-right pr-3" style="width: 150px;">Nominal</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr id="row-stat-closing" onclick="filterByStat && filterByStat('closing')" style="cursor: pointer;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-check-double text-primary mr-2" style="width: 16px;"></i>Closing Baru <span class="stat-month-label text-muted font-weight-normal" style="font-size: 0.75rem;">{{ $monthName }}</span>
+                                            <i class="fas fa-check-double text-primary mr-2" style="width: 16px;"></i>Peserta Baru Closing <span class="stat-month-label badge badge-success text-white font-weight-bold px-2 py-0.5 ml-1" style="font-size: 0.72rem; background-color: #1cc88a; border-radius: 4px; display: {{ $monthName ? 'inline-block' : 'none' }};">{{ $monthName }}</span>
                                         </td>
                                         <td class="text-center font-weight-bold text-gray-800" id="stat-count-closing">
                                             {{ number_format($stats['count_closing'] ?? 0) }}
                                         </td>
-                                        <td class="text-right pr-3 font-weight-bold text-primary" id="stat-nom-closing" style="font-size: 0.9rem;">
+                                        <td class="text-right pr-3 font-weight-bold text-primary" id="stat-nom-closing" style="font-size: 0.88rem;">
                                             Rp {{ number_format($stats['nominal_closing'] ?? 0, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                     <tr id="row-stat-sudah_bayar" onclick="filterByStat && filterByStat('sudah_bayar')" style="cursor: pointer;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-check-circle text-success mr-2" style="width: 16px;"></i>Peserta Lama yang sudah bayar SPP bulan (<span class="stat-month-label text-muted font-weight-normal" style="font-size: 0.75rem;">{{ $monthName }}</span>)
+                                            <i class="fas fa-check-circle text-success mr-2" style="width: 16px;"></i>Peserta Lama Bayar SPP <span class="stat-month-label badge badge-success text-white font-weight-bold px-2 py-0.5 ml-1" style="font-size: 0.72rem; background-color: #1cc88a; border-radius: 4px; display: {{ $monthName ? 'inline-block' : 'none' }};">{{ $monthName }}</span>
                                         </td>
                                         <td class="text-center font-weight-bold text-gray-800" id="stat-count-spp">
                                             {{ number_format($stats['count_spp'] ?? 0) }}
                                         </td>
-                                        <td class="text-right pr-3 font-weight-bold text-success" id="stat-nom-spp" style="font-size: 0.9rem;">
+                                        <td class="text-right pr-3 font-weight-bold text-success" id="stat-nom-spp" style="font-size: 0.88rem;">
                                             Rp {{ number_format($stats['nominal_spp'] ?? 0, 0, ',', '.') }}
                                         </td>
                                     </tr>
-                                    <tr id="row-stat-belum_bayar" onclick="filterByStat && filterByStat('belum_bayar')" style="cursor: pointer;">
+                                    <tr style="background-color: rgba(78, 115, 223, 0.08); border-bottom: 2px solid #e3e6f0;">
+                                        <td class="pl-3 font-weight-bold text-primary">
+                                            <i class="fas fa-coins text-primary mr-2" style="width: 16px;"></i>Total Pembayaran Masuk
+                                        </td>
+                                        <td class="text-center font-weight-bold text-primary" id="stat-count-masuk">
+                                            {{ number_format(($stats['count_closing'] ?? 0) + ($stats['count_spp'] ?? 0)) }}
+                                        </td>
+                                        <td class="text-right pr-3 font-weight-bold text-primary" id="stat-nom-masuk" style="font-size: 0.88rem;">
+                                            Rp {{ number_format(($stats['nominal_closing'] ?? 0) + ($stats['nominal_spp'] ?? 0), 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+
+                                    <tr id="row-stat-belum_bayar" onclick="filterByStat && filterByStat('belum_bayar')" style="cursor: pointer; border-bottom: 2px solid #e3e6f0;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-exclamation-circle text-warning mr-2" style="width: 16px;"></i>Jumlah Potensi (Belum Bayar) <span class="stat-month-label text-muted font-weight-normal" style="font-size: 0.75rem;">{{ $monthName }}</span>
+                                            <i class="fas fa-exclamation-circle text-warning mr-2" style="width: 16px;"></i>Potensi Belum Bayar <span class="stat-month-label badge badge-success text-white font-weight-bold px-2 py-0.5 ml-1" style="font-size: 0.72rem; background-color: #1cc88a; border-radius: 4px; display: {{ $monthName ? 'inline-block' : 'none' }};">{{ $monthName }}</span>
                                         </td>
                                         <td class="text-center font-weight-bold text-gray-800" id="stat-count-belum">
                                             {{ number_format($stats['count_belum'] ?? 0) }}
                                         </td>
-                                        <td class="text-right pr-3 font-weight-bold text-warning" id="stat-nom-belum" style="font-size: 0.9rem;">
+                                        <td class="text-right pr-3 font-weight-bold text-warning" id="stat-nom-belum" style="font-size: 0.88rem;">
                                             Rp {{ number_format($stats['nominal_belum'] ?? 0, 0, ',', '.') }}
                                         </td>
                                     </tr>
-                                    <tr id="row-stat-total_month" onclick="filterByStat && filterByStat('total_month')" style="cursor: pointer; background-color: rgba(54, 185, 204, 0.05);">
-                                        <td class="pl-3 font-weight-bold text-gray-900">
-                                            <i class="fas fa-calculator text-info mr-2" style="width: 16px;"></i>Total Keseluruhan <span class="stat-month-label text-muted font-weight-normal" style="font-size: 0.75rem;">{{ $monthName }}</span>
+
+                                    <tr id="row-stat-menunggak" onclick="filterByStat && filterByStat('menunggak')" style="cursor: pointer;">
+                                        <td class="pl-3 font-weight-bold text-gray-800">
+                                            <i class="fas fa-history text-danger mr-2" style="width: 16px;"></i>Peserta Menunggak
                                         </td>
-                                        <td class="text-center font-weight-bold text-gray-900" id="stat-count-total-month">
-                                            {{ number_format(($stats['count_closing'] ?? 0) + ($stats['count_spp'] ?? 0) + ($stats['count_belum'] ?? 0)) }}
+                                        <td class="text-center font-weight-bold text-gray-800" id="stat-count-menunggak">
+                                            {{ number_format($stats['count_menunggak'] ?? 0) }}
                                         </td>
-                                        <td class="text-right pr-3 font-weight-bold text-info" id="stat-nom-total-month" style="font-size: 0.95rem;">
-                                            Rp {{ number_format(($stats['nominal_closing'] ?? 0) + ($stats['nominal_spp'] ?? 0) + ($stats['nominal_belum'] ?? 0), 0, ',', '.') }}
+                                        <td class="text-right pr-3 font-weight-bold text-danger" id="stat-nom-menunggak" style="font-size: 0.88rem;">
+                                            Rp {{ number_format($stats['nominal_menunggak'] ?? 0, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -606,8 +644,20 @@
 
         <div class="col-xl-12 col-md-12 mb-4">
             <div class="card shadow mb-4">
-                <div class="card-header py-2 d-flex align-items-center bg-primary text-white sticky-header-top">
+                <div class="card-header py-2 d-flex align-items-center bg-primary text-white sticky-header-top justify-content-between">
                     <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-list-alt mr-2"></i>Daftar Peserta M1T</h6>
+                    <div class="d-flex align-items-center" style="gap: 8px;">
+                        <div class="position-relative" style="width: 200px;">
+                            <input type="text" id="smi_search" class="form-control form-control-sm border-0 smi-search-input" 
+                                style="border-radius: 20px; padding-left: 15px; padding-right: 15px; height: 32px; font-size: 0.8rem; background: rgba(255,255,255,0.15); color: white;" 
+                                placeholder="Cari nama..." value="{{ request('search') }}">
+                        </div>
+                        <button type="button" class="btn btn-warning btn-sm font-weight-bold shadow-sm d-flex align-items-center justify-content-center" 
+                            onclick="updateSmiFilters()" 
+                            style="height: 32px; border-radius: 20px; font-size: 0.75rem; color: #2e59d9; padding: 0 15px;">
+                            <i class="fas fa-search mr-1"></i> Cari
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body p-0">
 
@@ -1109,16 +1159,25 @@
             // Initial currency formatting
             initCurrencyInputs();
 
-            // Enter key trigger for search
-            const searchInput = document.getElementById('smi_search');
-            if (searchInput) {
-                searchInput.addEventListener('keypress', function (e) {
+            // Enter key trigger and value syncing for search inputs (no live search)
+            const searchInputs = document.querySelectorAll('.smi-search-input');
+            searchInputs.forEach(input => {
+                input.addEventListener('keypress', function (e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         updateSmiFilters();
                     }
                 });
-            }
+
+                input.addEventListener('input', function (e) {
+                    // Sync values between both inputs if both exist
+                    searchInputs.forEach(otherInput => {
+                        if (otherInput !== e.target) {
+                            otherInput.value = e.target.value;
+                        }
+                    });
+                });
+            });
             
             // Initial active card highlighting
             highlightActiveCard();
@@ -1173,9 +1232,11 @@
                         container.innerHTML = data.html;
                         if (statTotal) statTotal.innerText = new Intl.NumberFormat('id-ID').format(data.stats.total);
                         if (statAktif) statAktif.innerText = new Intl.NumberFormat('id-ID').format(data.stats.aktif);
-                        if (statCuti) statCuti.innerText = new Intl.NumberFormat('id-ID').format(data.stats.cuti);
-                        const statLunas = document.getElementById('stat-lunas');
-                        if (statLunas) statLunas.innerText = new Intl.NumberFormat('id-ID').format(data.stats.lunas);
+                                                 if (statCuti) statCuti.innerText = new Intl.NumberFormat('id-ID').format(data.stats.cuti);
+                         const statLunas = document.getElementById('stat-lunas');
+                         if (statLunas) statLunas.innerText = new Intl.NumberFormat('id-ID').format(data.stats.lunas);
+                         const statPending = document.getElementById('stat-pending');
+                         if (statPending) statPending.innerText = new Intl.NumberFormat('id-ID').format(data.stats.pending);
 
                         // Update New Monthly Stats
                         const statCountClosing = document.getElementById('stat-count-closing');
@@ -1184,6 +1245,8 @@
                         const statNomSpp = document.getElementById('stat-nom-spp');
                         const statCountBelum = document.getElementById('stat-count-belum');
                         const statNomBelum = document.getElementById('stat-nom-belum');
+                        const statCountMenunggak = document.getElementById('stat-count-menunggak');
+                        const statNomMenunggak = document.getElementById('stat-nom-menunggak');
                         
                         const monthLabelEls = document.querySelectorAll('.stat-month-label');
                         const monthCardEls = document.querySelectorAll('.stat-month-only');
@@ -1198,16 +1261,42 @@
                             if (statNomSpp) statNomSpp.innerText = fmt(data.stats.nominal_spp);
                             if (statCountBelum) statCountBelum.innerText = num(data.stats.count_belum);
                             if (statNomBelum) statNomBelum.innerText = fmt(data.stats.nominal_belum);
+                            if (statCountMenunggak) statCountMenunggak.innerText = num(data.stats.count_menunggak || 0);
+                            if (statNomMenunggak) statNomMenunggak.innerText = fmt(data.stats.nominal_menunggak || 0);
 
-                            const statCountTotalMonth = document.getElementById('stat-count-total-month');
-                            const statNomTotalMonth = document.getElementById('stat-nom-total-month');
-                            if (statCountTotalMonth) statCountTotalMonth.innerText = num(data.stats.count_closing + data.stats.count_spp + data.stats.count_belum);
-                            if (statNomTotalMonth) statNomTotalMonth.innerText = fmt(data.stats.nominal_closing + data.stats.nominal_spp + data.stats.nominal_belum);
+                            // Update A. Total Pembayaran Masuk
+                            const statCountMasuk = document.getElementById('stat-count-masuk');
+                            const statNomMasuk = document.getElementById('stat-nom-masuk');
+                            if (statCountMasuk) statCountMasuk.innerText = num(data.stats.count_closing + data.stats.count_spp);
+                            if (statNomMasuk) statNomMasuk.innerText = fmt(data.stats.nominal_closing + data.stats.nominal_spp);
 
-                            monthLabelEls.forEach(el => el.innerText = data.stats.filter_month_name);
+                            // Update Rekap panel elements
+                            const rekapTotalPeserta = document.getElementById('rekap-total-peserta');
+                            const rekapSudahMasuk = document.getElementById('rekap-sudah-masuk');
+                            const rekapBelumMasuk = document.getElementById('rekap-belum-masuk');
+                            const rekapTunggakan = document.getElementById('rekap-tunggakan');
+                            const rekapTotalPotensi = document.getElementById('rekap-total-potensi');
+
+                            if (rekapTotalPeserta) rekapTotalPeserta.innerText = num(data.stats.count_closing + data.stats.count_spp + data.stats.count_belum);
+                            if (rekapSudahMasuk) rekapSudahMasuk.innerText = fmt(data.stats.nominal_closing + data.stats.nominal_spp);
+                            if (rekapBelumMasuk) rekapBelumMasuk.innerText = fmt(data.stats.nominal_belum);
+                            if (rekapTunggakan) rekapTunggakan.innerText = fmt(data.stats.nominal_menunggak || 0);
+                            if (rekapTotalPotensi) rekapTotalPotensi.innerText = fmt(data.stats.nominal_closing + data.stats.nominal_spp + data.stats.nominal_belum + (data.stats.nominal_menunggak || 0));
+
+                            monthLabelEls.forEach(el => {
+                                el.innerText = data.stats.filter_month_name;
+                                if (data.stats.filter_month_name) {
+                                    el.style.display = 'inline-block';
+                                } else {
+                                    el.style.display = 'none';
+                                }
+                            });
                             monthCardEls.forEach(el => el.classList.remove('d-none'));
                         } else {
-                            monthLabelEls.forEach(el => el.innerText = "");
+                            monthLabelEls.forEach(el => {
+                                el.innerText = "";
+                                el.style.display = 'none';
+                            });
                             monthCardEls.forEach(el => el.classList.add('d-none'));
                         }
 
@@ -1234,21 +1323,30 @@
             const statusSelect = document.getElementById('smi_filter_status');
             const sppStatusSelect = document.getElementById('smi_filter_spp_status');
             const sppMonthSelect = document.getElementById('smi_filter_spp_month');
+            const approvalSelect = document.getElementById('smi_filter_approval');
             const defaultActiveMonth = "{{ request('filter_spp_month') && request('filter_spp_month') !== 'all' ? request('filter_spp_month') : date('n') }}";
 
             if (type === 'all') {
                 if (statusSelect) statusSelect.value = 'all';
                 if (sppStatusSelect) sppStatusSelect.value = 'all';
                 if (sppMonthSelect) sppMonthSelect.value = 'all';
+                if (approvalSelect) approvalSelect.value = 'all';
             } else if (type === 'aktif') {
                 if (statusSelect) statusSelect.value = 'Aktif';
                 if (sppStatusSelect) sppStatusSelect.value = 'all';
+                if (approvalSelect) approvalSelect.value = 'all';
             } else if (type === 'cuti') {
                 if (statusSelect) statusSelect.value = 'Cuti';
                 if (sppStatusSelect) sppStatusSelect.value = 'all';
+                if (approvalSelect) approvalSelect.value = 'all';
             } else if (type === 'lunas') {
                 if (statusSelect) statusSelect.value = 'Lunas';
                 if (sppStatusSelect) sppStatusSelect.value = 'all';
+                if (approvalSelect) approvalSelect.value = 'all';
+            } else if (type === 'pending') {
+                if (statusSelect) statusSelect.value = 'all';
+                if (sppStatusSelect) sppStatusSelect.value = 'all';
+                if (approvalSelect) approvalSelect.value = 'Pending';
             } else {
                 // Table 2 (financial stats) filters: set month from ALL to default active month
                 if (sppMonthSelect && sppMonthSelect.value === 'all') {
@@ -1263,6 +1361,9 @@
                     if (statusSelect) statusSelect.value = 'all';
                 } else if (type === 'belum_bayar') {
                     if (sppStatusSelect) sppStatusSelect.value = '0';
+                    if (statusSelect) statusSelect.value = 'all';
+                } else if (type === 'menunggak') {
+                    if (sppStatusSelect) sppStatusSelect.value = 'menunggak';
                     if (statusSelect) statusSelect.value = 'all';
                 } else if (type === 'total_month') {
                     if (sppStatusSelect) sppStatusSelect.value = 'total_month';
@@ -1280,8 +1381,11 @@
 
             const status = document.getElementById('smi_filter_status')?.value;
             const sppStatus = document.getElementById('smi_filter_spp_status')?.value;
+            const approval = document.getElementById('smi_filter_approval')?.value;
 
-            if (status === 'Aktif' && sppStatus === 'all') {
+            if (approval === 'Pending') {
+                document.getElementById('row-stat-pending')?.classList.add('active-stat-row');
+            } else if (status === 'Aktif' && sppStatus === 'all') {
                 document.getElementById('row-stat-aktif')?.classList.add('active-stat-row');
             } else if (status === 'Cuti' && sppStatus === 'all') {
                 document.getElementById('row-stat-cuti')?.classList.add('active-stat-row');
@@ -1293,6 +1397,8 @@
                 document.getElementById('row-stat-sudah_bayar')?.classList.add('active-stat-row');
             } else if (sppStatus === '0' && status === 'all') {
                 document.getElementById('row-stat-belum_bayar')?.classList.add('active-stat-row');
+            } else if (sppStatus === 'menunggak' && status === 'all') {
+                document.getElementById('row-stat-menunggak')?.classList.add('active-stat-row');
             } else if (sppStatus === 'total_month' && status === 'all') {
                 document.getElementById('row-stat-total_month')?.classList.add('active-stat-row');
             } else if (status === 'all' && sppStatus === 'all') {

@@ -154,37 +154,6 @@ class PesertaSmiController extends Controller
             $query->whereMonth('tanggal_masuk', $request->filter_entry_month);
         }
 
-
-
-        // Filter Approval Status
-        if ($request->has('filter_approval') && $request->filter_approval && $request->filter_approval !== 'all') {
-            $fApp = $request->filter_approval;
-            
-            if ($fApp === 'Pending') {
-                $query->where(function($q) {
-                    $q->where('approval_status', 'Pending')
-                      ->orWhereNull('approval_status');
-                });
-            } else {
-                $query->where('approval_status', $fApp);
-            }
-            
-            // [USER_REQUEST] If filtering for 'Pending', only show those that actually need approval (Reseller/Chapter/Agen)
-            // This prevents CS-MBC/Admin records that might be stuck in 'Pending' state from cluttering the verification list.
-            if ($fApp === 'Pending') {
-                $query->where(function ($q) {
-                    $roles = ['reseller', 'chapter', 'agen', 'chapter '];
-                    $q->whereHas('closingCs', function ($sq) use ($roles) {
-                        $sq->whereIn('role', $roles);
-                    })->orWhereHas('createdBy', function ($sq) use ($roles) {
-                        $sq->whereIn('role', $roles);
-                    })->orWhereHas('salesPlan.createdBy', function ($sq) use ($roles) {
-                        $sq->whereIn('role', $roles);
-                    });
-                });
-            }
-        }
-
         // Filter Chapter (For Admin and Linda)
         if ($request->has('filter_chapter') && $request->filter_chapter && $request->filter_chapter !== 'all') {
             $chapter = $request->filter_chapter;
@@ -301,24 +270,49 @@ class PesertaSmiController extends Controller
         $totalStats = (clone $query)->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
 
         // [USER_REQUEST] Dashboard stats should only include Approved participants if they need approval
-        // Only apply this restriction for the general view (when not filtering for a specific approval status)
-        if (!$request->has('filter_approval') || $request->filter_approval === 'all') {
-            $globalStats = $globalStats->filter(function($item) {
-                $creatorRole = strtolower($item->closingCs->role ?? $item->createdBy->role ?? $item->salesPlan->createdBy->role ?? '');
-                $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
-                if ($needsApproval) {
-                    return $item->approval_status === 'Approved';
-                }
-                return true;
-            });
-            $totalStats = $totalStats->filter(function($item) {
-                $creatorRole = strtolower($item->closingCs->role ?? $item->createdBy->role ?? $item->salesPlan->createdBy->role ?? '');
-                $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
-                if ($needsApproval) {
-                    return $item->approval_status === 'Approved';
-                }
-                return true;
-            });
+        $globalStats = $globalStats->filter(function($item) {
+            $creatorRole = strtolower($item->closingCs->role ?? $item->createdBy->role ?? $item->salesPlan->createdBy->role ?? '');
+            $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+            if ($needsApproval) {
+                return $item->approval_status === 'Approved';
+            }
+            return true;
+        });
+        $totalStats = $totalStats->filter(function($item) {
+            $creatorRole = strtolower($item->closingCs->role ?? $item->createdBy->role ?? $item->salesPlan->createdBy->role ?? '');
+            $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+            if ($needsApproval) {
+                return $item->approval_status === 'Approved';
+            }
+            return true;
+        });
+
+        // Apply Filter Approval Status to $query for list view AFTER cloning stats
+        if ($request->has('filter_approval') && $request->filter_approval && $request->filter_approval !== 'all') {
+            $fApp = $request->filter_approval;
+            
+            if ($fApp === 'Pending') {
+                $query->where(function($q) {
+                    $q->where('approval_status', 'Pending')
+                      ->orWhereNull('approval_status');
+                });
+            } else {
+                $query->where('approval_status', $fApp);
+            }
+            
+            // [USER_REQUEST] If filtering for 'Pending', only show those that actually need approval (Reseller/Chapter/Agen)
+            if ($fApp === 'Pending') {
+                $query->where(function ($q) {
+                    $roles = ['reseller', 'chapter', 'agen', 'chapter '];
+                    $q->whereHas('closingCs', function ($sq) use ($roles) {
+                        $sq->whereIn('role', $roles);
+                    })->orWhereHas('createdBy', function ($sq) use ($roles) {
+                        $sq->whereIn('role', $roles);
+                    })->orWhereHas('salesPlan.createdBy', function ($sq) use ($roles) {
+                        $sq->whereIn('role', $roles);
+                    });
+                });
+            }
         }
 
         $lunasCount = 0;
@@ -337,18 +331,86 @@ class PesertaSmiController extends Controller
             }
         }
 
+        // Count unapproved (Pending / Null approval status for reseller/chapter/agen)
+        $pendingCountQuery = \App\Models\PesertaSmi::where(function($q) {
+            $q->where('approval_status', 'Pending')
+              ->orWhereNull('approval_status');
+        })
+        ->where(function($q) {
+            $q->whereHas('closingCs', function($sq) {
+                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+            })->orWhereHas('createdBy', function($sq) {
+                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+            })->orWhereHas('salesPlan.createdBy', function($sq) {
+                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+            });
+        });
+
+        // Apply regional filter if the user is a Chapter/Reseller
+        $user = auth()->user();
+        $role = strtolower($user->role);
+        
+        if ($role === 'chapter' || in_array($role, ['reseller', 'agen'])) {
+            $chapterName = $user->chapter;
+            $userId = $user->id;
+                
+            // Identify Direct Team Members
+            $resellerMembersIds = \App\Models\User::whereIn('role', ['reseller', 'agen'])
+                ->where('created_by', $userId)
+                ->pluck('id');
+            $allTeamIds = $resellerMembersIds->merge([$userId])->unique();
+            
+            $pendingCountQuery->where(function ($q) use ($chapterName, $userId, $allTeamIds) {
+                $q->whereIn('closing_cs_id', $allTeamIds)
+                  ->orWhereIn('created_by', $allTeamIds)
+                  ->orWhereHas('salesPlan', function($sq) use ($allTeamIds) {
+                      $sq->whereIn('created_by', $allTeamIds);
+                  });
+
+                if ($chapterName) {
+                    $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
+                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+
+                    $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
+                        $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
+                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
+                                $ssq->where('kota_nama', 'LIKE', '%' . $chapterName . '%')
+                                    ->orWhere('kota_nama', 'LIKE', '%' . $cleanChapter . '%');
+                            })
+                            ->whereNotIn('created_by', $excludeNames)
+                            ->where('created_by_role', '!=', 'cs-mbc');
+                        });
+
+                        $sq->orWhereHas('closingCs', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
+                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
+                                $ssq->where('chapter', 'LIKE', '%' . $chapterName . '%')
+                                    ->orWhere('chapter', 'LIKE', '%' . $cleanChapter . '%');
+                            })
+                            ->whereNotIn('name', $excludeNames)
+                            ->where('role', '!=', 'cs-mbc');
+                        });
+                    });
+                }
+            });
+        }
+        
+        $pendingCount = $pendingCountQuery->count();
+
         $activeMonth = ($sppMonth !== 'all') ? (int)$sppMonth : (int)date('n');
         $stats = [
             'total' => $globalStats->count(),
             'aktif' => $globalStats->where('status', 'Aktif')->count(),
             'cuti' => $globalStats->where('status', 'Cuti')->count(),
             'lunas' => $lunasCount,
+            'pending' => $pendingCount,
             'count_closing' => 0,
             'nominal_closing' => 0,
             'count_spp' => 0,
             'nominal_spp' => 0,
             'count_belum' => 0,
             'nominal_belum' => 0,
+            'count_menunggak' => 0,
+            'nominal_menunggak' => 0,
             'count_total_spp' => 0,
             'nominal_total_spp' => 0,
             'count_total_income' => 0,
@@ -471,6 +533,81 @@ class PesertaSmiController extends Controller
                 $pLevel = strtolower($p->level ?: ($p->salesPlan->level ?? ''));
                 $levelNominal = str_contains($pLevel, 'grow') ? 1500000 : 1000000;
 
+                // [USER_REQUEST] Calculate arrears (menunggak) from previous months of the current year
+                if ($p->status === 'Aktif' && !$isLunasBadge && $sppMonth !== 'all') {
+                    $joinMonth = 1;
+                    if ($p->tanggal_masuk) {
+                        try {
+                            $joinDate = \Carbon\Carbon::parse($p->tanggal_masuk);
+                            if ($joinDate->year == $yearFilter) {
+                                $joinMonth = (int)$joinDate->month;
+                            }
+                        } catch (\Exception $e) {}
+                    }
+                    
+                    $currentActiveMonth = (int)$sppMonth;
+                    $hasArrears = false;
+                    $arrearsNominal = 0;
+                    
+                    for ($m = $joinMonth; $m < $currentActiveMonth; $m++) {
+                        // Check if the participant was newly closing in that month
+                        $isClosingInMonth = false;
+                        if ($p->salesPlan) {
+                            $effDate = null;
+                            if ($p->salesPlan->tanggal_closing) {
+                                $effDate = \Carbon\Carbon::parse($p->salesPlan->tanggal_closing);
+                            } else {
+                                $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
+                            }
+                            if ($effDate && (int)$effDate->month === $m && (int)$effDate->year == $yearFilter) {
+                                $isClosingInMonth = true;
+                            }
+                        } else {
+                            $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
+                            if ($effDate && (int)$effDate->month === $m && (int)$effDate->year == $yearFilter) {
+                                $isClosingInMonth = true;
+                            }
+                        }
+                        
+                        // Check if it was planned/blue in custom schedule or selected_months
+                        $isPlannedInMonth = false;
+                        $customSch = $p->spp_custom_schedule ?? [];
+                        foreach ($customSch as $sch) {
+                            if ((int)$sch['month'] === $m && (int)($sch['year'] ?? $yearFilter) === (int)$yearFilter) {
+                                $isPlannedInMonth = true;
+                                break;
+                            }
+                        }
+                        if (!$isPlannedInMonth && $p->salesPlan) {
+                            $selectedMonths = $p->salesPlan->selected_months;
+                            if (is_string($selectedMonths)) {
+                                $selectedMonths = json_decode($selectedMonths, true) ?? [];
+                            }
+                            if (isset($selectedMonths[$yearFilter]) && is_array($selectedMonths[$yearFilter])) {
+                                if (in_array($m, $selectedMonths[$yearFilter])) {
+                                    $isPlannedInMonth = true;
+                                }
+                            }
+                        }
+                        
+                        $isBlueInMonth = $isClosingInMonth || $isPlannedInMonth;
+                        
+                        $paidInMonth = (float)($p->{"spp_$m"} ?? 0);
+                        if ($paidInMonth < $levelNominal) {
+                            if (!$isBlueInMonth) {
+                                $hasArrears = true;
+                                $arrearsNominal += ($levelNominal - $paidInMonth);
+                            } 
+                        }
+                    }
+                    
+                    if ($hasArrears && $arrearsNominal > 0) {
+                        $stats['count_menunggak']++;
+                        $stats['nominal_menunggak'] += $arrearsNominal;
+                    }
+                }
+                
+
                 // [USER_REQUEST] Exclude 'Cuti' status from monthly dashboard stats entirely
                 if ($p->status === 'Cuti') {
                     continue;
@@ -530,6 +667,19 @@ class PesertaSmiController extends Controller
         }
 
         $data = $query->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
+
+        // Ensure unapproved participants are always filtered out from the general list view if not explicitly requested
+        $reqApproval = $request->get('filter_approval', 'all');
+        if ($reqApproval === 'all') {
+            $data = $data->filter(function($p) {
+                $creatorRole = strtolower($p->closingCs->role ?? $p->createdBy->role ?? $p->salesPlan->createdBy->role ?? '');
+                $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+                if ($needsApproval && $p->approval_status !== 'Approved') {
+                    return false;
+                }
+                return true;
+            });
+        }
 
         // [USER_REQUEST] In-memory filter for SPP status (month-specific)
         // Must be done in-memory because Blue Checklist (isBlue) is a computed value, not a DB column.
@@ -610,6 +760,72 @@ class PesertaSmiController extends Controller
                 }
 
                 $isBlue = $isClosing || $isPlanned;
+
+                if ($sppStatus === 'menunggak') {
+                    if ($p->status !== 'Aktif' || $isLunasBadge || $mNum === 'all') {
+                        return false;
+                    }
+                    $joinMonth = 1;
+                    if ($p->tanggal_masuk) {
+                        try {
+                            $joinDate = \Carbon\Carbon::parse($p->tanggal_masuk);
+                            if ($joinDate->year == $yNum) {
+                                $joinMonth = (int)$joinDate->month;
+                            }
+                        } catch (\Exception $e) {}
+                    }
+                    
+                    $hasArrears = false;
+                    for ($m = $joinMonth; $m < $mNum; $m++) {
+                        $isClosingInMonth = false;
+                        if ($p->salesPlan) {
+                            $effDate = null;
+                            if ($p->salesPlan->tanggal_closing) {
+                                $effDate = \Carbon\Carbon::parse($p->salesPlan->tanggal_closing);
+                            } else {
+                                $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
+                            }
+                            if ($effDate && (int)$effDate->month === $m && (int)$effDate->year == $yNum) {
+                                $isClosingInMonth = true;
+                            }
+                        } else {
+                            $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
+                            if ($effDate && (int)$effDate->month === $m && (int)$effDate->year == $yNum) {
+                                $isClosingInMonth = true;
+                            }
+                        }
+                        
+                        $isPlannedInMonth = false;
+                        $customSch = $p->spp_custom_schedule ?? [];
+                        foreach ((array)$customSch as $sch) {
+                            if ((int)($sch['month'] ?? 0) === $m && (int)($sch['year'] ?? $yNum) === $yNum) {
+                                $isPlannedInMonth = true;
+                                break;
+                            }
+                        }
+                        if (!$isPlannedInMonth && $p->salesPlan) {
+                            $sel = $p->salesPlan->selected_months;
+                            if (is_string($sel)) $sel = json_decode($sel, true) ?? [];
+                            if (isset($sel[$yNum]) && in_array($m, (array)$sel[$yNum])) {
+                                $isPlannedInMonth = true;
+                            }
+                        }
+                        
+                        $isBlueInMonth = $isClosingInMonth || $isPlannedInMonth;
+                        
+                        $pLevel = strtolower($p->level ?: ($p->salesPlan->level ?? ''));
+                        $levelNominal = str_contains($pLevel, 'grow') ? 1500000 : 1000000;
+                        
+                        $paidInMonth = (float)($p->{"spp_$m"} ?? 0);
+                        if ($paidInMonth < $levelNominal) {
+                            if (!$isBlueInMonth) {
+                                $hasArrears = true;
+                                break;
+                            }
+                        }
+                    }
+                    return $hasArrears;
+                }
 
                 if ($sppStatus === '1') {
                     // Sudah Bayar: strictly when it's not a new closing and they have actually paid (val > 0)

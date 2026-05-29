@@ -278,8 +278,72 @@
                                 $isPaid = false;
                             }
                         }
+
+                        // Arrears check for this specific month
+                        $isMenunggakThisMonth = false;
+                        if ($item->status === 'Aktif' && !$isAllPaid && !$isPaid) {
+                            $joinMonth = 1;
+                            if ($item->tanggal_masuk) {
+                                try {
+                                    $joinDate = \Carbon\Carbon::parse($item->tanggal_masuk);
+                                    if ($joinDate->year == $filterYear) {
+                                        $joinMonth = (int)$joinDate->month;
+                                    }
+                                } catch (\Exception $e) {}
+                            }
+                            
+                            $activeMonthVal = request('filter_spp_month');
+                            if (!$activeMonthVal || $activeMonthVal === 'all') {
+                                $activeMonthVal = date('n');
+                            }
+                            $currentActiveMonth = (int)$activeMonthVal;
+                            
+                            if ($i >= $joinMonth && $i < $currentActiveMonth) {
+                                $isClosingInMonth = false;
+                                if ($item->salesPlan) {
+                                    $effDate = null;
+                                    if ($item->salesPlan->tanggal_closing) {
+                                        $effDate = \Carbon\Carbon::parse($item->salesPlan->tanggal_closing);
+                                    } else {
+                                        $effDate = $item->tanggal_masuk ? \Carbon\Carbon::parse($item->tanggal_masuk) : $item->salesPlan->updated_at;
+                                    }
+                                    if ($effDate && (int)$effDate->month === $i && (int)$effDate->year == $filterYear) {
+                                        $isClosingInMonth = true;
+                                    }
+                                } else {
+                                    $effDate = $item->tanggal_masuk ? \Carbon\Carbon::parse($item->tanggal_masuk) : $item->created_at;
+                                    if ($effDate && (int)$effDate->month === $i && (int)$effDate->year == $filterYear) {
+                                        $isClosingInMonth = true;
+                                    }
+                                }
+                                
+                                $isPlannedInMonth = false;
+                                foreach ((array)$customSchedule as $sch) {
+                                    if ($sch['month'] == $i && ($sch['year'] ?? $filterYear) == $filterYear) {
+                                        $isPlannedInMonth = true;
+                                        break;
+                                    }
+                                }
+                                if (!$isPlannedInMonth && $item->salesPlan) {
+                                    $selectedMonths = $item->salesPlan->selected_months;
+                                    if (is_string($selectedMonths)) {
+                                        $selectedMonths = json_decode($selectedMonths, true) ?? [];
+                                    }
+                                    if (isset($selectedMonths[$filterYear]) && is_array($selectedMonths[$filterYear])) {
+                                        if (in_array($i, $selectedMonths[$filterYear])) {
+                                            $isPlannedInMonth = true;
+                                        }
+                                    }
+                                }
+                                
+                                $isBlueInMonth = $isClosingInMonth || $isPlannedInMonth;
+                                if (!$isBlueInMonth) {
+                                    $isMenunggakThisMonth = true;
+                                }
+                            }
+                        }
                     @endphp
-                    <div class="spp-wrapper">
+                    <div class="spp-wrapper {{ $isMenunggakThisMonth ? 'spp-menunggak-border' : '' }}">
                         @php
                             // [USER_REQUEST] Blue for initial plan check, Green for manual monthly check
                             // [USER_REQUEST] All blue if status is "Lunas" (isAllPaid)

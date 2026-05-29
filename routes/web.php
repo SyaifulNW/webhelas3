@@ -405,3 +405,4 @@ Route::get('/ongkir/provinsi', [OngkirController::class, 'getProvinsi'])->name('
 Route::get('/ongkir/kota', [OngkirController::class, 'getKota'])->name('ongkir.kota');
 Route::get('/wilayah/provinsi', [WilayahController::class, 'getProvinces']);
 Route::get('/wilayah/kota/{id}', [WilayahController::class, 'getCities']);
+
