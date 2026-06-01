@@ -185,11 +185,7 @@ class PenilaianCsController extends Controller
         $closingTarget = round(($totalClosing / $targetClosingBulanan) * 100);
 
         // 5. PENCAPAIAN OMSET
-        $totalOmset = SalesPlan::where('created_by', $userId)
-            ->whereYear('updated_at', $tahun)
-            ->whereMonth('updated_at', $bulan)
-            ->where('status', 'sudah_transfer')
-            ->sum('nominal');
+        $totalOmset = $this->calculateCSOmset($userId, $bulan, $tahun);
         
         $targetOmset = 50000000; // 50 Juta
         $nilaiOmset = $targetOmset > 0 ? min(100, round(($totalOmset / $targetOmset) * 100)) : 0;
@@ -672,14 +668,59 @@ public function store(Request $request)
         return $nilaiLeadsMBC + $nilaiLeadsSMI + $nilaiManualPart;
     }
 
+    private function calculateCSOmset($userId, $bulan, $tahun)
+    {
+        $buildDateFilter = function ($query, $y, $m) {
+            $query->where(function ($q) use ($y, $m) {
+                $q->where(function ($qM1T) use ($y, $m) {
+                    $qM1T->whereHas('kelas', fn($k) => $k->where('nama_kelas', 'like', '%Start-Up Muslim Indonesia%'))
+                         ->where(function ($qDate) use ($y, $m) {
+                             $qDate->whereNotNull('tanggal_closing')->whereYear('tanggal_closing', $y);
+                             if ($m !== 'all') { $qDate->whereMonth('tanggal_closing', $m); }
+                         });
+                })->orWhere(function ($qMBC) use ($y, $m) {
+                    $qMBC->whereHas('kelas', function($k) use ($y, $m) {
+                        $k->where('nama_kelas', 'not like', '%Start-Up Muslim Indonesia%')
+                          ->where(function($kSub) use ($y, $m) {
+                              $kSub->where('nama_kelas', 'like', '%Zoom Privat%')->orWhere('nama_kelas', 'like', '%Start-Up Muda Indonesia%');
+                              if ($m !== 'all') {
+                                  $kSub->orWhere(function($kMul) use ($y, $m) {
+                                      $kMul->whereYear('tanggal_mulai', $y)->whereMonth('tanggal_mulai', $m);
+                                  });
+                              } else {
+                                  $kSub->orWhereYear('tanggal_mulai', $y);
+                              }
+                          });
+                    })->where(function ($qDate) use ($y, $m) {
+                        $qDate->whereYear('updated_at', $y);
+                        if ($m !== 'all') { $qDate->whereMonth('updated_at', $m); }
+                     });
+                });
+            });
+        };
+
+        $salesQuery = SalesPlan::where('status', 'sudah_transfer')
+            ->where('created_by', $userId)
+            ->where(function ($query) use ($tahun, $bulan, $buildDateFilter) {
+                $buildDateFilter($query, $tahun, $bulan);
+            });
+
+        $realSales = $salesQuery->with(['kelas', 'pesertaSmi'])->get();
+
+        $totalOmset = $realSales->sum(function ($plan) {
+            if ($plan->pesertaSmi) {
+                return (float) str_replace('.', '', $plan->pesertaSmi->total_pembayaran ?: ($plan->pesertaSmi->pembayaran_spp ?: $plan->pesertaSmi->spp_awal ?: 0));
+            }
+            return (float) str_replace('.', '', $plan->nominal ?: 0);
+        });
+
+        return $totalOmset;
+    }
+
     private function hitungTotalNilaiCS($userId, $bulan, $tahun)
     {
         // 1. Omset (40%)
-        $totalOmset = SalesPlan::where('created_by', $userId)
-            ->whereYear('updated_at', $tahun)
-            ->whereMonth('updated_at', $bulan)
-            ->where('status', 'sudah_transfer')
-            ->sum('nominal');
+        $totalOmset = $this->calculateCSOmset($userId, $bulan, $tahun);
         $targetOmset = 50000000; 
         $scoreOmset = $targetOmset > 0 ? min(40, round(($totalOmset / $targetOmset) * 40)) : 0;
 

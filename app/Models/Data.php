@@ -45,6 +45,8 @@ class Data extends Model
         'fu9', 'fu9_wa', 'fu9_telp', 'fu9_at', 'fu9_hasil', 'fu9_tindak_lanjut',
         'fu10', 'fu10_wa', 'fu10_telp', 'fu10_at', 'fu10_hasil', 'fu10_tindak_lanjut',
         'is_no_potensi',
+        'status_data',
+        'pic',
     ];
 
     protected $casts = [
