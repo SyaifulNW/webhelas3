@@ -780,10 +780,10 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                         // If class is being changed, ensure a SalesPlan exists for this new class
                         if ($field === 'kelas_id' && !empty($request->value)) {
                             $kelasId = $request->value;
-                            $exists = \App\Models\SalesPlan::where('data_id', $data->id)
+                            $existingPlan = \App\Models\SalesPlan::where('data_id', $data->id)
                                 ->where('kelas_id', $kelasId)
-                                ->exists();
-                            if (!$exists) {
+                                ->first();
+                            if (!$existingPlan) {
                                 $plan = new \App\Models\SalesPlan();
                                 $plan->data_id = $data->id;
                                 $plan->kelas_id = $kelasId;
@@ -792,6 +792,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                                 $plan->status = 'cold';
                                 $plan->level = 'Grow Up';
                                 $plan->save();
+                                $newSalesplanId = $plan->id;
+                            } else {
+                                $newSalesplanId = $existingPlan->id;
                             }
                         }
                         
@@ -800,7 +803,10 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                     }
                 }
 
-                return response()->json(['success' => true]);
+                return response()->json([
+                    'success' => true,
+                    'salesplan_id' => $newSalesplanId ?? null,
+                ]);
             } catch (\Exception $e) {
                 \Log::error('Update Inline Error: ' . $e->getMessage(), [
                     'id' => $request->id,
