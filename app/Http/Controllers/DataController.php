@@ -1329,6 +1329,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
     public function exportPdfInteraksi(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $bulan = $request->input('bulan');
         $tahun = $request->input('tahun', date('Y'));
         $csName = $request->input('cs_name');

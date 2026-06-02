@@ -131,7 +131,7 @@
                         @if($formattedDate)
                             <div style="font-size: 6px; color: #000; margin-top: 6px; border: 0.5px solid #999; padding: 2px; background-color: #f8f9fa; display: block; text-align: center; border-radius: 2px;">
                                 {{ $formattedDate }}
-                            </div>x
+                            </div>
                         @endif
                     </td>
                     <td class="text-left fu-cell">
