@@ -1924,6 +1924,9 @@
                                     <th style="width: 120px; text-align:center;">Rekap Penilaian</th>
                                     <th style="width: 110px; text-align:center;">Prospek</th>
                                     <th style="width: 160px; text-align:center;">Status Potensi</th>
+                                    @if(stripos(auth()->user()->chapter ?? '', 'depok') !== false || (in_array(strtolower(auth()->user()->role), ['administrator', 'operasional']) && request('view_type') === 'chapter'))
+                                        <th style="width: 120px; text-align:center;">Bukti Transfer</th>
+                                    @endif
                                     @if (in_array($userRole, ['administrator', 'operasional']))
                                         <th style="width: 120px; text-align:center;">PIC</th>
                                     @endif

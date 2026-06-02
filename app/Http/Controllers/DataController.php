@@ -358,13 +358,16 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
 
 
-        // Chapter Role – filter by user's chapter city and exclude certain CS-MBC names
+        // Chapter Role – filter by user's chapter city OR own created data, and exclude certain CS-MBC names
         if ($userRole === 'chapter') {
             $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
             $query->where(function($q) use ($user, $excludeNames) {
-                $q->where('kota_nama', 'like', '%' . $user->chapter . '%')
-                  ->whereNotIn('created_by', $excludeNames)
-                  ->where('created_by_role', '!=', 'cs-mbc');
+                $q->where('created_by', $user->name)
+                  ->orWhere(function($subQ) use ($user, $excludeNames) {
+                      $subQ->where('kota_nama', 'like', '%' . $user->chapter . '%')
+                           ->whereNotIn('created_by', $excludeNames)
+                           ->where('created_by_role', '!=', 'cs-mbc');
+                  });
             });
         } elseif (in_array($userRole, ['reseller', 'agen'])) {
             // Reseller/Agen: See own data + downline data
@@ -417,7 +420,10 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // Re-apply Permission/Ownership Logic to KPI Query for Regional Roles
         if ($userRole === 'chapter') {
             $chapterName = $user->chapter;
-            $kpiQuery->where('kota_nama', 'like', '%' . $chapterName . '%');
+            $kpiQuery->where(function($q) use ($user, $chapterName) {
+                $q->where('created_by', $user->name)
+                  ->orWhere('kota_nama', 'like', '%' . $chapterName . '%');
+            });
         } elseif (in_array($userRole, ['reseller', 'agen'])) {
             $downlineNames = \App\Models\User::where('created_by', $user->id)->pluck('name')->toArray();
             $viewNames = array_merge([$user->name], $downlineNames);
@@ -1396,6 +1402,19 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $answers[] = "Jadwal Zoom: " . $request->input('jadwal_zoom_tanggal') . " " . $request->input('jadwal_zoom_jam');
         }
 
+        if ($request->hasFile('bukti_transfer')) {
+            $file = $request->file('bukti_transfer');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $subFolder = 'uploads/bukti_transfer';
+            $destPath = public_path($subFolder);
+            if (!file_exists($destPath)) {
+                mkdir($destPath, 0777, true);
+            }
+            $file->move($destPath, $filename);
+            $buktiPath = $subFolder . '/' . $filename;
+            $answers[] = "Bukti Transfer: " . asset($buktiPath);
+        }
+
         $totalScore = $request->input('total_score');
 
         // Determine Category/Potensi
@@ -1460,11 +1479,21 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 'Yasmin' => '088228814769'
             ];
             
-            $waNumber = '088228814769'; // Default fallback to Yasmin
-            foreach ($waNumberMap as $nameKey => $phone) {
-                if (stripos($user->name, $nameKey) !== false) {
-                    $waNumber = $phone;
-                    break;
+            $isChapterOrAgent = in_array(strtolower($user->role ?? ''), ['chapter', 'reseller', 'agen']);
+            
+            if ($isChapterOrAgent) {
+                if (!empty($user->wa)) {
+                    $waNumber = $user->wa;
+                } else {
+                    $waNumber = null;
+                }
+            } else {
+                $waNumber = '088228814769'; // Default fallback to Yasmin
+                foreach ($waNumberMap as $nameKey => $phone) {
+                    if (stripos($user->name, $nameKey) !== false) {
+                        $waNumber = $phone;
+                        break;
+                    }
                 }
             }
             
@@ -1485,7 +1514,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                      . "_Data ini masuk otomatis dari Form M1T " . $user->name . "_";
 
             $token = env('FONNTE_TOKEN');
-            if ($token) {
+            if ($token && !empty($waNumber)) {
                 $curl = curl_init();
                 curl_setopt_array($curl, array(
                   CURLOPT_URL => 'https://api.fonnte.com/send',

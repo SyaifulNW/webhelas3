@@ -210,6 +210,30 @@
         </select>
     </td>
 
+    @if(stripos(auth()->user()->chapter ?? '', 'depok') !== false || (in_array(strtolower(auth()->user()->role), ['administrator', 'operasional']) && request('view_type') === 'chapter'))
+        @php
+            $buktiUrl = null;
+            if (isset($item->situasi_bisnis) && preg_match('/Bukti Transfer:\s*(https?:\/\/\S+)/i', $item->situasi_bisnis, $matches)) {
+                $buktiUrl = $matches[1];
+            }
+        @endphp
+        <td class="text-center" style="vertical-align: middle;">
+            @if($buktiUrl)
+                @if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $buktiUrl))
+                    <a href="{{ $buktiUrl }}" target="_blank">
+                        <img src="{{ $buktiUrl }}" style="max-width: 60px; max-height: 60px; border-radius: 6px; border: 1px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.08); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                @else
+                    <a href="{{ $buktiUrl }}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold" style="border-radius: 8px; font-size: 0.75rem;">
+                        <i class="fas fa-file-pdf text-danger me-1"></i> Lihat PDF
+                    </a>
+                @endif
+            @else
+                <span class="text-muted small fw-500">Belum Upload</span>
+            @endif
+        </td>
+    @endif
+
     {{-- 10. PIC / Action --}}
     <td class="text-center" style="vertical-align: middle;">
         <div class="d-flex flex-column gap-2 align-items-center">

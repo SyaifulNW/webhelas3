@@ -78,4 +78,16 @@ class PesertaSmi extends Model
     protected $casts = [
         'spp_custom_schedule' => 'array',
     ];
+
+    protected static function booted()
+    {
+        static::saved(function ($pesertaSmi) {
+            if ($pesertaSmi->isDirty('closing_cs_id')) {
+                if ($pesertaSmi->salesPlan) {
+                    $pesertaSmi->salesPlan->created_by = $pesertaSmi->closing_cs_id;
+                    $pesertaSmi->salesPlan->save();
+                }
+            }
+        });
+    }
 }

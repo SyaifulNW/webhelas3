@@ -2124,6 +2124,10 @@ class PesertaSmiController extends Controller
                 if ($field == 'closing_cs_id') {
                     $user = \App\Models\User::find($value);
                     $peserta->cs_name = $user ? $user->name : null;
+                    if ($peserta->salesPlan) {
+                        $peserta->salesPlan->created_by = $value;
+                        $peserta->salesPlan->save();
+                    }
                 }
 
                 $peserta->save();
@@ -2178,8 +2182,13 @@ class PesertaSmiController extends Controller
             $cleaned = str_replace('.', '', $request->biaya_pendaftaran);
             $peserta->biaya_pendaftaran = $cleaned;
         }
-        if ($request->has('closing_cs_id'))
+        if ($request->has('closing_cs_id')) {
             $peserta->closing_cs_id = $request->closing_cs_id;
+            if ($peserta->salesPlan) {
+                $peserta->salesPlan->created_by = $request->closing_cs_id;
+                $peserta->salesPlan->save();
+            }
+        }
 
         if ($request->has('closing_cs_id') && $request->closing_cs_id) {
             $user = \App\Models\User::find($request->closing_cs_id);

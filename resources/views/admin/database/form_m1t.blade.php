@@ -1,9 +1,18 @@
+@php
+    $isChapterOrAgent = in_array(strtolower($user->role ?? ''), ['chapter', 'reseller', 'agen']);
+    if ($isChapterOrAgent) {
+        $cleanChapter = str_ireplace('chapter ', '', $user->chapter ?? '');
+        $formTitle = "Form Pendaftaran Open House Chapter - " . ($cleanChapter ?: $user->name);
+    } else {
+        $formTitle = "Form Pendaftaran & Penjadwalan Konsultasi Program M1T";
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Pendaftaran & Penjadwalan Konsultasi Program M1T</title>
+    <title>{{ $formTitle }}</title>
     <!-- Use Tailwind via CDN for quick styling 'mirip google form' or custom CSS. Let's use simple Bootstrap. -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -113,14 +122,14 @@
         </script>
     @endif
 
-    <form action="{{ route('form.m1t.store') }}" method="POST">
+    <form action="{{ route('form.m1t.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="user_id" value="{{ $user->id }}">
         <input type="hidden" name="total_score" id="total_score" value="0">
 
         <div class="form-header">
             <h1>
-                Form Pendaftaran & Penjadwalan Konsultasi Program M1T
+                {{ $formTitle }}
             </h1>
             <p>Supaya bisa membantu Anda Maksimal dan optimal mohon isi data dibawah ini terlebih dahulu</p>
             <p class="text-danger small">* Wajib</p>
@@ -434,6 +443,13 @@ apakah anda tertarik, untuk mendengarkan informasinya. : <span class="text-dange
                 <label class="form-check-label" for="coach3">Sudah Kenal</label>
             </div>
         </div>
+
+        @if(strtolower($user->role ?? '') === 'chapter' && stripos($user->chapter ?? '', 'depok') !== false)
+        <div class="card-question">
+            <div class="question-title">16. Upload bukti transfer ke rekening PT. Fokus Kerja Nyata 7347824628 BSI <span class="text-danger">*</span></div>
+            <input type="file" class="form-control" name="bukti_transfer" accept="image/*,application/pdf" required>
+        </div>
+        @endif
 
 
 
