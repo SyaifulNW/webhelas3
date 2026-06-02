@@ -3155,7 +3155,7 @@
                                         </div>
                                         <div class="border-top border-secondary opacity-25 my-2"
                                             style="border-style: dashed !important;"></div>
-                                        <div>
+                                        <div class="mb-2">
                                             <label for="fu{{ $i }}_tindak_lanjut"
                                                 class="fw-bold text-dark text-uppercase mb-0"
                                                 style="font-size: 0.6rem; display: block; font-weight: 800 !important;">Tindak
@@ -3165,6 +3165,14 @@
                                                 {{ auth()->user()->role === 'administrator' ? 'readonly' : '' }}
                                                 style="font-size: 0.8rem; border-radius: 4px; resize: none; line-height: 1.2; font-weight: 700 !important; border-color: #dee2e6 !important;"
                                                 placeholder="Next..."></textarea>
+                                        </div>
+                                        <div class="mt-2 bg-light p-2 rounded border d-flex align-items-center justify-content-between shadow-sm" style="border-radius: 6px; font-size: 0.75rem; border-color: #dee2e6 !important;">
+                                            <span class="text-secondary fw-bold" style="font-size: 0.65rem; font-weight: 800 !important;"><i class="fas fa-clock mr-1"></i> WAKTU FU:</span>
+                                            <input type="text" class="fu-at-display-input border-0 bg-transparent text-right fw-bold text-dark p-0" 
+                                                id="fu{{ $i }}_at_under"
+                                                {{ auth()->user()->role === 'administrator' ? 'readonly' : '' }}
+                                                style="outline: none; font-size: 0.75rem; width: 120px; font-weight: 700 !important;"
+                                                placeholder="-">
                                         </div>
                                     </div>
                                 </div>
@@ -3397,6 +3405,28 @@
             });
         }
 
+        function getCurrentDateTimeString() {
+            let now = new Date();
+            let d = String(now.getDate()).padStart(2, '0');
+            let m = String(now.getMonth() + 1).padStart(2, '0');
+            let y = now.getFullYear();
+            let h = String(now.getHours()).padStart(2, '0');
+            let i = String(now.getMinutes()).padStart(2, '0');
+            return `${d}/${m}/${y} ${h}:${i}`;
+        }
+
+        // Two-way synchronization between top input (fuN_at) and under textarea input (fuN_at_under)
+        $(document).on('input change', '.fu-at-input', function() {
+            let id = $(this).attr('id');
+            let underId = id + '_under';
+            $('#' + underId).val($(this).val());
+        });
+        $(document).on('input change', '.fu-at-display-input', function() {
+            let id = $(this).attr('id');
+            let parentId = id.replace('_under', '');
+            $('#' + parentId).val($(this).val());
+        });
+
         $(document).on('click', '.btn-riwayat', function() {
             let $btn = $(this);
             let id = $btn.data('id');
@@ -3425,6 +3455,7 @@
                 $('#fu' + i + '_wa').prop('checked', wa);
                 $('#fu' + i + '_telp').prop('checked', telp);
                 $('#fu' + i + '_at').val(dateVal ? dateVal : '');
+                $('#fu' + i + '_at_under').val(dateVal ? dateVal : '');
 
                 // Show card if it has data or if it's the first card
                 if (hasil !== '' || tindak !== '' || wa || telp || i === 1) {
@@ -3442,6 +3473,11 @@
             let $nextCard = $('.fu-card-container.d-none').first();
             if ($nextCard.length) {
                 $nextCard.removeClass('d-none');
+                let nextIdx = $nextCard.data('index');
+                // Automatically pre-fill the date/time with the current timestamp when added
+                let currentAt = getCurrentDateTimeString();
+                $('#fu' + nextIdx + '_at').val(currentAt);
+                $('#fu' + nextIdx + '_at_under').val(currentAt);
             } else {
                 Swal.fire({
                     icon: 'info',
@@ -3454,12 +3490,27 @@
             let id = $('#riwayat_data_id').val();
             let salesplanId = $('#riwayat_salesplan_id').val();
             let updates = {};
+            let currentAt = getCurrentDateTimeString();
+            
             for (let i = 1; i <= 10; i++) {
-                updates['fu' + i + '_hasil'] = $('#fu' + i + '_hasil').val();
-                updates['fu' + i + '_tindak_lanjut'] = $('#fu' + i + '_tindak_lanjut').val();
-                updates['fu' + i + '_wa'] = $('#fu' + i + '_wa').is(':checked') ? 1 : 0;
-                updates['fu' + i + '_telp'] = $('#fu' + i + '_telp').is(':checked') ? 1 : 0;
-                updates['fu' + i + '_at'] = $('#fu' + i + '_at').val();
+                let hasil = $('#fu' + i + '_hasil').val();
+                let tindak = $('#fu' + i + '_tindak_lanjut').val();
+                let wa = $('#fu' + i + '_wa').is(':checked');
+                let telp = $('#fu' + i + '_telp').is(':checked');
+                let atVal = $('#fu' + i + '_at').val();
+
+                // If the follow-up card is visible or has any filled content, and date/time is empty, default it
+                if ((hasil || tindak || wa || telp || !$('#fu_card_' + i).hasClass('d-none')) && !atVal) {
+                    atVal = currentAt;
+                    $('#fu' + i + '_at').val(atVal);
+                    $('#fu' + i + '_at_under').val(atVal);
+                }
+
+                updates['fu' + i + '_hasil'] = hasil;
+                updates['fu' + i + '_tindak_lanjut'] = tindak;
+                updates['fu' + i + '_wa'] = wa ? 1 : 0;
+                updates['fu' + i + '_telp'] = telp ? 1 : 0;
+                updates['fu' + i + '_at'] = atVal;
             }
 
             let $btnSimpan = $(this);

@@ -181,7 +181,7 @@
                                 <i class="fas fa-circle text-danger mr-1"></i> Menunggak: <span class="text-dark">{{ $dashboardData['status_pie']['menunggak'] }}</span>
                             </div>
                             <div class="col-6 mb-1 text-xs font-weight-bold">
-                                <i class="fas fa-circle text-info mr-1"></i> Cuti: <span class="text-dark">{{ $dashboardData['status_pie']['cuti'] }}</span>
+                                <i class="fas fa-circle text-info mr-1"></i> OFF: <span class="text-dark">{{ $dashboardData['status_pie']['cuti'] }}</span>
                             </div>
                         </div>
                     </div>
@@ -366,7 +366,7 @@
         new Chart(pieCtx, {
             type: 'doughnut',
             data: {
-                labels: ["Lunas", "Pending", "Menunggak", "Cuti", "Drop Out"],
+                labels: ["Lunas", "Pending", "Menunggak", "OFF", "Drop Out"],
                 datasets: [{
                     data: [{{ $dashboardData['status_pie']['lunas'] }}, {{ $dashboardData['status_pie']['pending'] }}, {{ $dashboardData['status_pie']['menunggak'] }}, {{ $dashboardData['status_pie']['cuti'] }}, 0],
                     backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc', '#858796'],

@@ -326,7 +326,16 @@ class PesertaSmiController extends Controller
                     $countPaid++;
                 }
             }
-            if ($isManualLunas || $countPaid >= 6) {
+            $biayaClosing = $item->total_pembayaran ?? $item->spp_awal;
+            if (!$biayaClosing && ($item->biaya_pendaftaran || $item->pembayaran_spp)) {
+                $biayaClosing = (float) $item->biaya_pendaftaran + (float) $item->pembayaran_spp;
+            }
+            if (!$biayaClosing) {
+                $biayaClosing = $item->biaya_pendaftaran;
+            }
+            $isLumpSumLunas = ($biayaClosing >= (6 * $levelNominal));
+
+            if ($isManualLunas || $countPaid >= 6 || $isLumpSumLunas) {
                 $lunasCount++;
             }
         }
@@ -400,7 +409,7 @@ class PesertaSmiController extends Controller
         $stats = [
             'total' => $globalStats->count(),
             'aktif' => $globalStats->where('status', 'Aktif')->count(),
-            'cuti' => $globalStats->where('status', 'Cuti')->count(),
+            'cuti' => $globalStats->filter(fn($x) => in_array($x->status, ['Cuti', 'OFF', 'off']))->count(),
             'lunas' => $lunasCount,
             'pending' => $pendingCount,
             'count_closing' => 0,
@@ -426,16 +435,7 @@ class PesertaSmiController extends Controller
             // Filtering by spp_N = 0 would incorrectly exclude Blue Checklist participants.
             $month = (int)$sppMonth;
         } else {
-             // Handle Lunas Badge filtering when Month is ALL
-             if ($sppStatus === '1') {
-                $query->where(function ($q) {
-                    $q->where('is_lunas', 1)
-                        ->orWhereRaw("((CASE WHEN spp_1>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_2>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_3>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_4>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_5>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_6>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_7>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_8>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_9>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_10>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_11>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_12>=1000000 THEN 1 ELSE 0 END)) >= 6");
-                });
-            } elseif ($sppStatus === '0') {
-                $query->where('is_lunas', 0)
-                    ->whereRaw("((CASE WHEN spp_1>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_2>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_3>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_4>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_5>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_6>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_7>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_8>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_9>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_10>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_11>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_12>=1000000 THEN 1 ELSE 0 END)) < 6");
-            }
+             // Handled in-memory to align with dynamic level nominals and prevent discrepancies
         }
 
         // Server-side Search (Display Filter)
@@ -608,8 +608,8 @@ class PesertaSmiController extends Controller
                 }
                 
 
-                // [USER_REQUEST] Exclude 'Cuti' status from monthly dashboard stats entirely
-                if ($p->status === 'Cuti') {
+                // [USER_REQUEST] Exclude 'OFF' status from monthly dashboard stats entirely
+                if (in_array($p->status, ['Cuti', 'OFF', 'off'])) {
                     continue;
                 }
 
@@ -657,12 +657,14 @@ class PesertaSmiController extends Controller
         // Filter Status (Aktif, Cuti, Lulus, Lunas) - Applied only to list view, not stats cards
         if ($request->has('filter_status') && $request->filter_status && $request->filter_status !== 'all') {
             if ($request->filter_status === 'Lunas') {
-                $query->where(function ($q) {
-                    $q->where('is_lunas', 1)
-                      ->orWhereRaw("((CASE WHEN spp_1>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_2>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_3>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_4>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_5>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_6>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_7>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_8>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_9>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_10>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_11>=1000000 THEN 1 ELSE 0 END)+(CASE WHEN spp_12>=1000000 THEN 1 ELSE 0 END)) >= 6");
-                });
+                // Handled in-memory below to align with dynamic level nominals and prevent discrepancies
             } else {
-                $query->where('status', $request->filter_status);
+                $fStatus = $request->filter_status;
+                if (in_array($fStatus, ['Cuti', 'OFF', 'off'])) {
+                    $query->whereIn('status', ['Cuti', 'OFF', 'off']);
+                } else {
+                    $query->where('status', $fStatus);
+                }
             }
         }
 
@@ -681,6 +683,31 @@ class PesertaSmiController extends Controller
             });
         }
 
+        // Filter Lunas in-memory if requested to align perfectly with stats card calculation
+        if ($request->get('filter_status') === 'Lunas') {
+            $data = $data->filter(function($item) {
+                $isManualLunas = ($item->is_lunas == 1);
+                $itemLevel = strtolower($item->level ?? $item->salesPlan->level ?? '');
+                $levelNominal = str_contains($itemLevel, 'grow') ? 1500000 : 1000000;
+                $countPaid = 0;
+                for ($m = 1; $m <= 12; $m++) {
+                    if (($item->{"spp_$m"} ?? 0) >= $levelNominal) {
+                        $countPaid++;
+                    }
+                }
+                $biayaClosing = $item->total_pembayaran ?? $item->spp_awal;
+                if (!$biayaClosing && ($item->biaya_pendaftaran || $item->pembayaran_spp)) {
+                    $biayaClosing = (float) $item->biaya_pendaftaran + (float) $item->pembayaran_spp;
+                }
+                if (!$biayaClosing) {
+                    $biayaClosing = $item->biaya_pendaftaran;
+                }
+                $isLumpSumLunas = ($biayaClosing >= (6 * $levelNominal));
+
+                return ($isManualLunas || $countPaid >= 6 || $isLumpSumLunas);
+            });
+        }
+
         // [USER_REQUEST] In-memory filter for SPP status (month-specific)
         // Must be done in-memory because Blue Checklist (isBlue) is a computed value, not a DB column.
         // "Belum Lunas" = no Green (spp_N = 0) AND no Blue (not closing/planned month)
@@ -689,8 +716,8 @@ class PesertaSmiController extends Controller
             $mNum = ($sppMonth !== 'all') ? (int)$sppMonth : (int)date('n');
             $yNum = (int)$yearFilter;
             $data = $data->filter(function($p) use ($mNum, $yNum, $sppStatus) {
-                // Exclude Cuti status entirely from monthly stats lists (consistent with stats calculation)
-                if ($p->status === 'Cuti' && request()->get('filter_status') !== 'Cuti') {
+                // Exclude OFF status entirely from monthly stats lists (consistent with stats calculation)
+                if (in_array($p->status, ['Cuti', 'OFF', 'off']) && !in_array(request()->get('filter_status'), ['Cuti', 'OFF', 'off'])) {
                     return false;
                 }
 
@@ -858,17 +885,28 @@ class PesertaSmiController extends Controller
         // 4. Lulus -> Bottom-most
         $data = $data->map(function ($item) {
             $isManualLunas = ($item->is_lunas == 1);
+            $itemLevel = strtolower($item->level ?? $item->salesPlan->level ?? '');
+            $levelNominal = str_contains($itemLevel, 'grow') ? 1500000 : 1000000;
             $countPaid = 0;
             for ($m = 1; $m <= 12; $m++) {
-                if (($item->{"spp_$m"} ?? 0) >= 1000000)
+                if (($item->{"spp_$m"} ?? 0) >= $levelNominal)
                     $countPaid++;
             }
-            $item->is_all_paid = $isManualLunas || ($countPaid >= 6);
+            $biayaClosing = $item->total_pembayaran ?? $item->spp_awal;
+            if (!$biayaClosing && ($item->biaya_pendaftaran || $item->pembayaran_spp)) {
+                $biayaClosing = (float) $item->biaya_pendaftaran + (float) $item->pembayaran_spp;
+            }
+            if (!$biayaClosing) {
+                $biayaClosing = $item->biaya_pendaftaran;
+            }
+            $isLumpSumLunas = ($biayaClosing >= (6 * $levelNominal));
+
+            $item->is_all_paid = $isManualLunas || ($countPaid >= 6) || $isLumpSumLunas;
 
             $weight = 0; // Default: Aktif
             if ($item->is_all_paid)
                 $weight = 1;
-            if ($item->status === 'Cuti')
+            if (in_array($item->status, ['Cuti', 'OFF', 'off']))
                 $weight = 2;
             if ($item->status === 'Lulus')
                 $weight = 3;
@@ -880,6 +918,11 @@ class PesertaSmiController extends Controller
         // [USER_REQUEST] Filter out participants with 'LUNAS' badge when set to 'Belum Lunas' (status=0)
         if ($request->get('filter_spp_status') === '0') {
             $data = $data->reject(fn($item) => $item->is_all_paid);
+        }
+
+        // Filter out non-lunas participants when set to 'Sudah Lunas' (status=1) and Month is ALL
+        if ($sppMonth === 'all' && $request->get('filter_spp_status') === '1') {
+            $data = $data->filter(fn($item) => $item->is_all_paid);
         }
 
         // [USER_REQUEST] Dynamic Sorting
@@ -1001,7 +1044,7 @@ class PesertaSmiController extends Controller
                     ->whereDate('tanggal_selesai', '>=', $dateStart);
             })
                 ->where('status', '!=', 'Lulus')
-                ->where('status', '!=', 'Cuti')
+                ->whereNotIn('status', ['Cuti', 'OFF', 'off'])
                 ->where('is_lunas', '!=', 1); // Exclude fully paid participants
 
             $allActiveRaw = $activeInMonthQuery->orderBy('id', 'desc')->get()->unique('nama');
@@ -1451,7 +1494,7 @@ class PesertaSmiController extends Controller
             $mNum = ($sppMonth !== 'all') ? (int)$sppMonth : (int)date('n');
             $yNum = (int)$yearFilter;
             $data = $data->filter(function($p) use ($mNum, $yNum, $sppStatus) {
-                if ($p->status === 'Cuti' && request()->get('filter_status') !== 'Cuti') {
+                if (in_array($p->status, ['Cuti', 'OFF', 'off']) && !in_array(request()->get('filter_status'), ['Cuti', 'OFF', 'off'])) {
                     return false;
                 }
 
@@ -1611,7 +1654,7 @@ class PesertaSmiController extends Controller
             $weight = 0;
             if ($item->is_all_paid)
                 $weight = 1;
-            if ($item->status === 'Cuti')
+            if (in_array($item->status, ['Cuti', 'OFF', 'off']))
                 $weight = 2;
             if ($item->status === 'Lulus')
                 $weight = 3;
@@ -1750,7 +1793,7 @@ class PesertaSmiController extends Controller
         $stats = [
             'total' => $globalStats->count(),
             'aktif' => $globalStats->where('status', 'Aktif')->count(),
-            'cuti' => $globalStats->where('status', 'Cuti')->count(),
+            'cuti' => $globalStats->filter(fn($x) => in_array($x->status, ['Cuti', 'OFF', 'off']))->count(),
             'lunas' => $lunasCount,
             'pending' => $pendingCount,
             'count_closing' => 0,
@@ -1912,7 +1955,7 @@ class PesertaSmiController extends Controller
                 }
             }
 
-            if ($p->status === 'Cuti') {
+            if (in_array($p->status, ['Cuti', 'OFF', 'off'])) {
                 continue;
             }
 
@@ -2146,7 +2189,7 @@ class PesertaSmiController extends Controller
         // Validate Standard Request
         $request->validate([
             'nama' => 'required|string|max:255',
-            'status' => 'required|in:Aktif,Cuti,Lulus',
+            'status' => 'required|in:Aktif,Cuti,OFF,off,Lulus',
             'one_on_one_coaching' => 'nullable|date',
         ]);
 

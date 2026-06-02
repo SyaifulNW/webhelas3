@@ -19,7 +19,7 @@
                         <option value="all">Semua Status</option>
                         <option value="Aktif">Aktif</option>
                         <option value="Pending">Pending</option>
-                        <option value="Cuti">Cuti</option>
+                        <option value="OFF">OFF</option>
                         <option value="Drop Out">Drop Out</option>
                     </select>
                 </div>

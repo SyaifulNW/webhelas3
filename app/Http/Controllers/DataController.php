@@ -1329,6 +1329,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
     public function exportPdfInteraksi(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $bulan = $request->input('bulan');
         $tahun = $request->input('tahun', date('Y'));
         $csName = $request->input('cs_name');
@@ -1478,7 +1481,16 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $file = $request->file('bukti_transfer');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $subFolder = 'uploads/bukti_transfer';
-            $destPath = public_path($subFolder);
+            
+            // Robust path detection for various server environments (Shared Hosting, XAMPP, etc.)
+            $basePublic = public_path();
+            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
+                $basePublic = $_SERVER['DOCUMENT_ROOT'];
+            } elseif (is_dir(base_path('public_html'))) {
+                $basePublic = base_path('public_html');
+            }
+            
+            $destPath = rtrim($basePublic, '/') . '/' . $subFolder;
             if (!file_exists($destPath)) {
                 mkdir($destPath, 0777, true);
             }

@@ -493,7 +493,7 @@
                                 <tbody>
                                     <tr id="row-stat-all" onclick="filterByStat && filterByStat('all')" style="cursor: pointer;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-users text-primary mr-2" style="width: 16px;"></i>Total Peserta Keseluruhan (Aktif & Cuti)
+                                            <i class="fas fa-users text-primary mr-2" style="width: 16px;"></i>Total Peserta Keseluruhan (Aktif & OFF)
                                         </td>
                                         <td class="text-center">
                                             <span class="badge badge-primary font-weight-bold px-2.5 py-1" id="stat-total" style="font-size: 0.85rem; border-radius: 4px;">{{ number_format($stats['total']) }}</span>
@@ -509,7 +509,7 @@
                                     </tr>
                                     <tr id="row-stat-cuti" onclick="filterByStat && filterByStat('cuti')" style="cursor: pointer;">
                                         <td class="pl-3 font-weight-bold text-gray-800">
-                                            <i class="fas fa-user-slash text-danger mr-2" style="width: 16px;"></i>Total Peserta Cuti
+                                            <i class="fas fa-user-slash text-danger mr-2" style="width: 16px;"></i>Total Peserta OFF
                                         </td>
                                         <td class="text-center">
                                             <span class="badge badge-danger font-weight-bold px-2.5 py-1" id="stat-cuti" style="font-size: 0.85rem; border-radius: 4px;">{{ number_format($stats['cuti']) }}</span>
@@ -1470,7 +1470,7 @@
                 document.getElementById('row-stat-pending')?.classList.add('active-stat-row');
             } else if (status === 'Aktif' && sppStatus === 'all') {
                 document.getElementById('row-stat-aktif')?.classList.add('active-stat-row');
-            } else if (status === 'Cuti' && sppStatus === 'all') {
+            } else if ((status === 'Cuti' || status === 'OFF' || status === 'off') && sppStatus === 'all') {
                 document.getElementById('row-stat-cuti')?.classList.add('active-stat-row');
             } else if (status === 'Lunas' && sppStatus === 'all') {
                 document.getElementById('row-stat-lunas')?.classList.add('active-stat-row');

@@ -226,6 +226,10 @@
             $buktiUrl = null;
             if (isset($item->situasi_bisnis) && preg_match('/Bukti Transfer:\s*(https?:\/\/\S+)/i', $item->situasi_bisnis, $matches)) {
                 $buktiUrl = $matches[1];
+                // Resolve local testing URL issue by converting path relative to assets
+                if (preg_match('/uploads\/bukti_transfer\/\S+/i', $buktiUrl, $pathMatches)) {
+                    $buktiUrl = asset($pathMatches[0]);
+                }
             }
         @endphp
         <td class="text-center" style="vertical-align: middle;">
