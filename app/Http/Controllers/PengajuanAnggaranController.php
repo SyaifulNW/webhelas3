@@ -32,7 +32,7 @@ class PengajuanAnggaranController extends Controller
         $selectedApplicant = $request->get('applicant');
         $applicants = collect();
 
-        $query = PengajuanAnggaran::query();
+        $query = PengajuanAnggaran::with(['pengadaanBarang.buktiFotos']);
 
         // Linda and Administrator can see all requests
         if (!($isLinda || $isAdmin)) {
@@ -266,17 +266,12 @@ class PengajuanAnggaranController extends Controller
         ];
 
         if ($request->hasFile('bukti_transfer')) {
-            // Ultra-Detect: Cek folder publik yang sedang digunakan oleh web server
-            $basePublic = public_path();
-            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
-                $basePublic = $_SERVER['DOCUMENT_ROOT'];
-            } elseif (is_dir(base_path('public_html'))) {
-                $basePublic = base_path('public_html');
-            }
+            $subFolder = 'uploads/bukti_transfer';
+            $destinationPath = public_path($subFolder);
 
             // Delete old file if exists
-            if ($anggaran->bukti_transfer && file_exists(rtrim($basePublic, '/') . '/' . $anggaran->bukti_transfer)) {
-                @unlink(rtrim($basePublic, '/') . '/' . $anggaran->bukti_transfer);
+            if ($anggaran->bukti_transfer && file_exists(public_path($anggaran->bukti_transfer))) {
+                @unlink(public_path($anggaran->bukti_transfer));
             }
 
             $file = $request->file('bukti_transfer');
@@ -284,9 +279,6 @@ class PengajuanAnggaranController extends Controller
             $extension = $file->getClientOriginalExtension();
             $safeName = \Illuminate\Support\Str::slug($originalName) . '.' . $extension;
             $filename = 'bukti_trans_' . time() . '_' . $safeName;
-
-            $subFolder = 'uploads/bukti_transfer';
-            $destinationPath = rtrim($basePublic, '/') . '/' . $subFolder;
 
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0755, true);
@@ -298,8 +290,107 @@ class PengajuanAnggaranController extends Controller
 
         $anggaran->update($updateData);
 
+        // Sync status ACC, realisasi_dana, dan bukti_transfer ke PengadaanBarang yang terkait
+        $pengadaanBarang = \App\Models\PengadaanBarang::where('pengajuan_anggaran_id', $anggaran->id)->first();
+        if ($pengadaanBarang) {
+            $syncPengadaan = [];
+            if ($newStatus === 'approved') {
+                $syncPengadaan['acc'] = 'Iya';
+                $syncPengadaan['realisasi_dana'] = $totalApproved;
+            } elseif ($newStatus === 'belum_lunas') {
+                $syncPengadaan['acc'] = 'Belum Lunas';
+                $syncPengadaan['realisasi_dana'] = $totalApproved;
+            } elseif ($request->status === 'rejected') {
+                $syncPengadaan['acc'] = 'Tidak';
+                $syncPengadaan['realisasi_dana'] = null;
+            }
+            // Sync bukti_transfer jika Linda upload saat approve
+            if (isset($updateData['bukti_transfer'])) {
+                $syncPengadaan['bukti_transfer'] = $updateData['bukti_transfer'];
+            }
+            if (!empty($syncPengadaan)) {
+                $pengadaanBarang->update($syncPengadaan);
+            }
+
+            // Sync foto ke tabel pengadaan_bukti_transfers agar muncul di grid operasional
+            if (isset($updateData['bukti_transfer'])) {
+                $filePath = $updateData['bukti_transfer'];
+                $sudahAda = \App\Models\PengadaanBuktiTransfer::where('pengadaan_barang_id', $pengadaanBarang->id)
+                    ->where('file_path', $filePath)->exists();
+                if (!$sudahAda) {
+                    \App\Models\PengadaanBuktiTransfer::create([
+                        'pengadaan_barang_id' => $pengadaanBarang->id,
+                        'file_path'           => $filePath,
+                    ]);
+                }
+            }
+
+            // Auto-sync ke Inventaris Kantor jika ACC disetujui (hindari duplikasi)
+            $pengadaanBarang->refresh();
+            $pengadaanBarang->syncToInventaris();
+        }
+
         $message = $request->status === 'approved' ? 'Pengajuan anggaran disetujui.' : 'Pengajuan anggaran ditolak.';
         return redirect()->back()->with('success', $message);
+    }
+
+    public function gantiBuktiFoto(Request $request, $id, $buktiId)
+    {
+        $request->validate([
+            'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $user = Auth::user();
+        $isLinda = stripos($user->name, 'Linda') !== false;
+        if (!$isLinda) {
+            return redirect()->back()->with('error', 'Hanya Linda yang dapat mengganti foto ini.');
+        }
+
+        $anggaran = PengajuanAnggaran::findOrFail($id);
+
+        // Cari record bukti di tabel pengadaan_bukti_transfers
+        $pengadaanBarang = \App\Models\PengadaanBarang::where('pengajuan_anggaran_id', $anggaran->id)->first();
+        if (!$pengadaanBarang) {
+            return redirect()->back()->with('error', 'Pengadaan barang terkait tidak ditemukan.');
+        }
+
+        $bukti = \App\Models\PengadaanBuktiTransfer::where('id', $buktiId)
+                    ->where('pengadaan_barang_id', $pengadaanBarang->id)
+                    ->firstOrFail();
+
+        $subFolder = 'uploads/bukti_transfer';
+        $destinationPath = public_path($subFolder);
+
+        // Hapus file lama
+        if (file_exists(public_path($bukti->file_path))) {
+            @unlink(public_path($bukti->file_path));
+        }
+
+        $file = $request->file('bukti_transfer');
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+        $safeName = \Illuminate\Support\Str::slug($originalName) . '.' . $extension;
+        $filename = 'bukti_trans_' . time() . '_' . $safeName;
+
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0755, true);
+        }
+
+        $file->move($destinationPath, $filename);
+        $newPath = $subFolder . '/' . $filename;
+
+        // Update record bukti
+        $bukti->update(['file_path' => $newPath]);
+
+        // Jika ini adalah foto utama (bukti_transfer di pengadaan/pengajuan), update juga
+        if ($pengadaanBarang->bukti_transfer === $bukti->file_path || $pengadaanBarang->bukti_transfer === null) {
+            $pengadaanBarang->update(['bukti_transfer' => $newPath]);
+        }
+        if ($anggaran->bukti_transfer === $bukti->file_path || $anggaran->bukti_transfer === null) {
+            $anggaran->update(['bukti_transfer' => $newPath]);
+        }
+
+        return redirect()->back()->with('success', 'Foto berhasil diganti.');
     }
 
     public function uploadBukti(Request $request, $id)
@@ -318,36 +409,52 @@ class PengajuanAnggaranController extends Controller
             return redirect()->back()->with('error', 'Administrator hanya memiliki akses lihat.');
         }
 
-        if ($request->hasFile('bukti_transfer')) {
-            // Ultra-Detect: Cek folder publik yang sedang digunakan oleh web server
-            $basePublic = public_path();
-            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
-                $basePublic = $_SERVER['DOCUMENT_ROOT'];
-            } elseif (is_dir(base_path('public_html'))) {
-                $basePublic = base_path('public_html');
+        if (!$request->hasFile('bukti_transfer')) {
+            return redirect()->back()->with('error', 'File tidak ditemukan.');
+        }
+
+        $subFolder = 'uploads/bukti_transfer';
+        $destinationPath = public_path($subFolder);
+
+        // Delete old file if exists
+        if ($anggaran->bukti_transfer && file_exists(public_path($anggaran->bukti_transfer))) {
+            @unlink(public_path($anggaran->bukti_transfer));
+        }
+
+        $file = $request->file('bukti_transfer');
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+        $safeName = \Illuminate\Support\Str::slug($originalName) . '.' . $extension;
+        $filename = 'bukti_trans_' . time() . '_' . $safeName;
+
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0755, true);
+        }
+
+        $file->move($destinationPath, $filename);
+        $filePath = $subFolder . '/' . $filename;
+
+        // Simpan ke pengajuan_anggarans
+        $anggaran->update(['bukti_transfer' => $filePath]);
+
+        // Sync ke pengadaan_barangs yang terkait
+        $pengadaanBarang = \App\Models\PengadaanBarang::where('pengajuan_anggaran_id', $anggaran->id)->first();
+        if ($pengadaanBarang) {
+            if ($pengadaanBarang->bukti_transfer && $pengadaanBarang->bukti_transfer !== $filePath
+                && file_exists(public_path($pengadaanBarang->bukti_transfer))) {
+                @unlink(public_path($pengadaanBarang->bukti_transfer));
             }
+            $pengadaanBarang->update(['bukti_transfer' => $filePath]);
 
-            $subFolder = 'uploads/bukti_transfer';
-            $destinationPath = rtrim($basePublic, '/') . '/' . $subFolder;
-
-            // Delete old file if exists
-            if ($anggaran->bukti_transfer && file_exists(rtrim($basePublic, '/') . '/' . $anggaran->bukti_transfer)) {
-                @unlink(rtrim($basePublic, '/') . '/' . $anggaran->bukti_transfer);
+            // Sync ke tabel pengadaan_bukti_transfers (multiple foto) agar muncul di grid operasional
+            $sudahAda = \App\Models\PengadaanBuktiTransfer::where('pengadaan_barang_id', $pengadaanBarang->id)
+                ->where('file_path', $filePath)->exists();
+            if (!$sudahAda) {
+                \App\Models\PengadaanBuktiTransfer::create([
+                    'pengadaan_barang_id' => $pengadaanBarang->id,
+                    'file_path'           => $filePath,
+                ]);
             }
-
-            $file = $request->file('bukti_transfer');
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
-            $safeName = \Illuminate\Support\Str::slug($originalName) . '.' . $extension;
-            $filename = 'bukti_trans_' . time() . '_' . $safeName;
-
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
-            }
-
-            $file->move($destinationPath, $filename);
-
-            $anggaran->update(['bukti_transfer' => $subFolder . '/' . $filename]);
         }
 
         return redirect()->back()->with('success', 'Bukti transfer berhasil diunggah.');

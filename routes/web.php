@@ -160,6 +160,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/pengadaan-barang/update/{id}', [\App\Http\Controllers\PengadaanBarangController::class, 'update'])->name('pengadaan-barang.update');
     Route::delete('/pengadaan-barang/destroy/{id}', [\App\Http\Controllers\PengadaanBarangController::class, 'destroy'])->name('pengadaan-barang.destroy');
     Route::post('/pengadaan-barang/{id}/upload-bukti', [\App\Http\Controllers\PengadaanBarangController::class, 'uploadBukti'])->name('pengadaan-barang.upload-bukti');
+    Route::post('/pengadaan-barang/{id}/add-bukti', [\App\Http\Controllers\PengadaanBarangController::class, 'addBukti'])->name('pengadaan-barang.add-bukti');
+    Route::delete('/pengadaan-barang/{id}/bukti/{buktiId}', [\App\Http\Controllers\PengadaanBarangController::class, 'deleteBukti'])->name('pengadaan-barang.delete-bukti');
 
     // Inventaris Kantor
     Route::post('/inventaris-kantor/store', [\App\Http\Controllers\InventarisKantorController::class, 'store'])->name('inventaris-kantor.store');
@@ -259,6 +261,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/keuangan/pengajuan-anggaran/export-pdf', [App\Http\Controllers\PengajuanAnggaranController::class, 'exportPDF'])->name('keuangan.pengajuan-anggaran.export-pdf');
         Route::post('/keuangan/pengajuan-anggaran/{id}/status', [App\Http\Controllers\PengajuanAnggaranController::class, 'updateStatus'])->name('keuangan.pengajuan-anggaran.update-status');
         Route::post('/keuangan/pengajuan-anggaran/{id}/upload-bukti', [App\Http\Controllers\PengajuanAnggaranController::class, 'uploadBukti'])->name('keuangan.pengajuan-anggaran.upload-bukti');
+        Route::put('/keuangan/pengajuan-anggaran/{id}/ganti-bukti/{buktiId}', [App\Http\Controllers\PengajuanAnggaranController::class, 'gantiBuktiFoto'])->name('keuangan.pengajuan-anggaran.ganti-bukti');
 
         // Monitoring & Activity
         Route::get('/operasional', [DashboardController::class, 'operasional'])->name('operasional');

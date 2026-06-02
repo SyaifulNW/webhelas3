@@ -35,4 +35,12 @@ class PengajuanAnggaran extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Relasi ke PengadaanBarang yang memicu pengajuan ini.
+     */
+    public function pengadaanBarang()
+    {
+        return $this->hasOne(\App\Models\PengadaanBarang::class);
+    }
 }

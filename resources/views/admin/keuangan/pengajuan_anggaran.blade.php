@@ -26,13 +26,13 @@
             <div class="d-flex align-items-center">
                 <form action="{{ route('admin.keuangan.pengajuan-anggaran') }}" method="GET" class="form-inline mr-3"
                     id="filterForm">
-                    @if(request('embed'))
+                    @if (request('embed'))
                         <input type="hidden" name="embed" value="{{ request('embed') }}">
                     @endif
                     <select name="month" class="form-control form-control-sm mr-2" style="width: 130px;"
                         onchange="this.form.submit()">
                         <option value="all" {{ $month == 'all' ? 'selected' : '' }}>Semua Bulan</option>
-                        @for($m = 1; $m <= 12; $m++)
+                        @for ($m = 1; $m <= 12; $m++)
                             <option value="{{ sprintf('%02d', $m) }}" {{ $month == sprintf('%02d', $m) ? 'selected' : '' }}>
                                 {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
                             </option>
@@ -41,8 +41,9 @@
                     <select name="year" class="form-control form-control-sm mr-2" style="width: 120px;"
                         onchange="this.form.submit()">
                         <option value="all" {{ $year == 'all' ? 'selected' : '' }}>Semua Tahun</option>
-                        @for($y = date('Y'); $y >= 2024; $y--)
-                            <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @for ($y = date('Y'); $y >= 2024; $y--)
+                            <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}
+                            </option>
                         @endfor
                     </select>
                 </form>
@@ -52,7 +53,7 @@
                     <i class="fas fa-file-pdf fa-sm text-white-50 mr-1"></i> Cetak PDF
                 </a>
 
-                @if(!$isAdminMonitor)
+                @if (!$isAdminMonitor)
                     <button type="button" class="btn btn-primary btn-sm shadow-sm" id="btnTambahBaris">
                         <i class="fas fa-plus fa-sm text-white-50 mr-1"></i> Tambah Pengajuan Baru
                     </button>
@@ -60,7 +61,7 @@
             </div>
         </div>
 
-        @if(session('success'))
+        @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
                 <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -87,8 +88,12 @@
                                     <select name="sort_date_client" class="form-control form-control-sm m-auto table-sort"
                                         style="width: 100px; font-size: 0.75rem; height: 28px;" data-sort="date"
                                         onchange="applyTableFilters()">
-                                        <option value="desc" {{ $sortBy == 'tanggal_pengajuan' && $sortOrder == 'desc' ? 'selected' : '' }}>Terbaru</option>
-                                        <option value="asc" {{ $sortBy == 'tanggal_pengajuan' && $sortOrder == 'asc' ? 'selected' : '' }}>Terlama</option>
+                                        <option value="desc"
+                                            {{ $sortBy == 'tanggal_pengajuan' && $sortOrder == 'desc' ? 'selected' : '' }}>
+                                            Terbaru</option>
+                                        <option value="asc"
+                                            {{ $sortBy == 'tanggal_pengajuan' && $sortOrder == 'asc' ? 'selected' : '' }}>
+                                            Terlama</option>
                                     </select>
                                 </th>
                                 <th width="15%" class="align-middle text-center">
@@ -97,7 +102,9 @@
                                         style="width: 140px; font-size: 0.75rem; height: 28px;" data-filter="type"
                                         onchange="applyTableFilters()">
                                         <option value="all">ALL</option>
-                                        <option value="main">Pengajuan Bulan {{ $month != 'all' ? \Carbon\Carbon::create()->month($month)->translatedFormat('F') : 'Ini' }} Saja</option>
+                                        <option value="main">Pengajuan Bulan
+                                            {{ $month != 'all' ? \Carbon\Carbon::create()->month($month)->translatedFormat('F') : 'Ini' }}
+                                            Saja</option>
                                         <option value="overdue">Pengajuan yang menunggak</option>
                                     </select>
                                 </th>
@@ -107,19 +114,25 @@
                                         style="width: 90px; font-size: 0.75rem; height: 28px;" data-sort="cost"
                                         onchange="applyTableFilters()">
                                         <option value="">Urutan</option>
-                                        <option value="asc" {{ $sortBy == 'jumlah_biaya' && $sortOrder == 'asc' ? 'selected' : '' }}>Paling Murah</option>
-                                        <option value="desc" {{ $sortBy == 'jumlah_biaya' && $sortOrder == 'desc' ? 'selected' : '' }}>Paling Mahal</option>
+                                        <option value="asc"
+                                            {{ $sortBy == 'jumlah_biaya' && $sortOrder == 'asc' ? 'selected' : '' }}>Paling
+                                            Murah</option>
+                                        <option value="desc"
+                                            {{ $sortBy == 'jumlah_biaya' && $sortOrder == 'desc' ? 'selected' : '' }}>
+                                            Paling Mahal</option>
                                     </select>
                                 </th>
-                                @if($canManage || $isAdminMonitor)
+                                @if ($canManage || $isAdminMonitor)
                                     <th width="10%" class="text-center align-middle">
                                         <div class="mb-1">Pemohon</div>
-                                        <select name="applicant_client" class="form-control form-control-sm m-auto table-filter"
+                                        <select name="applicant_client"
+                                            class="form-control form-control-sm m-auto table-filter"
                                             style="width: 90px; font-size: 0.75rem; height: 28px;" data-filter="applicant"
                                             onchange="applyTableFilters()">
                                             <option value="">Semua</option>
-                                            @foreach($applicants as $appName)
-                                                <option value="{{ strtolower($appName) }}" {{ strtolower($selectedApplicant) == strtolower($appName) ? 'selected' : '' }}>
+                                            @foreach ($applicants as $appName)
+                                                <option value="{{ strtolower($appName) }}"
+                                                    {{ strtolower($selectedApplicant) == strtolower($appName) ? 'selected' : '' }}>
                                                     {{ $appName }}
                                                 </option>
                                             @endforeach
@@ -134,10 +147,14 @@
                                         style="width: 100px; font-size: 0.75rem; height: 28px;" data-filter="status"
                                         onchange="applyTableFilters()">
                                         <option value="">Semua</option>
-                                        <option value="pending" {{ $selectedStatus == 'pending' ? 'selected' : '' }}>Belum Terbayar</option>
-                                        <option value="belum_lunas" {{ $selectedStatus == 'belum_lunas' ? 'selected' : '' }}>Belum Lunas</option>
-                                        <option value="approved" {{ $selectedStatus == 'approved' ? 'selected' : '' }}>Disetujui</option>
-                                        <option value="rejected" {{ $selectedStatus == 'rejected' ? 'selected' : '' }}>Ditolak</option>
+                                        <option value="pending" {{ $selectedStatus == 'pending' ? 'selected' : '' }}>Belum
+                                            Terbayar</option>
+                                        <option value="belum_lunas"
+                                            {{ $selectedStatus == 'belum_lunas' ? 'selected' : '' }}>Belum Lunas</option>
+                                        <option value="approved" {{ $selectedStatus == 'approved' ? 'selected' : '' }}>
+                                            Disetujui</option>
+                                        <option value="rejected" {{ $selectedStatus == 'rejected' ? 'selected' : '' }}>
+                                            Ditolak</option>
                                     </select>
                                 </th>
                                 <th width="10%">Keterangan</th>
@@ -150,7 +167,7 @@
                                 <td class="text-right py-3 text-primary" style="font-size: 1rem;">
                                     <span id="headerTotalAwal">Rp {{ number_format($totalAwal, 0, ',', '.') }}</span>
                                 </td>
-                                @if($canManage || $isAdminMonitor)
+                                @if ($canManage || $isAdminMonitor)
                                     <td class="bg-light"></td>
                                 @endif
                                 <td class="text-right py-3 text-success" style="font-size: 1rem;">
@@ -174,11 +191,13 @@
                                     $rawDate = \Carbon\Carbon::parse($req->tanggal_pengajuan)->format('Y-m-d H:i:s');
                                 @endphp
                                 <tr id="row-{{ $req->id }}" class="request-row" data-id="{{ $req->id }}"
-                                    data-date="{{ $rawDate }}" data-applicant="{{ strtolower($req->diajukan_oleh) }}"
+                                    data-date="{{ $rawDate }}"
+                                    data-applicant="{{ strtolower($req->diajukan_oleh) }}"
                                     data-cost="{{ $req->jumlah_biaya }}" data-status="{{ $req->status }}">
-                                    <td class="text-center align-middle index-column">{{ $requests->firstItem() + $i }}</td>
+                                    <td class="text-center align-middle index-column">{{ $requests->firstItem() + $i }}
+                                    </td>
                                     <td class="text-center align-middle">
-                                        @if($canEdit)
+                                        @if ($canEdit)
                                             <input type="date"
                                                 class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold editable-date"
                                                 data-id="{{ $req->id }}"
@@ -192,13 +211,16 @@
                                     </td>
                                     <td class="align-middle {{ $canEdit ? 'editable-cell-container' : '' }}">
                                         <div class="d-flex align-items-center">
-                                            @if(!$req->overdue_items->isEmpty())
-                                                <button class="btn btn-sm btn-link p-0 mr-2 toggle-overdue" data-id="{{ $req->id }}" title="Lihat Tunggakan">
-                                                    <i class="fas fa-plus-circle text-warning animate-pulse" style="font-size: 1.1rem;"></i>
+                                            @if (!$req->overdue_items->isEmpty())
+                                                <button class="btn btn-sm btn-link p-0 mr-2 toggle-overdue"
+                                                    data-id="{{ $req->id }}" title="Lihat Tunggakan">
+                                                    <i class="fas fa-plus-circle text-warning animate-pulse"
+                                                        style="font-size: 1.1rem;"></i>
                                                 </button>
                                             @endif
                                             <div class="font-weight-bold text-dark {{ $canEdit ? 'editable-field' : '' }}"
-                                                data-field="nama_pengajuan" contenteditable="{{ $canEdit ? 'true' : 'false' }}">
+                                                data-field="nama_pengajuan"
+                                                contenteditable="{{ $canEdit ? 'true' : 'false' }}">
                                                 {{ $req->nama_pengajuan }}
                                             </div>
                                         </div>
@@ -206,27 +228,28 @@
                                             data-field="keterangan" contenteditable="{{ $canEdit ? 'true' : 'false' }}"
                                             placeholder="Tambah keterangan...">{{ $req->keterangan }}</div>
                                         <div class="mt-2">
-                                            @if($canEdit)
+                                            @if ($canEdit)
                                                 <div class="dropdown">
                                                     <button
                                                         class="btn btn-outline-info btn-xs dropdown-toggle shadow-sm w-100 text-left"
                                                         type="button" data-toggle="dropdown" aria-haspopup="true"
                                                         aria-expanded="false" style="font-size: 0.7rem;">
                                                         <i class="fas fa-redo-alt mr-1"></i>
-                                                        {{ $req->is_recurring ? ($intervalLabels[$req->recurring_interval] ?? 'Bulanan') : 'Sekali Saja' }}
+                                                        {{ $req->is_recurring ? $intervalLabels[$req->recurring_interval] ?? 'Bulanan' : 'Sekali Saja' }}
                                                     </button>
-                                                    <div class="dropdown-menu shadow animated--fade-in" style="font-size: 0.8rem;">
+                                                    <div class="dropdown-menu shadow animated--fade-in"
+                                                        style="font-size: 0.8rem;">
                                                         <a class="dropdown-item recurring-option {{ !$req->is_recurring ? 'active' : '' }}"
-                                                            href="javascript:void(0)" data-id="{{ $req->id }}" data-interval=""
-                                                            data-label="Sekali Saja">Sekali Saja</a>
+                                                            href="javascript:void(0)" data-id="{{ $req->id }}"
+                                                            data-interval="" data-label="Sekali Saja">Sekali Saja</a>
                                                         <div class="dropdown-divider"></div>
                                                         <a class="dropdown-item recurring-option {{ $req->recurring_interval == 'daily' ? 'active' : '' }}"
-                                                            href="javascript:void(0)" data-id="{{ $req->id }}" data-interval="daily"
-                                                            data-label="Harian">Harian</a>
+                                                            href="javascript:void(0)" data-id="{{ $req->id }}"
+                                                            data-interval="daily" data-label="Harian">Harian</a>
                                                         <a class="dropdown-item recurring-option {{ $req->recurring_interval == 'weekly' ? 'active' : '' }}"
                                                             href="javascript:void(0)" data-id="{{ $req->id }}"
                                                             data-interval="weekly" data-label="Mingguan">Mingguan</a>
-                                                        <a class="dropdown-item recurring-option {{ ($req->recurring_interval == 'monthly' || ($req->is_recurring && !$req->recurring_interval)) ? 'active' : '' }}"
+                                                        <a class="dropdown-item recurring-option {{ $req->recurring_interval == 'monthly' || ($req->is_recurring && !$req->recurring_interval) ? 'active' : '' }}"
                                                             href="javascript:void(0)" data-id="{{ $req->id }}"
                                                             data-interval="monthly" data-label="Bulanan">Bulanan</a>
                                                         <a class="dropdown-item recurring-option {{ $req->recurring_interval == '3_monthly' ? 'active' : '' }}"
@@ -245,13 +268,16 @@
                                                             <input type="date"
                                                                 class="form-control form-control-sm recurring-end-date-picker"
                                                                 value="{{ $req->recurring_end_date ? $req->recurring_end_date->format('Y-m-d') : '' }}"
-                                                                data-id="{{ $req->id }}" style="font-size: 0.75rem;">
+                                                                data-id="{{ $req->id }}"
+                                                                style="font-size: 0.75rem;">
                                                         </div>
                                                     </div>
                                                     <input type="hidden" class="recurring-interval-input"
-                                                        value="{{ $req->recurring_interval }}" data-id="{{ $req->id }}">
+                                                        value="{{ $req->recurring_interval }}"
+                                                        data-id="{{ $req->id }}">
                                                     <input type="hidden" class="is-recurring-input"
-                                                        value="{{ $req->is_recurring ? 1 : 0 }}" data-id="{{ $req->id }}">
+                                                        value="{{ $req->is_recurring ? 1 : 0 }}"
+                                                        data-id="{{ $req->id }}">
                                                     <input type="hidden" class="recurring-end-date-input"
                                                         value="{{ $req->recurring_end_date ? $req->recurring_end_date->format('Y-m-d') : '' }}"
                                                         data-id="{{ $req->id }}">
@@ -275,32 +301,35 @@
                                             </div>
                                         </div>
                                     </td>
-                                    @if($canManage || $isAdminMonitor)
-                                        <td class="align-middle text-center small font-weight-bold">{{ $req->diajukan_oleh }}</td>
+                                    @if ($canManage || $isAdminMonitor)
+                                        <td class="align-middle text-center small font-weight-bold">
+                                            {{ $req->diajukan_oleh }}</td>
                                     @endif
                                     <td class="align-middle text-right font-weight-bold text-success">
-                                        @if($req->status === 'approved' || $req->status === 'belum_lunas')
+                                        @if ($req->status === 'approved' || $req->status === 'belum_lunas')
                                             Rp {{ number_format($req->biaya_disetujui, 0, ',', '.') }}
                                         @else
                                             -
                                         @endif
                                     </td>
                                     <td class="align-middle text-right font-weight-bold text-danger">
-                                        @if($req->status === 'approved' || $req->status === 'belum_lunas')
+                                        @if ($req->status === 'approved' || $req->status === 'belum_lunas')
                                             Rp {{ number_format($req->jumlah_biaya - $req->biaya_disetujui, 0, ',', '.') }}
                                         @else
                                             -
                                         @endif
                                     </td>
                                     <td class="text-center align-middle">
-                                        @if($req->status === 'pending')
-                                            @if($canManage)
+                                        @if ($req->status === 'pending')
+                                            @if ($canManage)
                                                 <div class="d-flex flex-column gap-2 px-2">
-                                                    <button type="button" class="btn btn-success btn-sm btn-action mb-1 shadow-sm w-100"
+                                                    <button type="button"
+                                                        class="btn btn-success btn-sm btn-action mb-1 shadow-sm w-100"
                                                         onclick="openApprovalModal({{ $req->id }}, 'approved', '{{ $req->nama_pengajuan }}', {{ $req->jumlah_biaya }}, {{ $req->biaya_disetujui ?? 0 }})">
                                                         <i class="fas fa-check mr-1"></i> Setujui
                                                     </button>
-                                                    <button type="button" class="btn btn-danger btn-sm btn-action shadow-sm w-100"
+                                                    <button type="button"
+                                                        class="btn btn-danger btn-sm btn-action shadow-sm w-100"
                                                         onclick="openApprovalModal({{ $req->id }}, 'rejected', '{{ $req->nama_pengajuan }}', {{ $req->jumlah_biaya }})">
                                                         <i class="fas fa-times mr-1"></i> Tolak
                                                     </button>
@@ -319,8 +348,9 @@
                                                 <span class="badge badge-info py-2 px-3 badge-pill shadow-sm mb-1">
                                                     <i class="fas fa-hand-holding-usd mr-1"></i> Belum Lunas
                                                 </span>
-                                                @if($canManage)
-                                                    <button type="button" class="btn btn-success btn-xs px-2 shadow-sm font-weight-bold" 
+                                                @if ($canManage)
+                                                    <button type="button"
+                                                        class="btn btn-success btn-xs px-2 shadow-sm font-weight-bold"
                                                         onclick="openApprovalModal({{ $req->id }}, 'approved', '{{ $req->nama_pengajuan }}', {{ $req->jumlah_biaya }}, {{ $req->biaya_disetujui }})"
                                                         style="border-radius: 6px; font-size: 0.7rem;">
                                                         <i class="fas fa-money-bill-wave mr-1"></i> Bayar Lagi
@@ -332,8 +362,9 @@
                                                 <span class="badge badge-danger py-2 px-3 badge-pill shadow-sm mb-2">
                                                     <i class="fas fa-times-circle mr-1"></i> Ditolak
                                                 </span>
-                                                @if($isOwner && !$isAdminMonitor)
-                                                    <button type="button" class="btn btn-outline-info btn-xs px-2 shadow-sm"
+                                                @if ($isOwner && !$isAdminMonitor)
+                                                    <button type="button"
+                                                        class="btn btn-outline-info btn-xs px-2 shadow-sm"
                                                         onclick="resubmitRow({{ $req->id }})">
                                                         <i class="fas fa-redo mr-1"></i> Ajukan Kembali
                                                     </button>
@@ -342,7 +373,7 @@
                                         @endif
                                     </td>
                                     <td class="align-middle">
-                                        @if($req->catatan_admin)
+                                        @if ($req->catatan_admin)
                                             <div
                                                 class="p-2 bg-light rounded small border-left-{{ $req->status === 'approved' ? 'primary' : 'danger' }}">
                                                 {{ $req->catatan_admin }}
@@ -352,7 +383,52 @@
                                         @endif
                                     </td>
                                     <td class="text-center align-middle">
-                                        @if($req->bukti_transfer)
+                                        @php
+                                            // Cek apakah ada multiple foto dari pengadaan barang terkait
+                                            $pengadaanTerkait = $req->pengadaanBarang ?? null;
+                                            $multiFotos = $pengadaanTerkait
+                                                ? $pengadaanTerkait->buktiFotos()->get()
+                                                : collect();
+                                        @endphp
+                                        @if ($multiFotos->isNotEmpty())
+                                            <div class="d-flex flex-wrap justify-content-center"
+                                                style="gap:4px; max-width:180px; margin:0 auto;">
+                                                @foreach ($multiFotos as $foto)
+                                                    <div class="d-inline-block text-center" style="max-width:60px;">
+                                                        <div class="position-relative d-inline-block">
+                                                            <img src="{{ asset($foto->file_path) }}" alt="Bukti"
+                                                                class="img-thumbnail shadow-sm preview-image"
+                                                                style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;"
+                                                                onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')"
+                                                                title="Klik untuk memperbesar">
+                                                            <div class="preview-overlay"
+                                                                onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')">
+                                                                <i class="fas fa-search-plus text-white"></i>
+                                                            </div>
+                                                        </div>
+                                                        @if (!$isAdminMonitor)
+                                                            <div style="margin-top:2px;">
+                                                                <a href="javascript:void(0)"
+                                                                    class="small text-primary font-weight-bold"
+                                                                    style="font-size:0.65rem;"
+                                                                    onclick="openGantiFotoModal({{ $req->id }}, {{ $foto->id }}, '{{ $req->nama_pengajuan }}')">
+                                                                    <i class="fas fa-sync-alt"></i> Ganti
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            @if (!$isAdminMonitor)
+                                                <div class="mt-1">
+                                                    <a href="javascript:void(0)"
+                                                        class="small text-primary font-weight-bold"
+                                                        onclick="openUploadModal({{ $req->id }}, '{{ $req->nama_pengajuan }}')">
+                                                        <i class="fas fa-plus mr-1"></i>Tambah
+                                                    </a>
+                                                </div>
+                                            @endif
+                                        @elseif($req->bukti_transfer)
                                             <div class="position-relative d-inline-block">
                                                 <img src="{{ asset($req->bukti_transfer) }}" alt="Bukti Transfer"
                                                     class="img-thumbnail shadow-sm preview-image"
@@ -365,8 +441,9 @@
                                                 </div>
                                             </div>
                                             <div class="mt-1">
-                                                @if(!$isAdminMonitor)
-                                                    <a href="javascript:void(0)" class="small text-primary font-weight-bold"
+                                                @if (!$isAdminMonitor)
+                                                    <a href="javascript:void(0)"
+                                                        class="small text-primary font-weight-bold"
                                                         onclick="openUploadModal({{ $req->id }}, '{{ $req->nama_pengajuan }}')">
                                                         <i class="fas fa-sync-alt mr-1"></i>Ganti
                                                     </a>
@@ -374,7 +451,7 @@
                                             </div>
                                         @else
                                             <div class="d-flex flex-column align-items-center">
-                                                @if(!$isAdminMonitor)
+                                                @if (!$isAdminMonitor)
                                                     <button type="button" class="btn btn-outline-primary btn-xs px-2"
                                                         onclick="openUploadModal({{ $req->id }}, '{{ $req->nama_pengajuan }}')">
                                                         <i class="fas fa-upload mr-1"></i> Upload
@@ -386,9 +463,9 @@
                                         @endif
                                     </td>
                                     <td class="text-center align-middle">
-                                        @if(($isOwner && !$isAdminMonitor) || $canManage)
-                                            <button class="btn btn-danger btn-xs btn-delete-row" onclick="deleteRow({{ $req->id }})"
-                                                title="Hapus">
+                                        @if (($isOwner && !$isAdminMonitor) || $canManage)
+                                            <button class="btn btn-danger btn-xs btn-delete-row"
+                                                onclick="deleteRow({{ $req->id }})" title="Hapus">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         @else
@@ -396,71 +473,87 @@
                                         @endif
                                     </td>
                                 </tr>
-                                @if(!$req->overdue_items->isEmpty())
-                                    @foreach($req->overdue_items as $overdue)
+                                @if (!$req->overdue_items->isEmpty())
+                                    @foreach ($req->overdue_items as $overdue)
                                         @php
-                                            $curMonth = (int)($month ?? date('m'));
-                                            $curYear = (int)($year ?? date('Y'));
+                                            $curMonth = (int) ($month ?? date('m'));
+                                            $curYear = (int) ($year ?? date('Y'));
                                             $overdueDate = \Carbon\Carbon::parse($overdue->tanggal_pengajuan);
-                                            $diffInMonths = (($curYear - $overdueDate->year) * 12) + ($curMonth - $overdueDate->month);
+                                            $diffInMonths =
+                                                ($curYear - $overdueDate->year) * 12 +
+                                                ($curMonth - $overdueDate->month);
                                             $isCritical = $diffInMonths >= 2;
-                                            
-                                            $badgeStyle = $isCritical 
-                                                ? 'color: #fff; background-color: #e74a3b; border: 1px solid #d43f3a;' 
+
+                                            $badgeStyle = $isCritical
+                                                ? 'color: #fff; background-color: #e74a3b; border: 1px solid #d43f3a;'
                                                 : 'color: #fff; background-color: #fd7e14; border: 1px solid #e67e22;';
-                                            $borderStyle = $isCritical 
-                                                ? 'border-left: 4px solid #e74a3b;' 
+                                            $borderStyle = $isCritical
+                                                ? 'border-left: 4px solid #e74a3b;'
                                                 : 'border-left: 4px solid #fd7e14;';
                                             $iconColor = $isCritical ? 'text-danger' : 'text-orange';
-
                                         @endphp
-                                        <tr class="overdue-row overdue-for-{{ $req->id }} bg-light" 
+                                        <tr class="overdue-row overdue-for-{{ $req->id }} bg-light"
                                             data-status="{{ $overdue->status }}"
                                             style="display: none; {{ $borderStyle }}">
 
-                                            <td class="text-center align-middle"><i class="fas fa-level-up-alt fa-rotate-90 {{ $iconColor }}"></i></td>
+                                            <td class="text-center align-middle"><i
+                                                    class="fas fa-level-up-alt fa-rotate-90 {{ $iconColor }}"></i>
+                                            </td>
                                             <td class="text-center align-middle small text-muted font-weight-bold">
                                                 {{ \Carbon\Carbon::parse($overdue->tanggal_pengajuan)->format('d/m/Y') }}
                                             </td>
                                             <td class="align-middle">
-                                                <div class="font-weight-bold text-secondary small">{{ $overdue->nama_pengajuan }}</div>
-                                                <div class="badge {{ $isCritical ? 'badge-danger' : '' }}" style="font-size: 0.6rem; {{ !$isCritical ? 'background-color: #fd7e14; color: white;' : '' }}">
-                                                    TUNGGAKAN {{ \Carbon\Carbon::parse($overdue->tanggal_pengajuan)->translatedFormat('F Y') }}
+                                                <div class="font-weight-bold text-secondary small">
+                                                    {{ $overdue->nama_pengajuan }}</div>
+                                                <div class="badge {{ $isCritical ? 'badge-danger' : '' }}"
+                                                    style="font-size: 0.6rem; {{ !$isCritical ? 'background-color: #fd7e14; color: white;' : '' }}">
+                                                    TUNGGAKAN
+                                                    {{ \Carbon\Carbon::parse($overdue->tanggal_pengajuan)->translatedFormat('F Y') }}
                                                 </div>
                                             </td>
-                                            <td class="text-right align-middle font-weight-bold text-secondary" style="font-size: 0.85rem;">
+                                            <td class="text-right align-middle font-weight-bold text-secondary"
+                                                style="font-size: 0.85rem;">
                                                 Rp {{ number_format($overdue->jumlah_biaya, 0, ',', '.') }}
                                             </td>
-                                            @if($canManage || $isAdminMonitor)
-                                                <td class="text-center align-middle small text-muted">{{ $overdue->diajukan_oleh }}</td>
+                                            @if ($canManage || $isAdminMonitor)
+                                                <td class="text-center align-middle small text-muted">
+                                                    {{ $overdue->diajukan_oleh }}</td>
                                             @endif
-                                            <td class="text-right align-middle text-muted font-weight-bold" style="font-size: 0.85rem;">
+                                            <td class="text-right align-middle text-muted font-weight-bold"
+                                                style="font-size: 0.85rem;">
                                                 Rp {{ number_format($overdue->biaya_disetujui, 0, ',', '.') }}
                                             </td>
-                                            <td class="text-right align-middle text-muted font-weight-bold" style="font-size: 0.85rem;">
-                                                Rp {{ number_format($overdue->jumlah_biaya - $overdue->biaya_disetujui, 0, ',', '.') }}
+                                            <td class="text-right align-middle text-muted font-weight-bold"
+                                                style="font-size: 0.85rem;">
+                                                Rp
+                                                {{ number_format($overdue->jumlah_biaya - $overdue->biaya_disetujui, 0, ',', '.') }}
                                             </td>
                                             <td class="text-center align-middle">
                                                 <div class="d-flex flex-column align-items-center">
-                                                    @if($overdue->status === 'approved')
-                                                        <span class="badge badge-success px-2 py-1 shadow-sm mb-2" style="font-size: 0.65rem;">
+                                                    @if ($overdue->status === 'approved')
+                                                        <span class="badge badge-success px-2 py-1 shadow-sm mb-2"
+                                                            style="font-size: 0.65rem;">
                                                             <i class="fas fa-check-circle mr-1"></i> Disetujui
                                                         </span>
                                                     @elseif($overdue->status === 'belum_lunas')
-                                                        <span class="badge badge-info px-2 py-1 shadow-sm mb-2" style="font-size: 0.65rem;">
+                                                        <span class="badge badge-info px-2 py-1 shadow-sm mb-2"
+                                                            style="font-size: 0.65rem;">
                                                             <i class="fas fa-hand-holding-usd mr-1"></i> Belum Lunas
                                                         </span>
                                                     @else
-                                                        <span class="badge px-2 py-1 shadow-sm mb-2" style="font-size: 0.65rem; {{ $badgeStyle }}">
+                                                        <span class="badge px-2 py-1 shadow-sm mb-2"
+                                                            style="font-size: 0.65rem; {{ $badgeStyle }}">
                                                             <i class="fas fa-clock mr-1"></i> Belum Terbayar
                                                         </span>
                                                     @endif
 
-                                                    @if($canManage && $overdue->status !== 'approved')
-                                                        <button type="button" class="btn btn-success btn-xs px-2 shadow-sm font-weight-bold" 
+                                                    @if ($canManage && $overdue->status !== 'approved')
+                                                        <button type="button"
+                                                            class="btn btn-success btn-xs px-2 shadow-sm font-weight-bold"
                                                             onclick="openApprovalModal({{ $overdue->id }}, 'approved', '{{ $overdue->nama_pengajuan }}', {{ $overdue->jumlah_biaya }}, {{ $overdue->biaya_disetujui ?? 0 }}, '({{ \Carbon\Carbon::parse($overdue->tanggal_pengajuan)->translatedFormat('F Y') }})')"
                                                             style="border-radius: 6px; font-size: 0.7rem;">
-                                                            <i class="fas fa-money-bill-wave mr-1"></i> {{ $overdue->status === 'belum_lunas' ? 'Bayar Lagi' : 'Bayar Sekarang' }}
+                                                            <i class="fas fa-money-bill-wave mr-1"></i>
+                                                            {{ $overdue->status === 'belum_lunas' ? 'Bayar Lagi' : 'Bayar Sekarang' }}
                                                         </button>
                                                     @endif
                                                 </div>
@@ -474,7 +567,8 @@
 
                             @empty
                                 <tr id="emptyRow">
-                                    <td colspan="{{ ($canManage || $isAdminMonitor) ? 11 : 10 }}" class="text-center py-5">
+                                    <td colspan="{{ $canManage || $isAdminMonitor ? 11 : 10 }}"
+                                        class="text-center py-5">
                                         <div class="p-3">
                                             <i class="fas fa-folder-open fa-3x text-light mb-3"></i>
                                             <p class="text-muted">Belum ada data pengajuan anggaran.</p>
@@ -508,14 +602,16 @@
                     <input type="hidden" name="status" id="inputStatusApproval">
                     <div class="modal-body p-4">
                         <p class="mb-3">Pengajuan: <strong id="namaPengajuanApproval"></strong></p>
-                        <p class="mb-3">Biaya Diajukan: <strong id="biayaDiajukanApproval" class="text-primary"></strong>
+                        <p class="mb-3">Biaya Diajukan: <strong id="biayaDiajukanApproval"
+                                class="text-primary"></strong>
                         </p>
 
                         <div id="containerBiayaDisetujui" class="form-group d-none">
                             <label class="font-weight-bold">Nominal Pembayaran (Rp)</label>
                             <input type="text" name="biaya_disetujui" id="inputBiayaDisetujui" class="form-control"
                                 placeholder="0">
-                            <small class="text-muted">Masukkan nominal yang dibayar saat ini. Sisa akan otomatis terhitung.</small>
+                            <small class="text-muted">Masukkan nominal yang dibayar saat ini. Sisa akan otomatis
+                                terhitung.</small>
                         </div>
 
                         <div class="form-group">
@@ -527,8 +623,8 @@
                         <div id="containerBuktiTransfer" class="form-group d-none">
                             <label class="font-weight-bold">Upload Bukti Transfer</label>
                             <div class="custom-file">
-                                <input type="file" name="bukti_transfer" class="custom-file-input" id="inputBuktiTransfer"
-                                    accept="image/*">
+                                <input type="file" name="bukti_transfer" class="custom-file-input"
+                                    id="inputBuktiTransfer" accept="image/*">
                                 <label class="custom-file-label" for="inputBuktiTransfer">Pilih file gambar...</label>
                             </div>
                             <small class="text-muted">Maksimal 2MB (jpeg, png, jpg).</small>
@@ -545,6 +641,46 @@
 
     <!-- Modal Upload Bukti Khusus -->
     <div class="modal fade" id="modalUploadBukti" tabindex="-1" role="dialog" aria-hidden="true">
+
+        <!-- Modal Ganti Foto Bukti (dari pengadaan) -->
+        <div class="modal fade" id="modalGantiFoto" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content border-0 shadow-lg text-left">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title"><i class="fas fa-sync-alt mr-2"></i>Ganti Foto Bukti</h5>
+                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <form id="formGantiFoto" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-body p-4">
+                            <p class="mb-3 text-dark">Ganti foto untuk: <strong id="namaGantiFoto"
+                                    class="text-warning"></strong></p>
+                            <div class="form-group mb-0">
+                                <label class="font-weight-bold text-dark">Pilih Foto Pengganti</label>
+                                <div class="custom-file">
+                                    <input type="file" name="bukti_transfer" class="custom-file-input"
+                                        id="inputGantiFoto" accept="image/*" required>
+                                    <label class="custom-file-label" for="inputGantiFoto">Pilih file gambar...</label>
+                                </div>
+                                <div class="mt-2 small text-muted">
+                                    <i class="fas fa-info-circle mr-1"></i> Format: JPG, PNG, JPEG. Maks: 2MB.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light border-0">
+                            <button class="btn btn-secondary btn-sm px-4" type="button"
+                                data-dismiss="modal">Batal</button>
+                            <button class="btn btn-warning btn-sm px-4 shadow-sm text-dark" type="submit">
+                                <i class="fas fa-sync-alt mr-1"></i> Ganti Foto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow-lg text-left">
                 <div class="modal-header bg-primary text-white">
@@ -561,8 +697,8 @@
                         <div class="form-group mb-0">
                             <label class="font-weight-bold text-dark">Pilih File Bukti (Gambar)</label>
                             <div class="custom-file">
-                                <input type="file" name="bukti_transfer" class="custom-file-input" id="inputUploadBukti"
-                                    accept="image/*" required>
+                                <input type="file" name="bukti_transfer" class="custom-file-input"
+                                    id="inputUploadBukti" accept="image/*" required>
                                 <label class="custom-file-label" for="inputUploadBukti">Pilih file gambar...</label>
                             </div>
                             <div class="mt-2 small text-muted">
@@ -599,7 +735,7 @@
     </div>
 
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -611,13 +747,13 @@
             }
 
             function reorderTable() {
-                $('#requestsBody tr.request-row').each(function (index) {
+                $('#requestsBody tr.request-row').each(function(index) {
                     $(this).find('.index-column').text(index + 1);
                 });
             }
 
             // Tambah Baris
-            $('#btnTambahBaris').click(function () {
+            $('#btnTambahBaris').click(function() {
                 $('#emptyRow').hide();
 
                 const newRow = `
@@ -710,7 +846,7 @@
             });
 
             // Handle template selection
-            $(document).on('click', '.template-item', function () {
+            $(document).on('click', '.template-item', function() {
                 const name = $(this).data('name');
                 const cost = $(this).data('cost');
                 const note = $(this).data('note');
@@ -741,7 +877,7 @@
             });
 
             // Simpan Baris Baru
-            $(document).on('click', '#btnSimpanBaris', function () {
+            $(document).on('click', '#btnSimpanBaris', function() {
                 const nama = $('#newNama').text().trim();
                 const biaya = $('#newBiaya').text().replace(/[^0-9]/g, '');
                 const keterangan = $('#newKeterangan').text().trim();
@@ -776,19 +912,21 @@
                         recurring_interval: recurringInterval,
                         recurring_end_date: recurringEndDate
                     },
-                    success: function (response) {
+                    success: function(response) {
                         if (response.success) {
                             location.reload();
                         }
                     },
-                    error: function (xhr) {
+                    error: function(xhr) {
                         btn.prop('disabled', false).html('<i class="fas fa-save"></i>');
                         let msg = 'Terjadi kesalahan saat menghubungi server.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                        if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON
+                            .message;
                         Swal.fire({
                             icon: 'error',
                             title: 'Gagal Menyimpan',
-                            text: msg + ' (' + xhr.status + ': ' + xhr.statusText + ').',
+                            text: msg + ' (' + xhr.status + ': ' + xhr.statusText +
+                                ').',
                             confirmButtonColor: '#4e73df',
                         });
                     }
@@ -796,7 +934,7 @@
             });
 
             // Batal Baris
-            $(document).on('click', '#btnBatalBaris', function () {
+            $(document).on('click', '#btnBatalBaris', function() {
                 $('#newRowTemp').remove();
                 $('#newRowActions').remove();
                 if ($('#requestsBody tr.request-row').length === 0) {
@@ -806,7 +944,7 @@
             });
 
             // Handle contenteditable field focus out
-            $(document).on('focusout', '.request-row .editable-field', function () {
+            $(document).on('focusout', '.request-row .editable-field', function() {
                 const field = $(this);
                 const row = field.closest('tr');
                 const id = row.data('id');
@@ -824,7 +962,7 @@
             });
 
             // Handle date change
-            $(document).on('change', '.editable-date', function () {
+            $(document).on('change', '.editable-date', function() {
                 saveRow($(this).closest('tr'));
             });
 
@@ -851,16 +989,15 @@
                         recurring_interval: recurringInterval,
                         recurring_end_date: recurringEndDate
                     },
-                    success: function () {
+                    success: function() {
                         row.addClass('table-success-brief');
                         setTimeout(() => row.removeClass('table-success-brief'), 500);
                         // If it was rejected, we might want to refresh the status UI
                         if (row.data('status') === 'rejected') {
                             location.reload();
                         }
-                    }
-                    ,
-                    error: function (xhr) {
+                    },
+                    error: function(xhr) {
                         console.error('Save failed:', xhr.status, xhr.statusText);
                         if (xhr.status !== 200) {
                             row.addClass('table-danger');
@@ -870,7 +1007,7 @@
                 });
             }
 
-            window.resubmitRow = function (id) {
+            window.resubmitRow = function(id) {
                 Swal.fire({
                     title: 'Kirim Kembali?',
                     text: 'Pengajuan ini akan dikirim ulang untuk ditinjau.',
@@ -884,9 +1021,11 @@
                     if (result.isConfirmed) {
                         const row = $(`#row-${id}`);
                         const nama = row.find('[data-field="nama_pengajuan"]').text().trim();
-                        const biaya = row.find('[data-field="jumlah_biaya"]').text().replace(/[^0-9]/g, '');
+                        const biaya = row.find('[data-field="jumlah_biaya"]').text().replace(/[^0-9]/g,
+                            '');
                         const keterangan = row.find('[data-field="keterangan"]').text().trim();
-                        const tanggal = row.find('.editable-date').length ? row.find('.editable-date').val() : row.data('date');
+                        const tanggal = row.find('.editable-date').length ? row.find('.editable-date')
+                            .val() : row.data('date');
 
                         $.ajax({
                             url: window.location.pathname.split('?')[0] + '/' + id + '/update',
@@ -902,7 +1041,7 @@
                                 recurring_interval: row.find('.recurring-interval-input').val(),
                                 recurring_end_date: row.find('.recurring-end-date-input').val()
                             },
-                            success: function (response) {
+                            success: function(response) {
                                 if (response.success) {
                                     Swal.fire({
                                         icon: 'success',
@@ -915,10 +1054,12 @@
                                     });
                                 }
                             },
-                            error: function (xhr) {
+                            error: function(xhr) {
                                 let msg = 'Gagal mengirim ulang';
-                                if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
-                                Swal.fire('Error!', msg + ' (' + xhr.status + ': ' + xhr.statusText + ').', 'error');
+                                if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr
+                                    .responseJSON.message;
+                                Swal.fire('Error!', msg + ' (' + xhr.status + ': ' + xhr
+                                    .statusText + ').', 'error');
                             }
                         });
                     }
@@ -926,17 +1067,19 @@
             }
 
             // Prevent Enter in single line fields
-            $(document).on('keydown', '[data-field="nama_pengajuan"], [data-field="jumlah_biaya"], #newNama, #newBiaya', function (e) {
-                if (e.which === 13) {
-                    e.preventDefault();
-                    $(this).blur();
-                }
-            });
+            $(document).on('keydown',
+                '[data-field="nama_pengajuan"], [data-field="jumlah_biaya"], #newNama, #newBiaya',
+                function(e) {
+                    if (e.which === 13) {
+                        e.preventDefault();
+                        $(this).blur();
+                    }
+                });
 
             reorderTable();
 
             // Instant Client-side Filtering and Sorting
-            window.applyTableFilters = function () {
+            window.applyTableFilters = function() {
                 const statusFilter = $('select[name="status_client"]').val();
                 const applicantFilter = $('select[name="applicant_client"]').val();
                 const typeFilter = $('select[name="type_client"]').val();
@@ -951,7 +1094,7 @@
                     const rowStatus = $(row).data('status');
                     const rowApplicant = $(row).data('applicant');
                     const overdueRows = $(`.overdue-for-${rowId}`);
-                    
+
                     // Check if main row matches
                     const mainMatchesStatus = !statusFilter || rowStatus === statusFilter;
                     const mainMatchesApplicant = !applicantFilter || rowApplicant === applicantFilter;
@@ -980,25 +1123,33 @@
                     if (show) {
                         if (typeFilter === 'main') {
                             overdueRows.hide();
-                            $(row).find('.toggle-overdue i').removeClass('fa-minus-circle text-danger').addClass('fa-plus-circle text-warning');
+                            $(row).find('.toggle-overdue i').removeClass('fa-minus-circle text-danger')
+                                .addClass('fa-plus-circle text-warning');
                         } else if (typeFilter === 'overdue') {
                             if (matchingOverdueCount === 0) {
                                 show = false;
                             } else {
                                 // Ensure matching overdue are shown
                                 overdueRows.each(function() {
-                                    const matches = (!statusFilter || $(this).data('status') === statusFilter) && mainMatchesApplicant;
+                                    const matches = (!statusFilter || $(this).data('status') ===
+                                        statusFilter) && mainMatchesApplicant;
                                     if (matches) $(this).show();
                                 });
-                                $(row).find('.toggle-overdue i').removeClass('fa-plus-circle text-warning').addClass('fa-minus-circle text-danger');
+                                $(row).find('.toggle-overdue i').removeClass(
+                                    'fa-plus-circle text-warning').addClass(
+                                    'fa-minus-circle text-danger');
                             }
                         } else {
                             // General view: if status filter is active and we have matches, keep them visible
                             if (statusFilter && matchingOverdueCount > 0) {
-                                $(row).find('.toggle-overdue i').removeClass('fa-plus-circle text-warning').addClass('fa-minus-circle text-danger');
+                                $(row).find('.toggle-overdue i').removeClass(
+                                    'fa-plus-circle text-warning').addClass(
+                                    'fa-minus-circle text-danger');
                             } else {
                                 overdueRows.hide();
-                                $(row).find('.toggle-overdue i').removeClass('fa-minus-circle text-danger').addClass('fa-plus-circle text-warning');
+                                $(row).find('.toggle-overdue i').removeClass(
+                                    'fa-minus-circle text-danger').addClass(
+                                    'fa-plus-circle text-warning');
                             }
                         }
                     } else {
@@ -1011,7 +1162,7 @@
                 // 2. Sorting (Cost takes precedence if selected, otherwise Date)
                 const visibleRows = rows.filter(row => $(row).is(':visible'));
 
-                visibleRows.sort(function (a, b) {
+                visibleRows.sort(function(a, b) {
                     if (costSort) {
                         const costA = parseFloat($(a).data('cost'));
                         const costB = parseFloat($(b).data('cost'));
@@ -1023,7 +1174,7 @@
                     }
                 });
 
-                $.each(visibleRows, function (index, row) {
+                $.each(visibleRows, function(index, row) {
                     $('#requestsBody').append(row);
                 });
 
@@ -1034,12 +1185,12 @@
             applyTableFilters();
 
             // Update Sort helper (now legacy but keeping structure if needed)
-            window.updateSort = function (select) {
+            window.updateSort = function(select) {
                 applyTableFilters();
             };
 
             // Format Biaya Disetujui as user types
-            $(document).on('input', '#inputBiayaDisetujui, #newBiaya, [data-field="jumlah_biaya"]', function () {
+            $(document).on('input', '#inputBiayaDisetujui, #newBiaya, [data-field="jumlah_biaya"]', function() {
                 let element = $(this);
                 let val = element.is('input') ? element.val() : element.text();
 
@@ -1071,7 +1222,7 @@
                                 range.collapse(true);
                                 selection.removeAllRanges();
                                 selection.addRange(range);
-                            } catch (e) { }
+                            } catch (e) {}
                         }
                     }
                 } else {
@@ -1081,20 +1232,20 @@
             });
 
             // Clean dots before form submission
-            $('#formApproval').on('submit', function () {
+            $('#formApproval').on('submit', function() {
                 let input = $('#inputBiayaDisetujui');
                 let rawVal = input.val().replace(/[^0-9]/g, '');
                 input.val(rawVal);
             });
 
             // Handle custom-file-input label
-            $(document).on('change', '.custom-file-input', function () {
+            $(document).on('change', '.custom-file-input', function() {
                 let fileName = $(this).val().split('\\').pop();
                 $(this).next('.custom-file-label').addClass("selected").html(fileName);
             });
 
             // Handle Recurring Options (Existing Rows)
-            $(document).on('click', '.recurring-option', function () {
+            $(document).on('click', '.recurring-option', function() {
                 const id = $(this).data('id');
                 const interval = $(this).data('interval');
                 const label = $(this).data('label');
@@ -1114,7 +1265,7 @@
             });
 
             // Handle End Date Picker change
-            $(document).on('change', '.recurring-end-date-picker', function () {
+            $(document).on('change', '.recurring-end-date-picker', function() {
                 const id = $(this).data('id');
                 const value = $(this).val();
                 const container = $(this).closest('.dropdown');
@@ -1123,12 +1274,12 @@
             });
 
             // Prevent closing dropdown when clicking end date picker
-            $(document).on('click', '.recurring-end-date-picker, #newRecurringEndDate', function (e) {
+            $(document).on('click', '.recurring-end-date-picker, #newRecurringEndDate', function(e) {
                 e.stopPropagation();
             });
 
             // Handle Recurring Options (New Row)
-            $(document).on('click', '.new-recurring-option', function () {
+            $(document).on('click', '.new-recurring-option', function() {
                 const interval = $(this).data('interval');
                 const label = $(this).data('label');
 
@@ -1141,7 +1292,7 @@
             });
         });
 
-        window.deleteRow = function (id) {
+        window.deleteRow = function(id) {
             Swal.fire({
                 title: 'Hapus Pengajuan?',
                 text: 'Data ini akan dihapus secara permanen!',
@@ -1159,7 +1310,7 @@
                         data: {
                             _token: $('meta[name="csrf-token"]').attr('content'),
                         },
-                        success: function (response) {
+                        success: function(response) {
                             if (response.success) {
                                 Swal.fire({
                                     icon: 'success',
@@ -1168,10 +1319,11 @@
                                     showConfirmButton: false,
                                     timer: 1500
                                 });
-                                $(`#row-${id}`).fadeOut(300, function () {
+                                $(`#row-${id}`).fadeOut(300, function() {
                                     $(this).remove();
-                                    $('#requestsBody tr.request-row').each(function (index) {
-                                        $(this).find('.index-column').text(index + 1);
+                                    $('#requestsBody tr.request-row').each(function(index) {
+                                        $(this).find('.index-column').text(index +
+                                            1);
                                     });
 
                                     if ($('#requestsBody tr.request-row').length === 0) {
@@ -1179,13 +1331,16 @@
                                     }
                                 });
                             } else {
-                                Swal.fire('Gagal!', response.message || 'Terjadi kesalahan saat menghapus.', 'error');
+                                Swal.fire('Gagal!', response.message ||
+                                    'Terjadi kesalahan saat menghapus.', 'error');
                             }
                         },
-                        error: function (xhr) {
+                        error: function(xhr) {
                             let msg = 'Gagal menghubungi server';
-                            if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
-                            Swal.fire('Error!', msg + ' (' + xhr.status + ': ' + xhr.statusText + ').', 'error');
+                            if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON
+                                .message;
+                            Swal.fire('Error!', msg + ' (' + xhr.status + ': ' + xhr.statusText +
+                                ').', 'error');
                         }
                     });
                 }
@@ -1204,14 +1359,16 @@
 
             $('#inputStatusApproval').val(status);
             $('#namaPengajuanApproval').text(name + (extraTitle ? ' ' + extraTitle : ''));
-            
+
             let diajukanHtml = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalAmount);
             if (currentApproved > 0) {
-                diajukanHtml += ` <span class="badge badge-info ml-1" style="font-size:0.7rem">Sudah dibayar: Rp ${new Intl.NumberFormat('id-ID').format(currentApproved)}</span>`;
-                diajukanHtml += ` <div class="text-danger small font-weight-bold mt-1">Sisa yang harus dibayar: Rp ${new Intl.NumberFormat('id-ID').format(remaining)}</div>`;
+                diajukanHtml +=
+                    ` <span class="badge badge-info ml-1" style="font-size:0.7rem">Sudah dibayar: Rp ${new Intl.NumberFormat('id-ID').format(currentApproved)}</span>`;
+                diajukanHtml +=
+                    ` <div class="text-danger small font-weight-bold mt-1">Sisa yang harus dibayar: Rp ${new Intl.NumberFormat('id-ID').format(remaining)}</div>`;
             }
             $('#biayaDiajukanApproval').html(diajukanHtml);
-            
+
             $('#inputBiayaDisetujui').val(new Intl.NumberFormat('id-ID').format(remaining));
             $('#inputCatatanApproval').val('');
 
@@ -1255,6 +1412,23 @@
 
             $('#modalUploadBukti').modal('show');
         }
+
+        function openGantiFotoModal(pengajuanId, buktiId, name) {
+            $('#namaGantiFoto').text(name);
+            $('#formGantiFoto').attr('action', '/admin/keuangan/pengajuan-anggaran/' + pengajuanId + '/ganti-bukti/' +
+                buktiId);
+
+            $('#inputGantiFoto').val('');
+            $('#inputGantiFoto').next('.custom-file-label').removeClass("selected").html('Pilih file gambar...');
+
+            $('#modalGantiFoto').modal('show');
+        }
+
+        // Handle custom file label update for modal ganti foto
+        $(document).on('change', '#inputGantiFoto', function() {
+            let fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').addClass("selected").html(fileName);
+        });
     </script>
 
     <style>
@@ -1325,9 +1499,17 @@
         }
 
         @keyframes pulse-warning {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         .animate-pulse {
@@ -1468,7 +1650,7 @@
                             break;
                         }
                     }
-                    
+
                     if (parentId) {
                         const parentRow = $('#row-' + parentId);
                         if (parentRow.length) {
@@ -1488,9 +1670,9 @@
                 const id = $(this).data('id');
                 const targetRows = $(`.overdue-for-${id}`);
                 const icon = $(this).find('i');
-                
+
                 targetRows.fadeToggle(200);
-                
+
                 if (icon.hasClass('fa-plus-circle')) {
                     icon.removeClass('fa-plus-circle text-warning').addClass('fa-minus-circle text-danger');
                 } else {
@@ -1503,4 +1685,3 @@
         });
     </script>
 @endsection
-

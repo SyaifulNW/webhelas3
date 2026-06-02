@@ -14,7 +14,6 @@ class MonitoringPerbaikan extends Model
         'kerusakan',
         'timeline',
         'progress',
-        'rencana',
         'budget',
         'realisasi_dana',
         'tanggal_mulai',

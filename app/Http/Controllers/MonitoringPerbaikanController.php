@@ -16,7 +16,6 @@ class MonitoringPerbaikanController extends Controller
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date',
             'progress'   => 'nullable|string',
-            'rencana'   => 'nullable|string',
             'budget'    => 'nullable|numeric',
             'realisasi_dana' => 'nullable|numeric',
         ]);
@@ -34,7 +33,6 @@ class MonitoringPerbaikanController extends Controller
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date',
             'progress'   => 'nullable|string',
-            'rencana'   => 'nullable|string',
             'budget'    => 'nullable|numeric',
             'realisasi_dana' => 'nullable|numeric',
         ]);

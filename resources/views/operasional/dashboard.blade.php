@@ -45,13 +45,13 @@
                 function disableAllFields() {
                     document.querySelectorAll(
                         '.table-monitoring tbody input, .table-monitoring tbody textarea, .table-monitoring tbody select'
-                        ).forEach(function(el) {
+                    ).forEach(function(el) {
                         el.disabled = true;
                     });
                     // Hide any upload or delete elements
                     document.querySelectorAll(
                         '.delete-inventaris-btn, .delete-btn, .delete-pengadaan-btn, a[onclick*="openUploadModal"], button[onclick*="openUploadModal"]'
-                        ).forEach(function(el) {
+                    ).forEach(function(el) {
                         el.style.setProperty('display', 'none', 'important');
                     });
                 }
@@ -414,8 +414,8 @@
 
         /* Monitoring Perbaikan Table Styling */
         .monitoring-header {
-            background-color: #f28d8d !important;
-            color: #000;
+            background-color: #4e73df !important;
+            color: #f9f1f1ff;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -837,7 +837,7 @@
                                         <th class="text-center"
                                             style="width: 50px; background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle;">
                                             No</th>
-                                            <th class="text-center"
+                                        <th class="text-center"
                                             style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle; width: 170px;">
                                             <div class="mb-1 font-weight-bold"
                                                 style="font-size: 0.85rem; letter-spacing: 0.5px;">INVENTARIS</div>
@@ -894,7 +894,7 @@
                                     @forelse($inventarisKantor as $key => $item)
                                         <tr data-id="{{ $item->id }}">
                                             <td class="text-center no-col">{{ $loop->iteration }}</td>
-<td>
+                                            <td>
                                                 <textarea class="form-control-inline text-center inventaris-live-edit auto-resize" data-field="nama_peralatan"
                                                     rows="1" placeholder="(Tulis Barang)">{{ $item->nama_peralatan }}</textarea>
                                             </td>
@@ -995,49 +995,46 @@
                             </button>
                         </div>
 
+                        <!-- Filter Deadline Bar -->
+                        <div class="d-flex align-items-center mb-2 flex-wrap" style="gap: 10px;">
+                            <span class="font-weight-bold text-muted" style="font-size:0.82rem; white-space:nowrap;"><i
+                                    class="fas fa-calendar-alt mr-1"></i> Filter Deadline:</span>
+                            <input type="date" id="filter-timeline-start" class="form-control form-control-sm"
+                                style="border-radius: 20px; font-weight: 600; width: 150px; height: 32px; padding: 2px 10px; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" />
+                            <span class="text-muted" style="font-size:0.8rem;">s/d</span>
+                            <input type="date" id="filter-timeline-end" class="form-control form-control-sm"
+                                style="border-radius: 20px; font-weight: 600; width: 150px; height: 32px; padding: 2px 10px; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" />
+                            <button id="filter-timeline-btn" class="btn btn-primary btn-sm" title="Filter Deadline"
+                                style="border-radius: 20px; padding: 4px 16px; font-size:0.8rem;">
+                                <i class="fas fa-search mr-1"></i> Cari
+                            </button>
+                            <button id="filter-timeline-reset" class="btn btn-outline-secondary btn-sm"
+                                title="Reset Filter" style="border-radius: 20px; padding: 4px 16px; font-size:0.8rem;">
+                                <i class="fas fa-sync-alt mr-1"></i> Reset
+                            </button>
+                        </div>
+
+                        <!-- Filter Progress Bar -->
+                        <div class="d-flex align-items-center mb-3 flex-wrap" style="gap: 10px;">
+                            <span class="font-weight-bold text-muted" style="font-size:0.82rem; white-space:nowrap;"><i
+                                    class="fas fa-tasks mr-1"></i> Filter Progress:</span>
+                            <select id="filter-progress" class="form-control form-control-sm"
+                                style="border-radius: 20px; font-weight: 700; width: 160px; height: 32px; padding: 2px 10px; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                <option value="all">-- Semua --</option>
+                                <option value="Pengajuan dana">Pengajuan dana</option>
+                                <option value="Pengerjaan">Pengerjaan</option>
+                                <option value="Selesai">Selesai</option>
+                            </select>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table table-monitoring mb-0">
                                 <thead>
                                     <tr>
                                         <th class="text-center" style="width: 50px;">NO.</th>
-                                        <th style="width: 180px;">FASILITAS</th>
-                                        <th>KERUSAKAN</th>
-                                        <th class="text-center" style="width: 150px;">
-                                            TIMELINE
-                                            <div class="d-flex flex-column align-items-center mt-2">
-                                                <input type="date" id="filter-timeline-start"
-                                                    class="form-control form-control-sm mx-auto text-center"
-                                                    placeholder="Mulai"
-                                                    style="border-radius: 20px; font-weight: 700; width: 120px; height: 28px; padding: 2px 5px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" />
-                                                <input type="date" id="filter-timeline-end"
-                                                    class="form-control form-control-sm mx-auto text-center mt-1"
-                                                    placeholder="Selesai"
-                                                    style="border-radius: 20px; font-weight: 700; width: 120px; height: 28px; padding: 2px 5px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" />
-                                                <div class="d-flex gap-1 mt-1" style="gap: 4px;">
-                                                    <button id="filter-timeline-btn" class="btn btn-sm btn-primary"
-                                                        title="Cari" style="border-radius: 6px; padding: 2px 8px;"><i
-                                                            class="fas fa-search"></i></button>
-                                                    <button id="filter-timeline-reset" class="btn btn-sm btn-primary"
-                                                        title="Tampilkan Semua"
-                                                        style="border-radius: 6px; padding: 2px 8px;"><i
-                                                            class="fas fa-sync-alt"></i></button>
-                                                </div>
-                                            </div>
-                                        </th>
-                                        <th class="text-center" style="width: 160px; vertical-align: middle;">
-                                            <div class="mb-1 text-white font-weight-bold"
-                                                style="font-size: 0.85rem; letter-spacing: 0.5px;">PROGRESS</div>
-                                            <select id="filter-progress" class="form-control form-control-sm mx-auto"
-                                                style="border-radius: 20px; font-weight: 700; text-align: center; text-align-last: center; width: 140px; cursor: pointer; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                                <option value="all">-- Semua --</option>
-                                                <option value="Pengajuan Dana">Pengajuan Dana</option>
-                                                <option value="Cari Vendor">Cari Vendor</option>
-                                                <option value="Pending">Pending</option>
-                                                <option value="On Progress">On Progress</option>
-                                                <option value="Selesai">Selesai</option>
-                                            </select>
-                                        </th>
-                                        <th>RENCANA</th>
+                                        <th style="width: 200px;">FASILITAS</th>
+                                        <th>RENCANA PERBAIKAN</th>
+                                        <th class="text-center" style="width: 160px;">PROGRESS</th>
                                         <th class="text-center" style="width: 130px;">BUDGET</th>
                                         <th class="text-center" style="width: 130px;">REALISASI DANA</th>
                                         <th class="text-center" style="width: 120px;">LPJ</th>
@@ -1059,69 +1056,73 @@
                                             <td>
                                                 <textarea class="form-control-inline font-weight-bold live-edit auto-resize" data-field="fasilitas" rows="1"
                                                     placeholder="(Tulis Data Baru)">{{ $item->fasilitas }}</textarea>
+                                                <div class="mt-1"
+                                                    style="font-size:0.7rem; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">
+                                                    Deadline</div>
+                                                <div class="d-flex align-items-center" style="gap:3px; flex-wrap:wrap;">
+                                                    <input type="date"
+                                                        class="form-control-inline text-center live-edit"
+                                                        data-field="tanggal_mulai" value="{{ $item->tanggal_mulai }}"
+                                                        style="width: 110px; font-size:0.72rem;">
+                                                    <span style="font-size: 0.7rem; color:#aaa;">s/d</span>
+                                                    <input type="date"
+                                                        class="form-control-inline text-center live-edit"
+                                                        data-field="tanggal_selesai" value="{{ $item->tanggal_selesai }}"
+                                                        style="width: 110px; font-size:0.72rem;">
+                                                </div>
                                             </td>
                                             <td class="text-truncate-cell">
                                                 <textarea class="form-control-inline live-edit auto-resize kerusakan-field" data-field="kerusakan" rows="1"
                                                     spellcheck="false">{{ $item->kerusakan }}</textarea>
                                                 <button class="btn-lihat-detail mt-1"
-                                                    onclick="openDetailPopup('Kerusakan', this.previousElementSibling.value)">Lihat
+                                                    onclick="openDetailPopup('Rencana Perbaikan', this.previousElementSibling.value)">Lihat
                                                     Detail</button>
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="d-flex flex-column align-items-center justify-content-center">
-                                                    <input type="date"
-                                                        class="form-control-inline text-center live-edit"
-                                                        data-field="tanggal_mulai" value="{{ $item->tanggal_mulai }}"
-                                                        style="width: 120px;">
-                                                    <span class="my-1 text-muted"
-                                                        style="font-size: 0.75rem; line-height: 1;">s/d</span>
-                                                    <input type="date"
-                                                        class="form-control-inline text-center live-edit"
-                                                        data-field="tanggal_selesai" value="{{ $item->tanggal_selesai }}"
-                                                        style="width: 120px;">
-                                                </div>
                                             </td>
                                             <td class="text-center">
                                                 @php
                                                     $statusClass = '';
-                                                    if ($item->progress == 'Pengajuan Dana') {
+                                                    if (
+                                                        $item->progress == 'Pengajuan dana' ||
+                                                        $item->progress == 'Pengajuan Dana'
+                                                    ) {
                                                         $statusClass = 'bg-status-pengajuan-dana';
-                                                    } elseif ($item->progress == 'Cari Vendor') {
-                                                        $statusClass = 'bg-status-cari-vendor';
-                                                    } elseif ($item->progress == 'Pending') {
-                                                        $statusClass = 'bg-status-pending';
-                                                    } elseif ($item->progress == 'On Progress') {
+                                                    } elseif (
+                                                        $item->progress == 'Pengerjaan' ||
+                                                        $item->progress == 'On Progress' ||
+                                                        $item->progress == 'Cari Vendor'
+                                                    ) {
                                                         $statusClass = 'bg-status-on-progress';
                                                     } elseif ($item->progress == 'Selesai') {
                                                         $statusClass = 'bg-status-selesai';
+                                                    } else {
+                                                        $statusClass = 'bg-status-pending';
                                                     }
                                                 @endphp
                                                 <select
                                                     class="form-control-inline live-edit status-dropdown {{ $statusClass }}"
                                                     data-field="progress">
-                                                    <option value="Pengajuan Dana"
-                                                        {{ $item->progress == 'Pengajuan Dana' ? 'selected' : '' }}
-                                                        class="bg-status-pengajuan-dana">Pengajuan Dana</option>
-                                                    <option value="Cari Vendor"
-                                                        {{ $item->progress == 'Cari Vendor' ? 'selected' : '' }}
-                                                        class="bg-status-cari-vendor">Cari Vendor</option>
-                                                    <option value="Pending"
-                                                        {{ $item->progress == 'Pending' ? 'selected' : '' }}
-                                                        class="bg-status-pending">Pending</option>
-                                                    <option value="On Progress"
-                                                        {{ $item->progress == 'On Progress' ? 'selected' : '' }}
-                                                        class="bg-status-on-progress">On Progress</option>
+                                                    @if (
+                                                        !in_array($item->progress, [
+                                                            'Pengajuan dana',
+                                                            'Pengajuan Dana',
+                                                            'Pengerjaan',
+                                                            'On Progress',
+                                                            'Cari Vendor',
+                                                            'Selesai',
+                                                        ]) && !empty($item->progress))
+                                                        <option value="{{ $item->progress }}" selected
+                                                            class="bg-status-pending">{{ $item->progress }}</option>
+                                                    @endif
+                                                    <option value="Pengajuan dana"
+                                                        {{ $item->progress == 'Pengajuan dana' || $item->progress == 'Pengajuan Dana' ? 'selected' : '' }}
+                                                        class="bg-status-pengajuan-dana">Pengajuan dana</option>
+                                                    <option value="Pengerjaan"
+                                                        {{ $item->progress == 'Pengerjaan' || $item->progress == 'On Progress' || $item->progress == 'Cari Vendor' ? 'selected' : '' }}
+                                                        class="bg-status-on-progress">Pengerjaan</option>
                                                     <option value="Selesai"
                                                         {{ $item->progress == 'Selesai' ? 'selected' : '' }}
                                                         class="bg-status-selesai">Selesai</option>
                                                 </select>
-                                            </td>
-                                            <td class="text-truncate-cell">
-                                                <textarea class="form-control-inline live-edit auto-resize rencana-field" data-field="rencana" rows="1"
-                                                    spellcheck="false">{{ $item->rencana }}</textarea>
-                                                <button class="btn-lihat-detail mt-1"
-                                                    onclick="openDetailPopup('Rencana', this.previousElementSibling.value)">Lihat
-                                                    Detail</button>
                                             </td>
                                             <td class="text-right">
                                                 <div class="d-flex align-items-center justify-content-end">
@@ -1174,14 +1175,14 @@
                                         </tr>
                                     @empty
                                         <tr class="empty-row">
-                                            <td colspan="10" class="text-center py-5 text-muted">Belum ada data
+                                            <td colspan="9" class="text-center py-5 text-muted">Belum ada data
                                                 monitoring perbaikan.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                                 <tfoot>
                                     <tr style="background-color: #f8f9fc;">
-                                        <td colspan="6" class="text-right font-weight-bold"
+                                        <td colspan="5" class="text-right font-weight-bold"
                                             style="white-space: nowrap; padding-right: 15px;">TOTAL ESTIMASI DANA</td>
                                         <td class="text-right font-weight-bold text-danger"
                                             style="font-size: 1.1rem; white-space: nowrap;">
@@ -1208,7 +1209,7 @@
             <div class="tab-pane fade" id="kebutuhan-m1t" role="tabpanel">
                 <div class="card border-0 shadow-sm mt-4" style="border-radius: 15px; overflow: hidden;">
                     <div class="card-header text-center font-weight-bold"
-                        style="background-color: #f28d8d; color: #000; border: 2px solid #000;">
+                        style="background-color: #4e73df; color: #ffff; border: 2px solid #000;">
                         LIST PENGADAAN BARANG
                     </div>
                     <div class="card-body p-4">
@@ -1228,31 +1229,15 @@
                                         <th class="text-center" style="width: 50px;">NO.</th>
                                         <th>NAMA BARANG</th>
                                         <th class="text-center" style="width: 120px;">JUMLAH</th>
-                                        <th class="text-center" style="width: 170px; vertical-align: middle;">
-                                            <div class="mb-1 text-white font-weight-bold"
-                                                style="font-size: 0.85rem; letter-spacing: 0.5px;">PROGRESS</div>
-                                            <select id="filter-progress-pengadaan"
-                                                class="form-control form-control-sm mx-auto"
-                                                style="border-radius: 20px; font-weight: 700; text-align: center; text-align-last: center; width: 140px; cursor: pointer; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                                <option value="all">-- Semua --</option>
-                                                <option value="Pengajuan Dana">Pengajuan Dana</option>
-                                                <option value="Cari Vendor">Cari Vendor</option>
-                                                <option value="Pending">Pending</option>
-                                                <option value="Terealisasi">Terealisasi</option>
-                                            </select>
-                                        </th>
                                         <th class="text-right" style="width: 160px;">BUDGET</th>
-                                        <th class="text-center" style="width: 170px; vertical-align: middle;">
-                                            <div class="mb-1 text-white font-weight-bold"
-                                                style="font-size: 0.85rem; letter-spacing: 0.5px;">ACC</div>
-                                            <select id="filter-acc-pengadaan" class="form-control form-control-sm mx-auto"
-                                                style="border-radius: 20px; font-weight: 700; text-align: center; text-align-last: center; width: 140px; cursor: pointer; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                                <option value="all">-- Semua --</option>
-                                                <option value="Iya">Iya</option>
-                                                <option value="Tidak">Tidak</option>
-                                            </select>
+                                        <th class="text-right" style="width: 160px;">REALISASI DANA</th>
+                                        <th class="text-center" style="width: 150px;">STATUS ACC</th>
+                                        <th class="text-center">
+                                            BUKTI TRANSFER
+                                            <div class="text-white-50"
+                                                style="font-size: 0.65rem; font-weight: 400; margin-top: 2px;">Max. 2
+                                                Gambar</div>
                                         </th>
-                                        <th class="text-center">Bukti Transfer</th>
                                         <th class="text-center" style="width: 50px;"></th>
                                     </tr>
                                 </thead>
@@ -1263,41 +1248,19 @@
                                         <tr data-id="{{ $item->id }}">
                                             <td class="text-center no-col">{{ $loop->iteration }}</td>
                                             <td>
-                                                <textarea class="form-control-inline font-weight-bold pengadaan-live-edit auto-resize" data-field="nama_barang"
-                                                    rows="1" placeholder="(Tulis Nama Barang)">{{ $item->nama_barang }}</textarea>
+                                                <div class="d-flex align-items-start" style="gap:4px;">
+                                                    <textarea class="form-control-inline font-weight-bold pengadaan-live-edit auto-resize" data-field="nama_barang"
+                                                        rows="1" placeholder="(Tulis Nama Barang)">{{ $item->nama_barang }}</textarea>
+                                                    @if ($item->is_inventory_created)
+                                                        <span title="Sudah masuk ke Inventaris Kantor"
+                                                            style="color:#1cc88a; font-size:0.85rem; flex-shrink:0; margin-top:3px;">
+                                                            <i class="fas fa-check-circle"></i>
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td>
                                                 <textarea class="form-control-inline text-center pengadaan-live-edit auto-resize" data-field="jumlah" rows="1">{{ $item->jumlah }}</textarea>
-                                            </td>
-                                            <td class="text-center">
-                                                @php
-                                                    $progClass = '';
-                                                    if ($item->progress == 'Pengajuan Dana') {
-                                                        $progClass = 'bg-status-pengajuan-dana';
-                                                    } elseif ($item->progress == 'Cari Vendor') {
-                                                        $progClass = 'bg-status-cari-vendor';
-                                                    } elseif ($item->progress == 'Pending') {
-                                                        $progClass = 'bg-status-pending';
-                                                    } elseif ($item->progress == 'Terealisasi') {
-                                                        $progClass = 'bg-status-selesai';
-                                                    }
-                                                @endphp
-                                                <select
-                                                    class="form-control-inline pengadaan-live-edit status-dropdown {{ $progClass }}"
-                                                    data-field="progress">
-                                                    <option value="Pengajuan Dana"
-                                                        {{ $item->progress == 'Pengajuan Dana' ? 'selected' : '' }}
-                                                        class="bg-status-pengajuan-dana">Pengajuan Dana</option>
-                                                    <option value="Cari Vendor"
-                                                        {{ $item->progress == 'Cari Vendor' ? 'selected' : '' }}
-                                                        class="bg-status-cari-vendor">Cari Vendor</option>
-                                                    <option value="Pending"
-                                                        {{ $item->progress == 'Pending' ? 'selected' : '' }}
-                                                        class="bg-status-pending">Pending</option>
-                                                    <option value="Terealisasi"
-                                                        {{ $item->progress == 'Terealisasi' ? 'selected' : '' }}
-                                                        class="bg-status-selesai">Terealisasi</option>
-                                                </select>
                                             </td>
                                             <td class="text-right">
                                                 <div class="d-flex align-items-center justify-content-end">
@@ -1308,50 +1271,89 @@
                                                         value="{{ number_format((float) $item->budget, 0, ',', '.') }}">
                                                 </div>
                                             </td>
-                                            <td class="text-center">
+                                            {{-- REALISASI DANA: diisi oleh Linda saat approve, read-only di operasional --}}
+                                            <td class="text-right align-middle">
+                                                @if ($item->realisasi_dana !== null)
+                                                    <div class="d-flex align-items-center justify-content-end">
+                                                        <span class="mr-1 text-primary font-weight-bold">Rp</span>
+                                                        <span
+                                                            class="font-weight-bold text-primary">{{ number_format((float) $item->realisasi_dana, 0, ',', '.') }}</span>
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted font-italic"
+                                                        style="font-size: 0.78rem; opacity: 0.6;">Menunggu
+                                                        persetujuan</span>
+                                                @endif
+                                            </td>
+                                            {{-- ACC: Read-only badge, dikontrol oleh Linda via Pengajuan Anggaran --}}
+                                            <td class="text-center align-middle">
                                                 @php
-                                                    $accClass = '';
-                                                    if ($item->acc == 'Iya') {
-                                                        $accClass = 'bg-status-selesai';
-                                                    } elseif ($item->acc == 'Tidak') {
-                                                        $accClass = 'bg-status-tidak';
+                                                    $acc = $item->acc ?? 'Pending';
+                                                    if ($acc === 'Iya') {
+                                                        $accBadgeStyle = 'background:#1cc88a; color:#fff;';
+                                                        $accIcon = 'fa-check-circle';
+                                                        $accLabel = 'Disetujui';
+                                                    } elseif ($acc === 'Tidak') {
+                                                        $accBadgeStyle = 'background:#e74a3b; color:#fff;';
+                                                        $accIcon = 'fa-times-circle';
+                                                        $accLabel = 'Ditolak';
+                                                    } elseif ($acc === 'Belum Lunas') {
+                                                        $accBadgeStyle = 'background:#36b9cc; color:#fff;';
+                                                        $accIcon = 'fa-hand-holding-usd';
+                                                        $accLabel = 'Belum Lunas';
                                                     } else {
-                                                        $accClass = 'bg-status-pending';
+                                                        $accBadgeStyle = 'background:#f6c23e; color:#000;';
+                                                        $accIcon = 'fa-clock';
+                                                        $accLabel = 'Menunggu ACC';
                                                     }
                                                 @endphp
-                                                <select
-                                                    class="form-control-inline pengadaan-live-edit status-dropdown {{ $accClass }}"
-                                                    data-field="acc">
-                                                    <option value="" {{ $item->acc == '' ? 'selected' : '' }}>-
-                                                        Pilih -</option>
-                                                    <option value="Iya" {{ $item->acc == 'Iya' ? 'selected' : '' }}
-                                                        class="bg-status-selesai">Iya</option>
-                                                    <option value="Tidak" {{ $item->acc == 'Tidak' ? 'selected' : '' }}
-                                                        class="bg-status-tidak">Tidak</option>
-                                                </select>
+                                                <span class="badge shadow-sm px-3 py-2"
+                                                    style="{{ $accBadgeStyle }} border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
+                                                    <i class="fas {{ $accIcon }} mr-1"></i>{{ $accLabel }}
+                                                </span>
                                             </td>
-                                            <td class="text-center align-middle bukti-transfer-cell">
-                                                @if ($item->bukti_transfer)
-                                                    <div class="position-relative d-inline-block">
-                                                        <img src="{{ asset($item->bukti_transfer) }}"
-                                                            alt="Bukti Transfer"
-                                                            class="img-thumbnail shadow-sm preview-image"
-                                                            style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;"
-                                                            onclick="previewImage('{{ asset($item->bukti_transfer) }}', 'Bukti Transfer - {{ $item->nama_barang }}')"
-                                                            title="Klik untuk memperbesar">
-                                                    </div>
-                                                    <div class="mt-1">
-                                                        <a href="javascript:void(0)"
-                                                            class="small text-primary font-weight-bold"
-                                                            onclick="openUploadModal({{ $item->id }}, '{{ $item->nama_barang }}')">
-                                                            Ganti
-                                                        </a>
+                                            <td class="text-center align-middle bukti-transfer-cell"
+                                                style="min-width: 120px;">
+                                                @php $fotos = $item->buktiFotos; @endphp
+                                                @if ($fotos->isNotEmpty())
+                                                    <div class="d-flex flex-wrap justify-content-center align-items-center"
+                                                        style="gap: 4px;">
+                                                        @foreach ($fotos as $foto)
+                                                            <div class="position-relative d-inline-block bukti-foto-item"
+                                                                data-bukti-id="{{ $foto->id }}">
+                                                                <img src="{{ asset($foto->file_path) }}" alt="Bukti"
+                                                                    class="img-thumbnail shadow-sm preview-image"
+                                                                    style="width: 44px; height: 44px; object-fit: cover; cursor: pointer;"
+                                                                    onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $item->nama_barang }}')"
+                                                                    title="Klik untuk memperbesar">
+                                                                <button type="button"
+                                                                    class="btn-hapus-bukti-foto position-absolute"
+                                                                    style="top:-5px; right:-5px; width:16px; height:16px; border-radius:50%; background:#e74a3b; border:none; color:#fff; font-size:9px; line-height:1; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center;"
+                                                                    data-id="{{ $item->id }}"
+                                                                    data-bukti-id="{{ $foto->id }}"
+                                                                    title="Hapus foto ini">
+                                                                    <i class="fas fa-times"></i>
+                                                                </button>
+                                                            </div>
+                                                        @endforeach
+                                                        {{-- Tombol + untuk tambah foto, hanya jika belum 2 --}}
+                                                        @if ($fotos->count() < 2)
+                                                            <button type="button"
+                                                                class="btn-tambah-bukti-foto d-flex align-items-center justify-content-center"
+                                                                style="width: 22px; height: 22px; border-radius: 50%; border: none; background: #4e73df; color: #fff; cursor: pointer; font-size: 0.7rem; flex-shrink:0; padding:0;"
+                                                                data-id="{{ $item->id }}"
+                                                                data-nama="{{ $item->nama_barang }}"
+                                                                title="Tambah Foto Bukti">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 @else
                                                     <div class="d-flex flex-column align-items-center">
                                                         <button type="button"
-                                                            class="btn btn-outline-primary btn-xs px-2 shadow-sm font-weight-bold"
-                                                            onclick="openUploadModal({{ $item->id }}, '{{ $item->nama_barang }}')"
+                                                            class="btn-tambah-bukti-foto btn btn-outline-primary btn-xs px-2 shadow-sm font-weight-bold"
+                                                            data-id="{{ $item->id }}"
+                                                            data-nama="{{ $item->nama_barang }}"
                                                             style="font-size: 0.7rem; padding: 2px 5px;">
                                                             <i class="fas fa-upload mr-1"></i> Upload
                                                         </button>
@@ -1374,12 +1376,13 @@
                                 </tbody>
                                 <tfoot>
                                     <tr style="background-color: #f8f9fc;">
-                                        <td colspan="4" class="text-right font-weight-bold">TOTAL ESTIMASI BUDGET
+                                        <td colspan="3" class="text-right font-weight-bold">TOTAL ESTIMASI BUDGET
                                             PENGADAAN</td>
                                         <td class="text-right font-weight-bold text-danger" style="font-size: 1.1rem;">
                                             Rp <span
                                                 id="grand-total-budget-pengadaan">{{ number_format($totalBudgetPengadaan, 0, ',', '.') }}</span>
                                         </td>
+                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -1544,7 +1547,7 @@
                         msg += '.';
                         className = 'filtered-empty-inventaris-row';
                     } else if (tableBodyId === 'monitoring-table-body') {
-                        colspan = 10;
+                        colspan = 9;
                         const filterValue = $('#filter-progress').val() || 'all';
                         msg = `Tidak ada data perbaikan dengan progress "${filterValue}".`;
                         className = 'filtered-empty-row';
@@ -1672,7 +1675,7 @@
                     data: {
                         _token: "{{ csrf_token() }}",
                         fasilitas: "",
-                        progress: "Pending"
+                        progress: "Pengajuan dana"
                     },
                     success: function(res) {
                         btn.prop('disabled', false).html(
@@ -1685,30 +1688,25 @@
                         const newRow = `
                         <tr data-id="${item.id}">
                             <td class="text-center no-col">${rowCount}</td>
-                            <td><textarea class="form-control-inline font-weight-bold live-edit auto-resize" data-field="fasilitas" rows="1" placeholder="(Tulis Data Baru)">${item.fasilitas || ''}</textarea></td>
+                            <td>
+                                <textarea class="form-control-inline font-weight-bold live-edit auto-resize" data-field="fasilitas" rows="1" placeholder="(Tulis Data Baru)">${item.fasilitas || ''}</textarea>
+                                <div class="mt-1" style="font-size:0.7rem; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">Deadline</div>
+                                <div class="d-flex align-items-center" style="gap:3px; flex-wrap:wrap;">
+                                    <input type="date" class="form-control-inline text-center live-edit" data-field="tanggal_mulai" style="width: 110px; font-size:0.72rem;">
+                                    <span style="font-size: 0.7rem; color:#aaa;">s/d</span>
+                                    <input type="date" class="form-control-inline text-center live-edit" data-field="tanggal_selesai" style="width: 110px; font-size:0.72rem;">
+                                </div>
+                            </td>
                             <td class="text-truncate-cell">
                                 <textarea class="form-control-inline live-edit auto-resize" data-field="kerusakan" rows="1" spellcheck="false"></textarea>
                                 <button class="btn-lihat-detail mt-1" onclick="openDetailPopup('Kerusakan', this.previousElementSibling.value)">Lihat Detail</button>
                             </td>
                             <td class="text-center">
-                                <div class="d-flex flex-column align-items-center justify-content-center">
-                                    <input type="date" class="form-control-inline text-center live-edit" data-field="tanggal_mulai" style="width: 120px;">
-                                    <span class="my-1 text-muted" style="font-size: 0.75rem; line-height: 1;">s/d</span>
-                                    <input type="date" class="form-control-inline text-center live-edit" data-field="tanggal_selesai" style="width: 120px;">
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <select class="form-control-inline live-edit status-dropdown bg-status-pending" data-field="progress">
-                                    <option value="Pengajuan Dana" class="bg-status-pengajuan-dana">Pengajuan Dana</option>
-                                    <option value="Cari Vendor" class="bg-status-cari-vendor">Cari Vendor</option>
-                                    <option value="Pending" selected class="bg-status-pending">Pending</option>
-                                    <option value="On Progress" class="bg-status-on-progress">On Progress</option>
+                                <select class="form-control-inline live-edit status-dropdown bg-status-pengajuan-dana" data-field="progress">
+                                    <option value="Pengajuan dana" selected class="bg-status-pengajuan-dana">Pengajuan dana</option>
+                                    <option value="Pengerjaan" class="bg-status-on-progress">Pengerjaan</option>
                                     <option value="Selesai" class="bg-status-selesai">Selesai</option>
                                 </select>
-                            </td>
-                            <td class="text-truncate-cell">
-                                <textarea class="form-control-inline live-edit auto-resize" data-field="rencana" rows="1" spellcheck="false"></textarea>
-                                <button class="btn-lihat-detail mt-1" onclick="openDetailPopup('Rencana', this.previousElementSibling.value)">Lihat Detail</button>
                             </td>
                             <td class="text-right">
                                 <div class="d-flex align-items-center justify-content-end">
@@ -1803,7 +1801,6 @@
                         tanggal_mulai: getRawValue('tanggal_mulai'),
                         tanggal_selesai: getRawValue('tanggal_selesai'),
                         progress: getRawValue('progress'),
-                        rencana: getRawValue('rencana'),
                         budget: getRawValue('budget'),
                         realisasi_dana: getRawValue('realisasi_dana'),
                     },
@@ -1816,14 +1813,16 @@
                             input.removeClass(
                                 'bg-status-pengajuan-dana bg-status-cari-vendor bg-status-pending bg-status-on-progress bg-status-selesai'
                             );
-                            if (value === 'Pengajuan Dana') input.addClass(
-                                'bg-status-pengajuan-dana');
-                            else if (value === 'Cari Vendor') input.addClass(
-                                'bg-status-cari-vendor');
-                            else if (value === 'Pending') input.addClass('bg-status-pending');
-                            else if (value === 'On Progress') input.addClass(
-                                'bg-status-on-progress');
-                            else if (value === 'Selesai') input.addClass('bg-status-selesai');
+                            if (value === 'Pengajuan dana' || value === 'Pengajuan Dana') {
+                                input.addClass('bg-status-pengajuan-dana');
+                            } else if (value === 'Pengerjaan' || value === 'On Progress' ||
+                                value === 'Cari Vendor') {
+                                input.addClass('bg-status-on-progress');
+                            } else if (value === 'Selesai') {
+                                input.addClass('bg-status-selesai');
+                            } else {
+                                input.addClass('bg-status-pending');
+                            }
 
                             // Trigger dynamic row filtering if progress changed
                             $('#filter-progress').trigger('change');
@@ -1890,8 +1889,24 @@
                     let keep = true;
 
                     // Filter progress
-                    if (progressFilter !== 'all' && rowProgress !== progressFilter) {
-                        keep = false;
+                    if (progressFilter !== 'all') {
+                        const normFilter = progressFilter.toLowerCase();
+                        const normRow = (rowProgress || '').toLowerCase();
+                        let isMatch = false;
+                        if (normFilter === 'pengajuan dana' && (normRow === 'pengajuan dana' || normRow ===
+                                'pengajuan dana')) {
+                            isMatch = true;
+                        } else if (normFilter === 'pengerjaan' && (normRow === 'pengerjaan' || normRow ===
+                                'on progress' || normRow === 'cari vendor')) {
+                            isMatch = true;
+                        } else if (normFilter === 'selesai' && normRow === 'selesai') {
+                            isMatch = true;
+                        } else if (normRow === normFilter) {
+                            isMatch = true;
+                        }
+                        if (!isMatch) {
+                            keep = false;
+                        }
                     }
 
                     // Filter timeline — hanya aktif jika setidaknya satu tanggal filter diisi
@@ -1956,7 +1971,7 @@
                                         .length === 0) {
                                         $('#monitoring-table-body').append(`
                                         <tr class="empty-row">
-                                            <td colspan="10" class="text-center py-5 text-muted">Belum ada data monitoring perbaikan.</td>
+                                            <td colspan="9" class="text-center py-5 text-muted">Belum ada data monitoring perbaikan.</td>
                                         </tr>
                                     `);
                                     }
@@ -1995,31 +2010,27 @@
                             <td class="text-center no-col">${rowCount}</td>
                             <td><textarea class="form-control-inline font-weight-bold pengadaan-live-edit auto-resize" data-field="nama_barang" rows="1" placeholder="(Tulis Nama Barang)">${item.nama_barang || ''}</textarea></td>
                             <td><textarea class="form-control-inline text-center pengadaan-live-edit auto-resize" data-field="jumlah" rows="1"></textarea></td>
-                            <td class="text-center">
-                                <select class="form-control-inline pengadaan-live-edit status-dropdown bg-status-pending" data-field="progress">
-                                    <option value="Pengajuan Dana" class="bg-status-pengajuan-dana">Pengajuan Dana</option>
-                                    <option value="Cari Vendor" class="bg-status-cari-vendor">Cari Vendor</option>
-                                    <option value="Pending" selected class="bg-status-pending">Pending</option>
-                                    <option value="Terealisasi" class="bg-status-selesai">Terealisasi</option>
-                                </select>
-                            </td>
                             <td class="text-right">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <span class="mr-1 text-success font-weight-bold">Rp</span>
                                     <input type="text" class="form-control-inline text-right text-success font-weight-bold pengadaan-live-edit pengadaan-budget-input" data-field="budget" value="0">
                                 </div>
                             </td>
-                            <td class="text-center">
-                                <select class="form-control-inline pengadaan-live-edit status-dropdown bg-status-pending" data-field="acc">
-                                    <option value="" selected>- Pilih -</option>
-                                    <option value="Iya" class="bg-status-selesai">Iya</option>
-                                    <option value="Tidak" class="bg-status-tidak">Tidak</option>
-                                </select>
+                            <td class="text-right align-middle">
+                                <span class="text-muted font-italic" style="font-size: 0.78rem; opacity: 0.6;">Menunggu persetujuan</span>
                             </td>
-                            <td class="text-center align-middle bukti-transfer-cell">
+                            <td class="text-center align-middle">
+                                <span class="badge shadow-sm px-3 py-2"
+                                    style="background:#f6c23e; color:#000; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
+                                    <i class="fas fa-clock mr-1"></i>Menunggu ACC
+                                </span>
+                            </td>
+                            <td class="text-center align-middle bukti-transfer-cell" style="min-width: 120px;">
                                 <div class="d-flex flex-column align-items-center">
-                                    <button type="button" class="btn btn-outline-primary btn-xs px-2 shadow-sm font-weight-bold"
-                                        onclick="openUploadModal(${item.id}, '${item.nama_barang}')" style="font-size: 0.7rem; padding: 2px 5px;">
+                                    <button type="button" class="btn-tambah-bukti-foto btn btn-outline-primary btn-xs px-2 shadow-sm font-weight-bold"
+                                        data-id="${item.id}"
+                                        data-nama="${item.nama_barang || ''}"
+                                        style="font-size: 0.7rem; padding: 2px 5px;">
                                         <i class="fas fa-upload mr-1"></i> Upload
                                     </button>
                                 </div>
@@ -2030,7 +2041,6 @@
                         </tr>
                     `;
                         $('#pengadaan-table-body').prepend(newRow);
-                        $('#filter-progress-pengadaan').trigger('change');
 
                         setTimeout(() => {
                             $('#pengadaan-table-body tr').first().find('.auto-resize')
@@ -2080,34 +2090,6 @@
                         input.css('background-color', 'transparent');
                         updateGrandTotalPengadaan();
 
-                        // Update dropdown color if it was a status change
-                        if (field === 'progress') {
-                            input.removeClass(
-                                'bg-status-pengajuan-dana bg-status-cari-vendor bg-status-pending bg-status-selesai'
-                            );
-                            if (value === 'Pengajuan Dana') input.addClass(
-                                'bg-status-pengajuan-dana');
-                            else if (value === 'Cari Vendor') input.addClass(
-                                'bg-status-cari-vendor');
-                            else if (value === 'Pending') input.addClass('bg-status-pending');
-                            else if (value === 'Terealisasi') input.addClass(
-                                'bg-status-selesai');
-
-                            // Trigger dynamic row filtering if progress changed
-                            $('#filter-progress-pengadaan').trigger('change');
-                        }
-
-                        if (field === 'acc') {
-                            input.removeClass(
-                                'bg-status-selesai bg-status-tidak bg-status-pending');
-                            if (value === 'Iya') input.addClass('bg-status-selesai');
-                            else if (value === 'Tidak') input.addClass('bg-status-tidak');
-                            else input.addClass('bg-status-pending');
-
-                            // Trigger dynamic row filtering if acc changed
-                            $('#filter-progress-pengadaan').trigger('change');
-                        }
-
                         const Toast = Swal.mixin({
                             toast: true,
                             position: 'top-end',
@@ -2150,32 +2132,6 @@
                 $('#grand-total-budget-pengadaan').text(new Intl.NumberFormat('id-ID').format(total));
             }
 
-            $(document).on('change', '#filter-progress-pengadaan, #filter-acc-pengadaan', function() {
-                const progressFilter = $('#filter-progress-pengadaan').val();
-                const accFilter = $('#filter-acc-pengadaan').val();
-
-                $('#pengadaan-table-body tr').each(function() {
-                    const tr = $(this);
-                    if (tr.hasClass('empty-pengadaan-row') || tr.hasClass('filtered-empty-row'))
-                        return;
-
-                    const rowProgress = tr.find('[data-field="progress"]').val();
-                    const rowAcc = tr.find('[data-field="acc"]').val();
-
-                    const progressMatch = progressFilter === 'all' || rowProgress ===
-                        progressFilter;
-                    const accMatch = accFilter === 'all' || rowAcc === accFilter;
-
-                    if (progressMatch && accMatch) {
-                        tr.removeClass('filtered-out');
-                    } else {
-                        tr.addClass('filtered-out');
-                    }
-                });
-
-                updatePagination('pengadaan-table-body', 'pengadaan-pagination', 1);
-            });
-
             // 4. Delete Data - Refresh-less
             $(document).on('click', '.delete-pengadaan-btn', function() {
                 const btn = $(this);
@@ -2216,6 +2172,206 @@
                             }
                         });
                     }
+                });
+            });
+
+            // ====================== BUKTI FOTO PENGADAAN ======================
+
+            // Input file tersembunyi untuk tambah foto
+            $('body').append(
+                '<input type="file" id="inputTambahBuktiFoto" accept="image/*" style="display:none;">');
+
+            var _currentBuktiId = null;
+            var _currentBuktiNama = null;
+
+            // Klik tombol + / Upload
+            $(document).on('click', '.btn-tambah-bukti-foto', function() {
+                _currentBuktiId = $(this).data('id');
+                _currentBuktiNama = $(this).data('nama');
+
+                // Enforce limit 2 foto
+                const cell = $('#pengadaan-table-body tr[data-id="' + _currentBuktiId +
+                    '"] .bukti-transfer-cell');
+                const jumlahFoto = cell.find('.bukti-foto-item').length;
+                if (jumlahFoto >= 2) {
+                    Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000
+                        })
+                        .fire({
+                            icon: 'warning',
+                            title: 'Maksimal 2 gambar'
+                        });
+                    return;
+                }
+
+                $('#inputTambahBuktiFoto').val('').trigger('click');
+            });
+
+            // Saat file dipilih, langsung upload
+            $(document).on('change', '#inputTambahBuktiFoto', function() {
+                const file = this.files[0];
+                if (!file || !_currentBuktiId) return;
+
+                const formData = new FormData();
+                formData.append('bukti_transfer', file);
+                formData.append('_token', '{{ csrf_token() }}');
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+
+                $.ajax({
+                    url: '/pengadaan-barang/' + _currentBuktiId + '/add-bukti',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        if (!res.success) {
+                            Swal.fire('Gagal', res.message || 'Gagal upload foto', 'error');
+                            return;
+                        }
+
+                        const cell = $('#pengadaan-table-body tr[data-id="' + _currentBuktiId +
+                            '"] .bukti-transfer-cell');
+                        const addBtn = cell.find('.btn-tambah-bukti-foto');
+
+                        // Hapus tombol Upload jika masih berbentuk tombol outline (belum ada foto)
+                        if (addBtn.hasClass('btn-outline-primary')) {
+                            cell.empty();
+                            cell.append(
+                                '<div class="d-flex flex-wrap justify-content-center align-items-center" style="gap:4px;"></div>'
+                            );
+                        }
+
+                        // Buat elemen foto baru
+                        const newFoto = `
+                            <div class="position-relative d-inline-block bukti-foto-item" data-bukti-id="${res.bukti_id}">
+                                <img src="${res.file_url}" alt="Bukti"
+                                    class="img-thumbnail shadow-sm preview-image"
+                                    style="width:44px;height:44px;object-fit:cover;cursor:pointer;"
+                                    onclick="previewImage('${res.file_url}', 'Bukti Transfer - ${_currentBuktiNama || ''}')"
+                                    title="Klik untuk memperbesar">
+                                <button type="button" class="btn-hapus-bukti-foto position-absolute"
+                                    style="top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:#e74a3b;border:none;color:#fff;font-size:9px;line-height:1;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;"
+                                    data-id="${_currentBuktiId}" data-bukti-id="${res.bukti_id}" title="Hapus foto ini">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>`;
+
+                        const plusBtn = `
+                            <button type="button" class="btn-tambah-bukti-foto d-flex align-items-center justify-content-center"
+                                style="width:22px;height:22px;border-radius:50%;border:none;background:#4e73df;color:#fff;cursor:pointer;font-size:0.7rem;flex-shrink:0;padding:0;"
+                                data-id="${_currentBuktiId}" data-nama="${_currentBuktiNama || ''}" title="Tambah Foto Bukti">
+                                <i class="fas fa-plus"></i>
+                            </button>`;
+
+                        // Jika belum ada wrapper flex, buat
+                        let wrapper = cell.find('.d-flex.flex-wrap');
+                        if (wrapper.length === 0) {
+                            cell.html(
+                                '<div class="d-flex flex-wrap justify-content-center align-items-center" style="gap:4px;"></div>'
+                            );
+                            wrapper = cell.find('.d-flex.flex-wrap');
+                        }
+
+                        // Hapus tombol + lama, insert foto baru, tambah tombol + baru di akhir
+                        wrapper.find('.btn-tambah-bukti-foto').remove();
+                        wrapper.append(newFoto);
+
+                        // Hanya tampilkan tombol + jika belum 2 foto
+                        const totalFoto = wrapper.find('.bukti-foto-item').length;
+                        if (totalFoto < 2) {
+                            wrapper.append(plusBtn);
+                        }
+
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Foto berhasil ditambahkan'
+                        });
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Gagal mengupload foto', 'error');
+                    }
+                });
+            });
+
+            // Hapus foto individual
+            $(document).on('click', '.btn-hapus-bukti-foto', function(e) {
+                e.stopPropagation();
+                const btn = $(this);
+                const id = btn.data('id');
+                const buktiId = btn.data('bukti-id');
+                const fotoItem = btn.closest('.bukti-foto-item');
+
+                Swal.fire({
+                    title: 'Hapus foto ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e74a3b',
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+                    $.ajax({
+                        url: '/pengadaan-barang/' + id + '/bukti/' + buktiId,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(res) {
+                            if (!res.success) return;
+                            fotoItem.remove();
+
+                            // Jika tidak ada foto tersisa, tampilkan tombol Upload
+                            const cell = $('#pengadaan-table-body tr[data-id="' + id +
+                                '"] .bukti-transfer-cell');
+                            const wrapper = cell.find('.d-flex.flex-wrap');
+                            const remainingFotos = wrapper.find('.bukti-foto-item')
+                                .length;
+
+                            if (remainingFotos === 0) {
+                                cell.html(`
+                                    <div class="d-flex flex-column align-items-center">
+                                        <button type="button" class="btn-tambah-bukti-foto btn btn-outline-primary btn-xs px-2 shadow-sm font-weight-bold"
+                                            data-id="${id}" data-nama=""
+                                            style="font-size:0.7rem;padding:2px 5px;">
+                                            <i class="fas fa-upload mr-1"></i> Upload
+                                        </button>
+                                    </div>`);
+                            } else {
+                                // Foto berkurang dari 2 → tampilkan tombol (+) kembali
+                                if (wrapper.find('.btn-tambah-bukti-foto').length ===
+                                    0) {
+                                    wrapper.append(`
+                                        <button type="button" class="btn-tambah-bukti-foto d-flex align-items-center justify-content-center"
+                                            style="width:22px;height:22px;border-radius:50%;border:none;background:#4e73df;color:#fff;cursor:pointer;font-size:0.7rem;flex-shrink:0;padding:0;"
+                                            data-id="${id}" data-nama="" title="Tambah Foto Bukti">
+                                            <i class="fas fa-plus"></i>
+                                        </button>`);
+                                }
+                            }
+                            Swal.mixin({
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 1200,
+                                    timerProgressBar: true
+                                })
+                                .fire({
+                                    icon: 'success',
+                                    title: 'Foto dihapus'
+                                });
+                        }
+                    });
                 });
             });
             // ====================== LIVE EDIT INVENTARIS KANTOR ======================
@@ -2618,19 +2774,19 @@
             updatePagination('inventaris-table-body', 'inventaris-pagination');
             updatePagination('monitoring-table-body', 'monitoring-pagination');
             updatePagination('pengadaan-table-body', 'pengadaan-pagination');
-            // 5. Timeline filter for monitoring — search button
+            // 5. Deadline filter for monitoring — search button
             $('#filter-timeline-btn').on('click', function() {
                 const startRaw = $('#filter-timeline-start').val();
                 const endRaw = $('#filter-timeline-end').val();
                 if (!startRaw && !endRaw) {
-                    Swal.fire('Perhatian', 'Pilih setidaknya satu tanggal untuk memfilter timeline.',
+                    Swal.fire('Perhatian', 'Pilih setidaknya satu tanggal untuk memfilter deadline.',
                         'warning');
                     return;
                 }
                 applyMonitoringFilter();
             });
 
-            // Refresh button — reset semua filter monitoring dan tampilkan semua data
+            // Reset button — reset semua filter monitoring dan tampilkan semua data
             $('#filter-timeline-reset').on('click', function() {
                 $('#filter-timeline-start').val('');
                 $('#filter-timeline-end').val('');
