@@ -30,7 +30,16 @@
                         $isAutoLunas = true;
                 }
 
-                $isAllPaid = $isManualLunas || $isAutoLunas;
+                $biayaClosing = $item->total_pembayaran ?? $item->spp_awal;
+                if (!$biayaClosing && ($item->biaya_pendaftaran || $item->pembayaran_spp)) {
+                    $biayaClosing = (float) $item->biaya_pendaftaran + (float) $item->pembayaran_spp;
+                }
+                if (!$biayaClosing) {
+                    $biayaClosing = $item->biaya_pendaftaran;
+                }
+                $isLumpSumLunas = ($biayaClosing >= (6 * $levelNominal));
+
+                $isAllPaid = $isManualLunas || $isAutoLunas || $isLumpSumLunas;
                 $filterYear = request('filter_year', date('Y'));
                 
                 // [USER_REQUEST] Pre-calculate approval logic for usage throughout the row
@@ -74,12 +83,10 @@
                     $statusClass = 'status-aktif';
                     if ($item->status == 'Aktif')
                         $statusClass = 'status-aktif';
-                    elseif ($item->status == 'Cuti')
+                    elseif (in_array($item->status, ['Cuti', 'OFF', 'off']))
                         $statusClass = 'status-cuti';
                     elseif ($item->status == 'Lulus')
                         $statusClass = 'status-lulus';
-                    elseif ($item->status == 'OFF' || $item->status == 'off')
-                        $statusClass = 'status-off';
                     
                     // Use calculated is_all_paid from controller if available, fallback to manual check
                     $isAllPaid = property_exists($item, 'is_all_paid') ? $item->is_all_paid : $isAllPaid;
@@ -96,8 +103,7 @@
                     style="width: 70px; font-size: 0.65rem; padding: 2px 6px;">
                     <option value="Aktif" {{ $item->status == 'Aktif' ? 'selected' : '' }} class="text-dark bg-white">Aktif</option>
                     <option value="Lulus" {{ $item->status == 'Lulus' ? 'selected' : '' }} class="text-dark bg-white">Lulus</option>
-                    <option value="Cuti" {{ $item->status == 'Cuti' ? 'selected' : '' }} class="text-dark bg-white">Cuti</option>
-                    <option value="OFF" {{ ($item->status == 'OFF' || $item->status == 'off') ? 'selected' : '' }} class="text-dark bg-white">OFF</option>
+                    <option value="OFF" {{ (in_array($item->status, ['Cuti', 'OFF', 'off'])) ? 'selected' : '' }} class="text-dark bg-white">OFF</option>
                 </select>
                 @else
                     <span class="badge badge-warning opacity-50" style="font-size: 0.65rem; padding: 3px 8px;">Menunggu Verifikasi</span>
@@ -111,7 +117,7 @@
                     onchange="quickUpdateField(this, {{ $item->id }}, 'tanggal_masuk')">
             </div>
 
-            @if($item->status == 'Cuti')
+            @if(in_array($item->status, ['Cuti', 'OFF', 'off']))
                 <div class="mt-2 d-flex flex-column px-1" style="gap: 4px;">
                     <a href="javascript:void(0)" onclick="focusTanggalSelesai({{ $item->id }})"
                         class="text-secondary font-weight-bold"
@@ -207,7 +213,7 @@
             <td class="text-center align-middle p-0 spp-col {{ $i > 1 ? 'spp-extra' : '' }}">
                 @php
                     $isVisible = true;
-                    if ($item->status == 'Cuti' || $item->status == 'Lulus') {
+                    if (in_array($item->status, ['Cuti', 'OFF', 'off']) || $item->status == 'Lulus') {
                         $isVisible = false;
                     }
                     $selectedMonths = [];

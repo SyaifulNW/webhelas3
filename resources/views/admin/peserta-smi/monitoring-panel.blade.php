@@ -140,7 +140,7 @@
                     <label class="text-xxs font-weight-bold text-dark mb-1">Status Aktif</label>
                     <select class="form-control form-control-sm border bg-light rounded-lg font-weight-bold text-xs h-35">
                         <option value="Aktif">Aktif</option>
-                        <option value="Cuti">Cuti</option>
+                        <option value="OFF">OFF</option>
                         <option value="Drop Out">Drop Out</option>
                     </select>
                 </div>
@@ -191,7 +191,7 @@
                         <span class="text-xxs font-weight-bold"><i class="fas fa-check-circle text-success mr-1"></i> Lunas</span>
                         <span class="text-xxs font-weight-bold"><i class="fas fa-clock text-warning mr-1"></i> Pending</span>
                         <span class="text-xxs font-weight-bold"><i class="fas fa-times-circle text-danger mr-1"></i> Menunggak</span>
-                        <span class="text-xxs font-weight-bold"><i class="fas fa-user-slash text-info mr-1"></i> Cuti</span>
+                        <span class="text-xxs font-weight-bold"><i class="fas fa-user-slash text-info mr-1"></i> OFF</span>
                         <span class="text-xxs font-weight-bold"><i class="fas fa-ban text-secondary mr-1"></i> Drop Out</span>
                     </div>
                 </div>
@@ -335,7 +335,7 @@
                             <span class="text-xxs font-weight-bold">9 (23.7%)</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-xxs font-weight-bold"><i class="fas fa-circle text-info mr-2"></i> Cuti</span>
+                            <span class="text-xxs font-weight-bold"><i class="fas fa-circle text-info mr-2"></i> OFF</span>
                             <span class="text-xxs font-weight-bold">2 (5.3%)</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
@@ -460,7 +460,7 @@
         new Chart(monitoringDoughnutCtx, {
             type: 'doughnut',
             data: {
-                labels: ["Lunas", "Pending", "Menunggak", "Cuti", "Drop Out"],
+                labels: ["Lunas", "Pending", "Menunggak", "OFF", "Drop Out"],
                 datasets: [{
                     data: [23, 3, 9, 2, 1],
                     backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc', '#858796'],

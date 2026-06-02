@@ -217,7 +217,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td style="padding: 4px 6px; border: 1px solid #e3e6f0; font-weight: 500; font-size: 7.5px;">Total Peserta Keseluruhan (Aktif & Cuti)</td>
+                            <td style="padding: 4px 6px; border: 1px solid #e3e6f0; font-weight: 500; font-size: 7.5px;">Total Peserta Keseluruhan (Aktif & OFF)</td>
                             <td style="padding: 4px 6px; border: 1px solid #e3e6f0; text-align: center; font-weight: bold; color: #4e73df; font-size: 8px;">{{ number_format($stats['total'] ?? 0) }}</td>
                         </tr>
                         <tr>
@@ -225,7 +225,7 @@
                             <td style="padding: 4px 6px; border: 1px solid #e3e6f0; text-align: center; font-weight: bold; color: #1cc88a; font-size: 8px;">{{ number_format($stats['aktif'] ?? 0) }}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px 6px; border: 1px solid #e3e6f0; font-weight: 500; font-size: 7.5px;">Total Peserta Cuti</td>
+                            <td style="padding: 4px 6px; border: 1px solid #e3e6f0; font-weight: 500; font-size: 7.5px;">Total Peserta OFF</td>
                             <td style="padding: 4px 6px; border: 1px solid #e3e6f0; text-align: center; font-weight: bold; color: #e74a3b; font-size: 8px;">{{ number_format($stats['cuti'] ?? 0) }}</td>
                         </tr>
                         <tr>
@@ -367,10 +367,8 @@
                         <div style="margin-top: 2px;">
                             @if($item->status == 'Aktif')
                                 <span class="badge badge-success">Aktif</span>
-                            @elseif($item->status == 'Cuti')
-                                <span class="badge badge-danger">Cuti</span>
-                            @elseif($item->status == 'OFF' || $item->status == 'off')
-                                <span class="badge badge-secondary">OFF</span>
+                            @elseif(in_array($item->status, ['Cuti', 'OFF', 'off']))
+                                <span class="badge badge-danger">OFF</span>
                             @else
                                 <span class="badge badge-warning">{{ $item->status }}</span>
                             @endif
@@ -399,7 +397,7 @@
                     @for($i = 1; $i <= 12; $i++)
                         @php
                             $isVisible = true;
-                            if ($item->status == 'Cuti' || $item->status == 'Lulus') {
+                            if (in_array($item->status, ['Cuti', 'OFF', 'off']) || $item->status == 'Lulus') {
                                 $isVisible = false;
                             }
                             
