@@ -106,6 +106,13 @@
             pointer-events: none;
             display: block;
         }
+
+        /* Custom SweetAlert Soft Blur Backdrop */
+        .swal-blur-backdrop {
+            backdrop-filter: blur(5px) !important;
+            -webkit-backdrop-filter: blur(5px) !important;
+            background-color: rgba(0, 0, 0, 0.4) !important;
+        }
     </style>
 
     <style>
@@ -1103,12 +1110,15 @@
                     @endif
                 @endif
 
+
+
                 {{-- Toolbar Actions Row --}}
                 <div class="d-flex justify-content-start align-items-center flex-nowrap gap-3 overflow-x-auto pb-2">
                     <!-- Kiri: Tombol Tambah -->
                     <div class="d-flex align-items-center">
                         @if (
-                            !in_array($userRole, ['administrator', 'manager', 'marketing', 'operasional']) &&
+                            !in_array($userRole, ['administrator', 'manager', 'marketing']) &&
+                            !($userRole === 'operasional' && stripos(auth()->user()->name, 'Rafi') === false) &&
                                 !(auth()->user()->name === 'Linda' && request('view') !== 'me'))
                             @php
                                 $slugName =
@@ -1852,6 +1862,37 @@
             </script>
 
             <div class="card-body position-relative">
+                @if ($isChapterView && in_array($userRole, ['administrator', 'operasional']))
+                    {{-- Legend Footer for Status Data (ADD OPS, EDIT OPS, CHAPTER) --}}
+                    <div class="mb-4 p-2 d-flex align-items-center justify-content-start flex-wrap"
+                        style="background: #ffffff; border: 2px solid #000; border-radius: 12px; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: fit-content; margin-top: 10px;">
+                        <span class="fw-bold text-dark text-uppercase mr-2"
+                            style="font-size: 0.75rem; letter-spacing: 1px;">
+                            <i class="fas fa-info-circle mr-1"></i> Panduan Warna Status Data:
+                        </span>
+                        <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
+                            style="border-radius: 50px; border: 1px solid #000;">
+                            <div
+                                style="width: 12px; height: 12px; background: #28a745; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
+                            </div>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">ADD OPS (Data Ditambah oleh Operasional)</span>
+                        </div>
+                        <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
+                            style="border-radius: 50px; border: 1px solid #000;">
+                            <div
+                                style="width: 12px; height: 12px; background: #ffc107; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
+                            </div>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">EDIT OPS (Data Diedit oleh Operasional)</span>
+                        </div>
+                        <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
+                            style="border-radius: 50px; border: 1px solid #000;">
+                            <div
+                                style="width: 12px; height: 12px; background: #6c757d; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
+                            </div>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">CHAPTER (Data Asli dari Chapter)</span>
+                        </div>
+                    </div>
+                @endif
                 <div id="tableContainer" class="table-scroll-container" style="overflow-x: auto; width: 100%;">
 
                     <table id="myTable"
@@ -1929,6 +1970,8 @@
                                     @endif
                                     @if (in_array($userRole, ['administrator', 'operasional']))
                                         <th style="width: 120px; text-align:center;">PIC</th>
+                                        <th style="width: 110px; text-align:center;">Status Data</th>
+                                        <th style="width: 80px; text-align:center;">Aksi</th>
                                     @endif
 
                                     {{-- Header for Admin in CS Helas Tab --}}
@@ -2149,6 +2192,56 @@
                                 });
                             });
 
+                            // Handler untuk Sumber Leads (select-sumber di chapter view)
+                            $(document).on('change', '.select-sumber', function() {
+                                let $this = $(this);
+                                let id = $this.data('id');
+                                let value = $this.val();
+
+                                $.ajax({
+                                    url: "{{ url('admin/update-sumber-leads') }}/" + id,
+                                    type: 'POST',
+                                    data: {
+                                        _token: '{{ csrf_token() }}',
+                                        leads: value
+                                    },
+                                    success: function(response) {
+                                        console.log('Sumber Leads updated:', value);
+                                        showStatusIcon($this, true);
+                                    },
+                                    error: function(xhr) {
+                                        console.error('Failed to update sumber leads:', xhr);
+                                        showStatusIcon($this, false);
+                                    }
+                                });
+                            });
+
+                            // Handler untuk PIC (select-pic di chapter view)
+                            $(document).on('change', '.select-pic', function() {
+                                let $this = $(this);
+                                let id = $this.data('id');
+                                let value = $this.val();
+
+                                $.ajax({
+                                    url: "{{ url('admin/database/update-inline') }}",
+                                    type: 'POST',
+                                    data: {
+                                        _token: '{{ csrf_token() }}',
+                                        id: id,
+                                        field: 'pic',
+                                        value: value
+                                    },
+                                    success: function(response) {
+                                        console.log('PIC updated:', value);
+                                        showStatusIcon($this, true);
+                                    },
+                                    error: function(xhr) {
+                                        console.error('Failed to update PIC:', xhr);
+                                        showStatusIcon($this, false);
+                                    }
+                                });
+                            });
+
                         });
                     </script>
 
@@ -2345,11 +2438,16 @@
                         function createNewRow(e) {
                             if (e) e.preventDefault();
 
+                            // Kirim view_type saat ini agar controller tahu partial mana yang harus dirender
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const currentViewType = urlParams.get('view_type') || '{{ $viewType ?? '' }}';
+
                             $.ajax({
                                 url: '{{ route('admin.database.createDraft') }}',
                                 method: 'POST',
                                 data: {
-                                    _token: '{{ csrf_token() }}'
+                                    _token: '{{ csrf_token() }}',
+                                    view_type: currentViewType
                                 },
                                 success: function(response) {
                                     if (response.success) {
@@ -2487,6 +2585,86 @@
                                     });
                                 }, 2000);
                             }
+
+                            // Delete Row Direct with SweetAlert & soft blur backdrop
+                            $(document).on('click', '.btn-delete-direct', function(e) {
+                                e.preventDefault();
+                                let $btn = $(this);
+                                let id = $btn.data('id');
+                                let nama = $btn.data('nama');
+                                let $row = $btn.closest('tr');
+
+                                Swal.fire({
+                                    title: 'Hapus Data?',
+                                    text: "Apakah Anda yakin ingin menghapus data \"" + nama + "\" secara permanen?",
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#e74a3b',
+                                    cancelButtonColor: '#858796',
+                                    confirmButtonText: 'Ya, Hapus!',
+                                    cancelButtonText: 'Batal',
+                                    customClass: {
+                                        backdrop: 'swal-blur-backdrop'
+                                    }
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        // Show loading state
+                                        Swal.fire({
+                                            title: 'Menghapus...',
+                                            allowOutsideClick: false,
+                                            didOpen: () => {
+                                                Swal.showLoading();
+                                            },
+                                            customClass: {
+                                                backdrop: 'swal-blur-backdrop'
+                                            }
+                                        });
+
+                                        $.ajax({
+                                            url: "{{ url('admin/database') }}/" + id,
+                                            method: 'POST',
+                                            data: {
+                                                _token: '{{ csrf_token() }}',
+                                                _method: 'DELETE'
+                                            },
+                                            success: function(res) {
+                                                Swal.fire({
+                                                    title: 'Berhasil!',
+                                                    text: 'Data "' + nama + '" telah berhasil dihapus.',
+                                                    icon: 'success',
+                                                    timer: 1500,
+                                                    showConfirmButton: false,
+                                                    customClass: {
+                                                        backdrop: 'swal-blur-backdrop'
+                                                    }
+                                                });
+                                                // Soft fade out and remove the row
+                                                $row.css('background-color', '#f8d7da').fadeOut(800, function() {
+                                                    $(this).remove();
+                                                    // Recalculate row numbers if needed
+                                                    $('#myTable tbody tr').each(function(index) {
+                                                        $(this).find('td:first').text(index + 1);
+                                                    });
+                                                });
+                                            },
+                                            error: function(xhr) {
+                                                let errorMsg = 'Terjadi kesalahan saat menghapus data.';
+                                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                                    errorMsg = xhr.responseJSON.message;
+                                                }
+                                                Swal.fire({
+                                                    title: 'Gagal!',
+                                                    text: errorMsg,
+                                                    icon: 'error',
+                                                    customClass: {
+                                                        backdrop: 'swal-blur-backdrop'
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+                            });
 
                         });
                     </script>

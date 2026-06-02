@@ -837,6 +837,15 @@
                                         <th class="text-center"
                                             style="width: 50px; background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle;">
                                             No</th>
+                                            <th class="text-center"
+                                            style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle; width: 170px;">
+                                            <div class="mb-1 font-weight-bold"
+                                                style="font-size: 0.85rem; letter-spacing: 0.5px;">INVENTARIS</div>
+                                            <input type="text" id="filter-peralatan-inventaris"
+                                                class="form-control form-control-sm mx-auto text-center"
+                                                placeholder="Cari..."
+                                                style="border-radius: 20px; font-weight: 700; width: 140px; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                        </th>
                                         <th class="text-center"
                                             style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle; width: 170px;">
                                             <div class="mb-1 font-weight-bold"
@@ -853,15 +862,6 @@
                                                 <option value="Kamar bawah">Kamar bawah</option>
                                                 <option value="Kamar mandi atas">Kamar mandi atas</option>
                                             </select>
-                                        </th>
-                                        <th class="text-center"
-                                            style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle; width: 170px;">
-                                            <div class="mb-1 font-weight-bold"
-                                                style="font-size: 0.85rem; letter-spacing: 0.5px;">PERALATAN</div>
-                                            <input type="text" id="filter-peralatan-inventaris"
-                                                class="form-control form-control-sm mx-auto text-center"
-                                                placeholder="Cari..."
-                                                style="border-radius: 20px; font-weight: 700; width: 140px; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                                         </th>
                                         <th class="text-center"
                                             style="background-color: #00ffff !important; color: #000 !important; border: 1px solid #000 !important; vertical-align: middle; width: 100px;">
@@ -894,7 +894,10 @@
                                     @forelse($inventarisKantor as $key => $item)
                                         <tr data-id="{{ $item->id }}">
                                             <td class="text-center no-col">{{ $loop->iteration }}</td>
-
+<td>
+                                                <textarea class="form-control-inline text-center inventaris-live-edit auto-resize" data-field="nama_peralatan"
+                                                    rows="1" placeholder="(Tulis Barang)">{{ $item->nama_peralatan }}</textarea>
+                                            </td>
                                             <td class="text-center font-weight-bold align-middle"
                                                 style="background: #fff;">
                                                 <select
@@ -924,11 +927,6 @@
                                                         {{ $item->lokasi == 'Kamar mandi atas' ? 'selected' : '' }}>Kamar
                                                         mandi atas</option>
                                                 </select>
-                                            </td>
-
-                                            <td>
-                                                <textarea class="form-control-inline text-center inventaris-live-edit auto-resize" data-field="nama_peralatan"
-                                                    rows="1" placeholder="(Tulis Barang)">{{ $item->nama_peralatan }}</textarea>
                                             </td>
                                             <td>
                                                 <textarea class="form-control-inline text-center inventaris-live-edit auto-resize" data-field="jumlah"
@@ -2245,6 +2243,9 @@
                         const newRow = `
                         <tr data-id="${item.id}">
                             <td class="text-center no-col">${rowCount}</td>
+                            <td>
+                                <textarea class="form-control-inline text-center inventaris-live-edit auto-resize" data-field="nama_peralatan" rows="1" placeholder="(Tulis Inventaris)"></textarea>
+                            </td>
                             <td class="text-center font-weight-bold align-middle" style="background: #fff;">
                                 <select class="form-control-inline text-center font-weight-bold inventaris-live-edit status-dropdown" data-field="lokasi" style="background-color: #fff !important; color: #000 !important; border: 1px solid rgba(0,0,0,0.1) !important; min-width: 150px;">
                                     <option value="">-- Pilih Lokasi --</option>
@@ -2256,9 +2257,6 @@
                                     <option value="Kamar bawah">Kamar bawah</option>
                                     <option value="Kamar mandi atas">Kamar mandi atas</option>
                                 </select>
-                            </td>
-                            <td>
-                                <textarea class="form-control-inline text-center inventaris-live-edit auto-resize" data-field="nama_peralatan" rows="1" placeholder="(Tulis Barang)"></textarea>
                             </td>
                             <td>
                                                 <textarea class="form-control-inline text-center inventaris-live-edit auto-resize" data-field="jumlah" rows="1"></textarea>

@@ -16,8 +16,19 @@
     if (preg_match('/Total Skor(?: Form)?:? ?(\d+)/i', $item->situasi_bisnis ?? '', $matches)) { $rawSkor = (int) $matches[1]; }
     if (preg_match('/Kategori: ?(\w+)/i', $item->situasi_bisnis ?? '', $matches)) { $rawKategori = strtoupper($matches[1]); }
 
-    $userRole = strtolower(auth()->user()->role);
-    $canEdit  = !in_array($userRole, ['marketing', 'administrator', 'operasional']);
+    $authUser = auth()->user();
+    $userRole = strtolower($authUser->role);
+    // Rafi (operasional) diberi hak edit di chapter view
+    $isRafi = ($userRole === 'operasional' && stripos($authUser->name, 'Rafi') !== false);
+    $canEdit  = !in_array($userRole, ['marketing', 'administrator', 'operasional']) || $isRafi;
+
+    static $chapterUsers = null;
+    if ($chapterUsers === null) {
+        $chapterUsers = \App\Models\User::whereIn('role', ['chapter', 'reseller'])
+            ->where('name', 'not like', '%umum%')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
 @endphp
 
 <tr data-id="{{ $item->id }}" style="background-color: #ffffff; color: #212529; transition: background-color 0.3s ease;">
@@ -68,7 +79,7 @@
     {{-- 4. Prov/Kota --}}
     <td>
         <div class="d-flex flex-column gap-1" style="min-width: 120px;">
-            @if(in_array($userRole, ['administrator', 'operasional']))
+            @if(in_array($userRole, ['administrator', 'operasional']) && !$isRafi)
                 <div class="p-1 px-2 shadow-sm border rounded bg-white text-muted" style="font-size: 0.75rem; border-color: #dee2e6 !important;">
                     {{ $item->provinsi_nama ?: '-' }}
                 </div>
@@ -289,8 +300,34 @@
                 </button>
             @endif
 
-            @if(in_array($userRole, ['administrator', 'operasional']))
-                <span class="badge badge-light border" style="font-size: 0.75rem; padding: 6px 12px; width: 110px;">{{ $item->createdBy?->name ?? $item->created_by }}</span>
+            @if($isRafi)
+                @php
+                    $picValue = $item->pic;
+                    if (empty($picValue)) {
+                        // Fallback to creator name only if creator is NOT operasional/Rafi
+                        $creatorName = $item->createdBy?->name ?? $item->created_by;
+                        $creatorRole = strtolower($item->created_by_role ?? '');
+                        if ($creatorRole !== 'operasional') {
+                            $picValue = $creatorName;
+                        }
+                    }
+                @endphp
+                <select class="form-control form-control-sm select-pic" data-id="{{ $item->id }}" style="font-size: 0.75rem; width: 110px; height: 28px; padding: 2px 5px;">
+                    <option value="">- Pilih PIC -</option>
+                    @foreach($chapterUsers as $cu)
+                        <option value="{{ $cu->name }}" {{ $picValue === $cu->name ? 'selected' : '' }}>
+                            {{ $cu->name }}
+                        </option>
+                    @endforeach
+                </select>
+            @elseif(in_array($userRole, ['administrator', 'operasional']))
+                @php
+                    $picValue = $item->pic;
+                    if (empty($picValue)) {
+                        $picValue = $item->createdBy?->name ?? $item->created_by;
+                    }
+                @endphp
+                <span class="badge badge-light border" style="font-size: 0.75rem; padding: 6px 12px; width: 110px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="{{ $picValue }}">{{ $picValue }}</span>
             @else
                 @if(!$item->is_no_potensi)
                     <button type="button" class="btn btn-sm btn-warning" onclick="markNoPotensi('{{ $item->id }}')" style="font-size: 0.7rem; width: 110px;">X Tidak Potensi</button>
@@ -302,4 +339,41 @@
             @endif
         </div>
     </td>
+
+    {{-- 11. Status Data (hanya tampil untuk administrator/operasional di chapter view) --}}
+    @if(in_array($userRole, ['administrator', 'operasional']))
+    @php
+        // Jika data berasal dari MBC, tampilkan '-'
+        $isMbcData = in_array($item->created_by_role ?? '', ['cs-mbc', 'mbc']);
+        $statusDataValue = $item->status_data ?? 'CHAPTER';
+    @endphp
+    <td class="text-center" style="vertical-align: middle;">
+        @if($isMbcData)
+            <span style="color: #999; font-size: 0.85rem;">-</span>
+        @elseif($statusDataValue === 'ADD OPS')
+            <span class="badge" style="background:#28a745; color:#fff; font-size:0.75rem; font-weight:700; border-radius:8px; padding:5px 10px; white-space:nowrap;">ADD OPS</span>
+        @elseif($statusDataValue === 'EDIT OPS')
+            <span class="badge" style="background:#ffc107; color:#212529; font-size:0.75rem; font-weight:700; border-radius:8px; padding:5px 10px; white-space:nowrap;">EDIT OPS</span>
+        @else
+            <span class="badge" style="background:#6c757d; color:#fff; font-size:0.75rem; font-weight:700; border-radius:8px; padding:5px 10px; white-space:nowrap;">CHAPTER</span>
+        @endif
+    </td>
+    @endif
+
+    {{-- 12. Aksi (hanya tampil untuk administrator/operasional di chapter view) --}}
+    @if(in_array($userRole, ['administrator', 'operasional']))
+    <td class="text-center" style="vertical-align: middle;">
+        @if($isRafi)
+            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-direct shadow-sm d-flex align-items-center justify-content-center mx-auto"
+                    style="width: 28px; height: 28px; border-radius: 6px; padding: 0; transition: all 0.2s;"
+                    data-id="{{ $item->id }}"
+                    data-nama="{{ $item->nama }}"
+                    title="Hapus Data">
+                <i class="fas fa-trash-alt" style="font-size: 0.85rem;"></i>
+            </button>
+        @else
+            <span style="color: #999; font-size: 0.85rem;">-</span>
+        @endif
+    </td>
+    @endif
 </tr>

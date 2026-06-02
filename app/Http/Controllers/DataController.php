@@ -23,7 +23,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $this->middleware('auth')->except(['formM1t', 'storeFormM1t']);
         }
 
-        public function createDraft()
+        public function createDraft(Request $request)
     {
         try {
             $user = Auth::user();
@@ -45,6 +45,16 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             if (in_array(strtolower($user->role), ['chapter', 'reseller']) && $user->chapter) {
                 $newData->kota_nama = $user->chapter;
             }
+
+            // Deteksi apakah ini Rafi (operasional)
+            $isRafi = strtolower($user->role) === 'operasional' && stripos($user->name, 'Rafi') !== false;
+
+            // Set status_data: ADD OPS jika yang tambah adalah Operasional (Rafi)
+            if ($isRafi) {
+                $newData->status_data = 'ADD OPS';
+            } else {
+                $newData->status_data = 'CHAPTER';
+            }
             
             $newData->save();
 
@@ -60,13 +70,35 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 $plan->save();
             }
 
+            // Load relasi salesplan agar tampil dengan benar di partial
+            $newData->load('salesplan');
+
             $kelas = Kelas::select('id', 'nama_kelas', 'tanggal_selesai')->orderBy('nama_kelas')->get();
-            // Gunakan view partial yang sama dengan loop utama untuk konsistensi
-            $html = view('admin.database.partials.row', [
-                'item' => $newData,
-                'loop' => (object)['iteration' => 'New'], // Placeholder iteration
-                'kelas' => $kelas
-            ])->render();
+
+            // Tentukan partial: chapter view untuk chapter/reseller/Rafi
+            $viewType = $request->input('view_type', '');
+            $isChapterUser = in_array(strtolower($user->role), ['chapter', 'reseller']);
+            $isChapterView = $isChapterUser || $isRafi || $viewType === 'chapter';
+
+            if ($isChapterView) {
+                // Render row_chapter langsung untuk chapter/Rafi agar konsisten
+                $html = view('admin.database.partials.row_chapter', [
+                    'item' => $newData,
+                    'loop' => (object)['iteration' => 'New', 'index' => 0],
+                    'kelas' => $kelas
+                ])->render();
+            } else {
+                // Untuk admin/cs/mbc — gunakan dispatcher row.blade.php
+                // Inject view_type ke request agar dispatcher berjalan benar
+                if ($viewType) {
+                    $request->merge(['view_type' => $viewType]);
+                }
+                $html = view('admin.database.partials.row', [
+                    'item' => $newData,
+                    'loop' => (object)['iteration' => 'New', 'index' => 0],
+                    'kelas' => $kelas
+                ])->render();
+            }
 
             return response()->json(['success' => true, 'html' => $html]);
         } catch (\Exception $e) {
@@ -155,11 +187,15 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         } elseif ($viewType === 'chapter') {
             // Only apply chapter role restriction when no specific user or chapter filter is set
             if (empty($csFilter) && empty($chapterFilter)) {
-                $query->whereIn('created_by_role', ['chapter', 'reseller', 'agen']);
+                $query->where(function($q) {
+                    $q->whereIn('created_by_role', ['chapter', 'reseller', 'agen'])
+                      ->orWhere('created_by_role', 'operasional')
+                      ->orWhereIn('status_data', ['ADD OPS', 'EDIT OPS']);
+                });
             }
         } elseif ($userRole === 'cs-mbc') {
             // Default behavior for CS-MBC role
-            $query->whereNotIn('created_by_role', ['chapter', 'reseller', 'agen']);
+            $query->whereNotIn('created_by_role', ['chapter', 'reseller', 'agen', 'operasional']);
         }
 
         // CS biasa → hanya datanya sendiri (Moved higher to capture absolute total correctly)
@@ -392,7 +428,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         if ($viewType === 'cs' || $userRole === 'cs-mbc') {
             $kpiQuery->where('created_by_role', 'cs-mbc');
         } elseif ($viewType === 'chapter') {
-            $kpiQuery->whereIn('created_by_role', ['chapter', 'reseller', 'agen']);
+            $kpiQuery->where(function($q) {
+                $q->whereIn('created_by_role', ['chapter', 'reseller', 'agen'])
+                  ->orWhere('created_by_role', 'operasional')
+                  ->orWhereIn('status_data', ['ADD OPS', 'EDIT OPS']);
+            });
         }
         
         // Re-apply Permission/Ownership Logic to KPI Query
@@ -781,6 +821,17 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                         
                         // Direct assignment and save to bypass mass-assignment issues if any
                         $data->$field = $request->value;
+
+                        // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
+                        $authUser = Auth::user();
+                        if (
+                            strtolower($authUser->role) === 'operasional' &&
+                            stripos($authUser->name, 'Rafi') !== false &&
+                            $data->status_data === 'CHAPTER'
+                        ) {
+                            $data->status_data = 'EDIT OPS';
+                        }
+
                         $data->save();
 
                         // If class is being changed, ensure a SalesPlan exists for this new class
@@ -839,6 +890,16 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             if ($request->has('kota_id')) {
                 $data->kota_id = $request->kota_id;
                 $data->kota_nama = $request->kota_nama;
+            }
+
+            // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
+            $authUser = Auth::user();
+            if (
+                strtolower($authUser->role) === 'operasional' &&
+                stripos($authUser->name, 'Rafi') !== false &&
+                $data->status_data === 'CHAPTER'
+            ) {
+                $data->status_data = 'EDIT OPS';
             }
 
             $data->save();
@@ -904,6 +965,17 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
     {
         $data = data::findOrFail($id);
         $data->leads = $request->leads;
+
+        // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
+        $authUser = Auth::user();
+        if (
+            strtolower($authUser->role) === 'operasional' &&
+            stripos($authUser->name, 'Rafi') !== false &&
+            $data->status_data === 'CHAPTER'
+        ) {
+            $data->status_data = 'EDIT OPS';
+        }
+
         $data->save();
 
         return response()->json(['success' => true]);
@@ -1639,9 +1711,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         if ($viewType === 'cs') {
             $query->where('created_by_role', 'cs-mbc');
         } elseif ($viewType === 'chapter') {
-            $query->whereIn('created_by_role', ['chapter', 'reseller', 'agen']);
+            $query->where(function($q) {
+                $q->whereIn('created_by_role', ['chapter', 'reseller', 'agen'])
+                  ->orWhere('created_by_role', 'operasional')
+                  ->orWhereIn('status_data', ['ADD OPS', 'EDIT OPS']);
+            });
         } elseif ($userRole === 'cs-mbc') {
-            $query->whereNotIn('created_by_role', ['chapter', 'reseller', 'agen']);
+            $query->whereNotIn('created_by_role', ['chapter', 'reseller', 'agen', 'operasional']);
         }
 
         if ($userRole === 'marketing') {
