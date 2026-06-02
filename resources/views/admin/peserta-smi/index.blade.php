@@ -380,7 +380,7 @@
         </style>
 
         <!-- Filter Card Section (At the Very Top) -->
-        <div class="col-12 mb-3 @if(auth()->check() && strtolower(auth()->user()->role) === 'administrator') d-none @endif">
+        <div class="col-12 mb-3 @if(auth()->check() && (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->name === 'Linda')) d-none @endif">
             <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
                 <div class="card-header py-2 d-flex flex-row align-items-center justify-content-start bg-primary text-white" style="gap: 20px;">
                     <div class="d-flex align-items-center mr-2">

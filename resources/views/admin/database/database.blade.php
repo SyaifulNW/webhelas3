@@ -1893,6 +1893,38 @@
                         </div>
                     </div>
                 @endif
+
+                @if (in_array(strtolower($userRole), ['cs-mbc', 'cs-smi', 'administrator', 'manager']) && !$isChapterView)
+                    {{-- Legend for Zoom status --}}
+                    <div class="mb-4 p-2 d-flex align-items-center justify-content-start flex-wrap"
+                        style="background: #ffffff; border: 2px solid #000; border-radius: 12px; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: fit-content; margin-top: 10px;">
+                        <span class="fw-bold text-dark text-uppercase mr-2"
+                            style="font-size: 0.75rem; letter-spacing: 1px;">
+                            <i class="fas fa-video mr-1 text-primary"></i> Panduan Warna Zoom:
+                        </span>
+                        <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
+                            style="border-radius: 50px; border: 1px solid #000;">
+                            <div
+                                style="width: 12px; height: 12px; background: #25799E; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
+                            </div>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Biru = Dijadwalkan</span>
+                        </div>
+                        <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
+                            style="border-radius: 50px; border: 1px solid #000;">
+                            <div
+                                style="width: 12px; height: 12px; background: #3CDE1D; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
+                            </div>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Hijau = Selesai Zoom</span>
+                        </div>
+                        <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
+                            style="border-radius: 50px; border: 1px solid #000;">
+                            <div
+                                style="width: 12px; height: 12px; background: #E61717; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
+                            </div>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Merah = Dibatalkan</span>
+                        </div>
+                    </div>
+                @endif
                 <div id="tableContainer" class="table-scroll-container" style="overflow-x: auto; width: 100%;">
 
                     <table id="myTable"
@@ -4717,20 +4749,71 @@
 
                 <!-- Modal Body -->
                 <div class="modal-body p-4 bg-light">
-                    <!-- Legend Row -->
+                    <!-- Legend & Target Row -->
                     <div class="row align-items-center mb-4">
                         <input type="hidden" id="modalFilterCs" value="{{ auth()->id() }}">
-                        <div class="col-12 d-flex justify-content-end align-items-center"
+                        
+                        <!-- Target Progress Tracker (60 Zoom per month) -->
+                        <div class="col-md-6 d-flex align-items-center mb-3 mb-md-0">
+                            @php
+                                $zoomCountThisMonth = \App\Models\ZoomSchedule::where('cs_id', auth()->id())
+                                    ->whereMonth('scheduled_at', date('m'))
+                                    ->whereYear('scheduled_at', date('Y'))
+                                    ->count();
+                                $zoomTarget = 60;
+                                $zoomProgressPercent = min(100, round(($zoomCountThisMonth / $zoomTarget) * 100));
+
+                                // Fetch individual status counts for the current month
+                                $scheduledCountThisMonth = \App\Models\ZoomSchedule::where('cs_id', auth()->id())
+                                    ->where('status', 'scheduled')
+                                    ->whereMonth('scheduled_at', date('m'))
+                                    ->whereYear('scheduled_at', date('Y'))
+                                    ->count();
+                                $doneCountThisMonth = \App\Models\ZoomSchedule::where('cs_id', auth()->id())
+                                    ->where('status', 'done')
+                                    ->whereMonth('scheduled_at', date('m'))
+                                    ->whereYear('scheduled_at', date('Y'))
+                                    ->count();
+                                $cancelledCountThisMonth = \App\Models\ZoomSchedule::where('cs_id', auth()->id())
+                                    ->where('status', 'cancelled')
+                                    ->whereMonth('scheduled_at', date('m'))
+                                    ->whereYear('scheduled_at', date('Y'))
+                                    ->count();
+                            @endphp
+                            <div class="w-100 p-3 rounded-lg shadow-sm bg-white border d-flex align-items-center" style="gap: 12px; border-radius: 12px;">
+                                <div class="d-flex align-items-center justify-content-center bg-primary-light text-primary rounded-circle" style="width: 40px; height: 40px; min-width: 40px; background-color: #ebf5ff;">
+                                    <i class="fas fa-bullseye fa-lg text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="font-weight-bold text-dark text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Target Zoom Bulanan</span>
+                                        <span class="font-weight-bold text-primary" style="font-size: 0.8rem;">{{ $zoomCountThisMonth }} / {{ $zoomTarget }} Zoom</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px; border-radius: 5px; background-color: #f1f5f9;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" 
+                                            style="width: {{ $zoomProgressPercent }}%; border-radius: 5px;" 
+                                            aria-valuenow="{{ $zoomCountThisMonth }}" aria-valuemin="0" aria-valuemax="{{ $zoomTarget }}"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-1" style="font-size: 0.65rem; color: #64748b;">
+                                        <span>Pencapaian: {{ $zoomProgressPercent }}%</span>
+                                        <span>Target: 60 Zoom (Bulan Ini)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Color Legends -->
+                        <div class="col-md-6 d-flex justify-content-md-end justify-content-start align-items-center"
                             style="gap: 15px; font-size: 0.8rem; font-weight: 700; color: #333;">
                             <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle"
                                     style="width: 10px; height: 10px; background-color: #25799E; display: inline-block;"></span>
-                                Scheduled</span>
+                                Scheduled ({{ $scheduledCountThisMonth }})</span>
                             <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle"
                                     style="width: 10px; height: 10px; background-color: #3CDE1D; display: inline-block;"></span>
-                                Done / Sukses</span>
+                                Done / Sukses ({{ $doneCountThisMonth }})</span>
                             <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle"
                                     style="width: 10px; height: 10px; background-color: #E61717; display: inline-block;"></span>
-                                Cancelled</span>
+                                Cancelled ({{ $cancelledCountThisMonth }})</span>
                         </div>
                     </div>
 

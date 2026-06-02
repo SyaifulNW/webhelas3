@@ -1,152 +1,275 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>Rekap Interaksi Follow Up</title>
     <style>
+        @page {
+            margin: 30px 40px 30px 40px;
+        }
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: 10px;
-            color: #333;
+            font-size: 9px;
+            color: #1e293b;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
         }
         .header {
-            text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
         }
-        .title {
-            background-color: #ffff00;
-            border: 2px solid #0000ff;
-            display: inline-block;
-            padding: 5px 20px;
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .page-title {
+            font-size: 18px;
             font-weight: bold;
-            font-size: 14px;
+            color: #1e3a8a;
+            margin: 0 0 5px 0;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        .meta-info {
+            font-size: 11px;
+            color: #475569;
+            margin: 0;
+        }
+        .meta-info strong {
+            color: #0f172a;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
+            margin-bottom: 30px;
         }
-        th, td {
-            border: 1px solid #000;
-            padding: 4px;
-            text-align: center;
-            word-wrap: break-word;
+        tr {
+            page-break-inside: avoid;
         }
         th {
-            background-color: #00ffff;
-            text-transform: uppercase;
+            background-color: #1e40af;
+            color: #ffffff;
             font-weight: bold;
-        }
-        .bg-light {
-            background-color: #f2f2f2;
-        }
-        .text-left {
+            font-size: 9.5px;
+            text-transform: uppercase;
+            padding: 8px 10px;
+            border: 1px solid #1d4ed8;
             text-align: left;
+            letter-spacing: 0.3px;
         }
-        .fu-cell {
+        td {
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            vertical-align: top;
+            background-color: #ffffff;
+        }
+        .row-even td {
+            background-color: #f8fafc;
+        }
+        
+        /* Participant Column Style */
+        .peserta-name {
+            font-size: 11px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 5px;
+        }
+        .peserta-detail {
+            font-size: 8.5px;
+            color: #475569;
+            margin-bottom: 3px;
+        }
+        .peserta-detail strong {
+            color: #334155;
+        }
+        
+        /* Follow Up Cards Column Style */
+        .fu-container {
+            display: block;
+        }
+        .fu-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            background-color: #ffffff;
+            margin-bottom: 6px;
+            padding: 6px 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            page-break-inside: avoid;
+        }
+        .fu-card:last-child {
+            margin-bottom: 0;
+        }
+        .fu-header {
+            border-bottom: 1px dashed #e2e8f0;
+            padding-bottom: 4px;
+            margin-bottom: 5px;
+            zoom: 1;
+        }
+        .fu-header:after {
+            content: '';
+            display: block;
+            clear: both;
+        }
+        .fu-title {
+            float: left;
             font-size: 8px;
+            font-weight: 800;
+            color: #2563eb;
         }
-        .check-icon {
-            font-family: DejaVu Sans, sans-serif;
+        .fu-date {
+            float: right;
+            font-size: 7.5px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .fu-channels {
+            margin-bottom: 4px;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 7px;
+            font-weight: 800;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-right: 3px;
+            text-transform: uppercase;
+        }
+        .badge-active {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 0.5px solid #bbf7d0;
+        }
+        .badge-inactive {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            border: 0.5px solid #e2e8f0;
+        }
+        .fu-text {
+            font-size: 8.5px;
+            margin-top: 3px;
+            color: #334155;
+            word-wrap: break-word;
+        }
+        .fu-text strong {
+            color: #475569;
+        }
+        
+        .no-data {
+            color: #94a3b8;
+            font-style: italic;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 10px;
+        }
+
+        /* Tindak Lanjut Table */
+        .section-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin: 25px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 8px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="title">RIWAYAT INTERAKSI FOLLOW UP LEADS ({{ $csName }})</div>
-        <p>Periode: 
-            @if($bulan)
-                {{ \Carbon\Carbon::create()->month($bulan)->isoFormat('MMMM') }}
-            @else
-                Semua Bulan
-            @endif
-            {{ $tahun }}
-        </p>
+        <table class="header-table">
+            <tr>
+                <td style="border: none; padding: 0;">
+                    <h1 class="page-title">Riwayat Interaksi Follow Up Leads</h1>
+                    <p class="meta-info">
+                        <strong>CS:</strong> {{ $csName }} &nbsp;|&nbsp; 
+                        <strong>Periode:</strong> {{ $bulan ? \Carbon\Carbon::create()->month($bulan)->isoFormat('MMMM') : 'Semua Bulan' }} {{ $tahun }}
+                    </p>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th rowspan="3" style="width: 30px;">NO</th>
-                <th rowspan="3" style="width: 70px;">TANGGAL</th>
-                <th style="width: 150px;">NAMA</th>
-                @for($i=1; $i<=10; $i++)
-                <th colspan="2">FU {{ $i }}</th>
-                @endfor
-            </tr>
-            <tr>
-                <th>NO WA</th>
-                @for($i=1; $i<=10; $i++)
-                <th>TELP</th>
-                <th>WA</th>
-                @endfor
-            </tr>
-            <tr>
-                <th></th>
-                @for($i=1; $i<=10; $i++)
-                <th>HASIL</th>
-                <th>TINDAK LANJUT</th>
-                @endfor
+                <th style="width: 5%; text-align: center;">NO</th>
+                <th style="width: 30%;">INFORMASI PESERTA</th>
+                <th style="width: 65%;">RIWAYAT INTERAKSI (1 - 10)</th>
             </tr>
         </thead>
         <tbody>
             @forelse($items as $index => $item)
-            @php $isEven = $index % 2 == 0; @endphp
-            <tr style="background-color: {{ $isEven ? '#ffffff' : '#f9f9f9' }};">
-                <td rowspan="2">{{ $index + 1 }}</td>
-                <td rowspan="2">
-                    @php
-                        $interactionDate = '-';
-                        for($i=1; $i<=10; $i++){
-                            $fuAt = "fu{$i}_at";
-                            if($item->$fuAt && \Carbon\Carbon::parse($item->$fuAt)->month == $bulan && \Carbon\Carbon::parse($item->$fuAt)->year == $tahun){
-                                $interactionDate = \Carbon\Carbon::parse($item->$fuAt)->format('d/m/Y');
-                                break;
-                            }
-                        }
-                    @endphp
-                    {{ $interactionDate }}
+            @php 
+                $isEven = $index % 2 == 0; 
+                $sp = $item->salesplan ? $item->salesplan->first() : null;
+                $source = $sp ?: $item;
+
+                // Check if this source has any filled follow ups
+                $hasAnyFu = false;
+                for($i=1; $i<=10; $i++) {
+                    $hasil = "fu{$i}_hasil";
+                    $tl = "fu{$i}_tindak_lanjut";
+                    $wa = "fu{$i}_wa";
+                    $telp = "fu{$i}_telp";
+                    if (!empty($source->$hasil) || !empty($source->$tl) || $source->$wa || $source->$telp) {
+                        $hasAnyFu = true;
+                    }
+                }
+            @endphp
+            <tr class="{{ $isEven ? 'row-even' : '' }}">
+                <td style="text-align: center; font-weight: bold; color: #475569; font-size: 10px;">{{ $index + 1 }}</td>
+                <td>
+                    <div class="peserta-name">{{ $item->nama ?: '-' }}</div>
+                    <div class="peserta-detail"><strong>No. WA:</strong> {{ $item->no_wa ?: '-' }}</div>
+                    <div class="peserta-detail"><strong>Kelas:</strong> {{ $item->kelas ? $item->kelas->nama_kelas : '-' }}</div>
+                    <div class="peserta-detail"><strong>Status:</strong> <span style="text-transform: capitalize;">{{ str_replace('_', ' ', $item->status_peserta) }}</span></div>
+                    <div class="peserta-detail"><strong>CS Penginput:</strong> {{ $item->created_by ?: '-' }}</div>
                 </td>
-                <td class="text-left"><strong>{{ $item->nama }}</strong></td>
-                @for($i=1; $i<=10; $i++)
-                    @php 
-                        $telp = "fu{$i}_telp";
-                        $wa = "fu{$i}_wa";
-                    @endphp
-                    <td>{!! $item->$telp ? '<span class="check-icon">✔</span>' : '-' !!}</td>
-                    <td>{!! $item->$wa ? '<span class="check-icon">✔</span>' : '-' !!}</td>
-                @endfor
-            </tr>
-            <tr style="background-color: {{ $isEven ? '#ffffff' : '#f9f9f9' }}; border-bottom: 2px solid #000;">
-                <td class="text-left">{{ $item->no_wa }}</td>
-                @for($i=1; $i<=10; $i++)
-                    @php 
-                        $hasil = "fu{$i}_hasil";
-                        $tl = "fu{$i}_tindak_lanjut";
-                        $fuAt = "fu{$i}_at";
-                        $formattedDate = $item->$fuAt ? \Carbon\Carbon::parse($item->$fuAt)->format('d/m/Y H:i') : null;
-                    @endphp
-                    <td class="text-left fu-cell">
-                        <div>{{ $item->$hasil ?: '-' }}</div>
-                        @if($formattedDate)
-                            <div style="font-size: 6px; color: #000; margin-top: 6px; border: 0.5px solid #999; padding: 2px; background-color: #f8f9fa; display: block; text-align: center; border-radius: 2px;">
-                                {{ $formattedDate }}
-                            </div>
-                        @endif
-                    </td>
-                    <td class="text-left fu-cell">
-                        <div>{{ $item->$tl ?: '-' }}</div>
-                        @if($formattedDate)
-                            <div style="font-size: 6px; color: #000; margin-top: 6px; border: 0.5px solid #999; padding: 2px; background-color: #f8f9fa; display: block; text-align: center; border-radius: 2px;">
-                                {{ $formattedDate }}
-                            </div>
-                        @endif
-                    </td>
-                @endfor
+                <td>
+                    @if($hasAnyFu)
+                        <div class="fu-container">
+                            @for($i=1; $i<=10; $i++)
+                                @php
+                                    $hasil = "fu{$i}_hasil";
+                                    $tl = "fu{$i}_tindak_lanjut";
+                                    $wa = "fu{$i}_wa";
+                                    $telp = "fu{$i}_telp";
+                                    $fuAt = "fu{$i}_at";
+                                @endphp
+                                @if(!empty($source->$hasil) || !empty($source->$tl) || $source->$wa || $source->$telp)
+                                    <div class="fu-card">
+                                        <div class="fu-header">
+                                            <span class="fu-title">FOLLOW UP {{ $i }}</span>
+                                            <span class="fu-date">
+                                                {{ $source->$fuAt ? \Carbon\Carbon::parse($source->$fuAt)->format('d/m/Y H:i') : '-' }}
+                                            </span>
+                                        </div>
+                                        <div class="fu-channels">
+                                            <span class="badge {{ $source->$wa ? 'badge-active' : 'badge-inactive' }}">WA {{ $source->$wa ? '✔' : '-' }}</span>
+                                            <span class="badge {{ $source->$telp ? 'badge-active' : 'badge-inactive' }}">TELP {{ $source->$telp ? '✔' : '-' }}</span>
+                                        </div>
+                                        @if(!empty($source->$hasil))
+                                            <div class="fu-text"><strong>Hasil:</strong> {{ $source->$hasil }}</div>
+                                        @endif
+                                        @if(!empty($source->$tl))
+                                            <div class="fu-text"><strong>Tindak Lanjut:</strong> {{ $source->$tl }}</div>
+                                        @endif
+                                    </div>
+                                @endif
+                            @endfor
+                        </div>
+                    @else
+                        <div class="no-data">Belum ada riwayat follow up pada bulan ini</div>
+                    @endif
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="23">Data tidak ditemukan</td>
+                <td colspan="3" class="no-data" style="padding: 30px 0; font-size: 11px;">Data tidak ditemukan</td>
             </tr>
             @endforelse
         </tbody>
@@ -155,17 +278,19 @@
     @php
         $tindakLanjutList = [];
         foreach($items as $item) {
+            $sp = $item->salesplan ? $item->salesplan->first() : null;
+            $source = $sp ?: $item;
             $latestTl = null;
             $latestDate = null;
             for($i=10; $i>=1; $i--){
                 $tl = "fu{$i}_tindak_lanjut";
                 $fuAt = "fu{$i}_at";
-                if(!empty($item->$tl) && $item->$tl != '-') {
+                if(!empty($source->$tl) && $source->$tl != '-') {
                     // Check if it's within the selected month and year
                     $isMatchPeriode = true;
                     if ($bulan && $tahun) {
                         try {
-                            $itemDate = \Carbon\Carbon::parse($item->$fuAt);
+                            $itemDate = \Carbon\Carbon::parse($source->$fuAt);
                             if ($itemDate->month != $bulan || $itemDate->year != $tahun) {
                                 $isMatchPeriode = false;
                             }
@@ -175,8 +300,8 @@
                     }
 
                     if ($isMatchPeriode) {
-                        $latestTl = $item->$tl;
-                        $latestDate = $item->$fuAt;
+                        $latestTl = $source->$tl;
+                        $latestDate = $source->$fuAt;
                         break;
                     }
                 }
@@ -193,28 +318,26 @@
     @endphp
 
     @if(count($tindakLanjutList) > 0)
-    <div style="margin-top: 30px; margin-bottom: 10px; text-align: left; font-size: 12px; font-weight: bold; text-transform: uppercase;">
-        Berikut yang harus di tindak lanjuti
-    </div>
-    <table style="margin-top: 5px;">
+    <div class="section-title">Daftar Tindak Lanjut Terdekat</div>
+    <table>
         <thead>
             <tr>
-                <th style="width: 30px;">NO</th>
-                <th style="width: 80px;">TANGGAL</th>
-                <th style="width: 200px;">NAMA</th>
-                <th style="width: 150px;">NO WA</th>
-                <th>TINDAK LANJUT</th>
+                <th style="width: 5%; text-align: center;">NO</th>
+                <th style="width: 15%; text-align: center;">TANGGAL FU</th>
+                <th style="width: 25%;">NAMA PESERTA</th>
+                <th style="width: 15%;">NO WA</th>
+                <th style="width: 40%;">TINDAK LANJUT</th>
             </tr>
         </thead>
         <tbody>
             @foreach($tindakLanjutList as $index => $tl)
             @php $isEven = $index % 2 == 0; @endphp
-            <tr style="background-color: {{ $isEven ? '#ffffff' : '#f9f9f9' }};">
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $tl['tanggal'] }}</td>
-                <td class="text-left"><strong>{{ $tl['nama'] }}</strong></td>
-                <td class="text-left">{{ $tl['no_wa'] }}</td>
-                <td class="text-left">{{ $tl['tindak_lanjut'] }}</td>
+            <tr class="{{ $isEven ? 'row-even' : '' }}">
+                <td style="text-align: center; font-weight: bold; color: #475569;">{{ $index + 1 }}</td>
+                <td style="text-align: center; font-weight: 600; color: #334155;">{{ $tl['tanggal'] }}</td>
+                <td style="font-weight: bold; color: #0f172a;">{{ $tl['nama'] ?: '-' }}</td>
+                <td>{{ $tl['no_wa'] ?: '-' }}</td>
+                <td style="color: #334155; font-weight: 500;">{{ $tl['tindak_lanjut'] ?: '-' }}</td>
             </tr>
             @endforeach
         </tbody>

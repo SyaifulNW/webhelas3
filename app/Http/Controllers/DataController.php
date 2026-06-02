@@ -1333,26 +1333,45 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         set_time_limit(300);
 
         $bulan = $request->input('bulan');
+        if (!$bulan) {
+            $bulan = (int) date('m');
+        }
         $tahun = $request->input('tahun', date('Y'));
         $csName = $request->input('cs_name');
 
         $user = Auth::user();
         // If regular CS (not admin/manager/marketing) and no filter selected, use their own name
-        if (!$csName && !in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) && $user->name !== 'Agus Setyo' && $user->name !== 'Linda') {
+        if (!$csName && !in_array(strtolower($user->role), ['administrator', 'manager', 'marketing'])) {
             $csName = $user->name;
         }
 
-        $query = Data::query()
+        $query = Data::with(['salesplan' => function($q) {
+                $q->orderBy('updated_at', 'desc');
+            }])
             ->whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan']);
 
         if ($bulan && $tahun) {
             $query->where(function($q) use ($bulan, $tahun) {
-                for($i=1; $i<=10; $i++) {
-                    $q->orWhere(function($subq) use ($i, $bulan, $tahun) {
-                        $subq->whereMonth("fu{$i}_at", $bulan)
-                             ->whereYear("fu{$i}_at", $tahun);
+                // Check in data table
+                $q->where(function($subq) use ($bulan, $tahun) {
+                    for($i=1; $i<=10; $i++) {
+                        $subq->orWhere(function($subq2) use ($i, $bulan, $tahun) {
+                            $subq2->whereMonth("fu{$i}_at", $bulan)
+                                  ->whereYear("fu{$i}_at", $tahun);
+                        });
+                    }
+                })
+                // OR check in salesplans table
+                ->orWhereHas('salesplan', function($subq) use ($bulan, $tahun) {
+                    $subq->where(function($subq2) use ($bulan, $tahun) {
+                        for($i=1; $i<=10; $i++) {
+                            $subq2->orWhere(function($subq3) use ($i, $bulan, $tahun) {
+                                $subq3->whereMonth("fu{$i}_at", $bulan)
+                                      ->whereYear("fu{$i}_at", $tahun);
+                            });
+                        }
                     });
-                }
+                });
             });
         }
 
