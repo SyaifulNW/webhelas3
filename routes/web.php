@@ -305,6 +305,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/cs/{id}/database', [AdminController::class, 'database'])->name('cs.database');
         Route::get('/cs/{id}', [AdminController::class, 'detailCS'])->name('cs.detail');
 
+        // Minutes of Meeting (MoM)
+        Route::get('/mom', [App\Http\Controllers\Admin\MomController::class, 'index'])->name('mom.index');
+        Route::post('/mom', [App\Http\Controllers\Admin\MomController::class, 'store'])->name('mom.store');
+        Route::put('/mom/{id}', [App\Http\Controllers\Admin\MomController::class, 'update'])->name('mom.update');
+        Route::delete('/mom/{id}', [App\Http\Controllers\Admin\MomController::class, 'destroy'])->name('mom.destroy');
+
         // Wallet Management (Admin)
         Route::prefix('wallet')->name('wallet.')->group(function () {
             Route::get('/', [AdminWalletController::class, 'index'])->name('index');

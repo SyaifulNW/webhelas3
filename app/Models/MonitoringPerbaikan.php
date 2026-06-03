@@ -16,7 +16,6 @@ class MonitoringPerbaikan extends Model
         'progress',
         'budget',
         'realisasi_dana',
-        'tanggal_mulai',
         'tanggal_selesai',
         'bukti_transfer',
     ];
