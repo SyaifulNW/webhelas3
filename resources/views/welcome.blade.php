@@ -30,8 +30,8 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            padding-top: 10px;
+            align-items: center;
+            padding: 20px 10px;
             overflow-x: hidden;
         }
 
@@ -321,6 +321,58 @@
                  max-width: 200px;
             }
         }
+
+        @media (max-width: 768px) {
+            body {
+                align-items: center;
+                padding: 20px 10px;
+            }
+            
+            .container {
+                width: 100%;
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+                letter-spacing: 0.5px;
+            }
+            
+            .logo img {
+                width: 80px;
+                margin-bottom: 8px;
+            }
+            
+            .login-row {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .login-row .feature-card.common-card {
+                width: 90% !important;
+                max-width: 300px !important;
+                height: 320px !important;
+                padding: 30px 20px;
+            }
+            
+            .feature-card img {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .feature-card h3 {
+                font-size: 1.2rem;
+                margin: 15px 0;
+            }
+            
+            .card-button {
+                width: 80%;
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 
@@ -346,10 +398,18 @@
                 <h3>Login Ke Sistem</h3>
                 <a href="{{ route('login') }}" class="card-button">Masuk</a>
             </div>
+
+            <div class="feature-card common-card">
+                <div class="logo-wrapper">
+                    <img src="{{ asset('backend/Helas.jpg') }}" alt="Logo Helas Corporation" style="filter: hue-rotate(140deg);">
+                </div>
+                <h3>Absensi Karyawan</h3>
+                <a href="{{ route('absensi') }}" class="card-button" style="background: linear-gradient(90deg, #10b981, #059669); color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);">Absen</a>
+            </div>
         </div>
 
     </div>
 </body>
 
 </html>
-```
+
