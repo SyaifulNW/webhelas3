@@ -45,6 +45,11 @@ class PengadaanBarangController extends Controller
         // Jangan izinkan update acc, progress, realisasi_dana, dan pengajuan_anggaran_id dari operasional
         $data = $request->except('acc', 'progress', 'realisasi_dana', 'pengajuan_anggaran_id');
 
+        // status_beli hanya boleh diubah jika ACC sudah Iya
+        if (isset($data['status_beli']) && $item->acc !== 'Iya') {
+            unset($data['status_beli']);
+        }
+
         // Jika nama_barang atau budget berubah, sync ke pengajuan anggaran terkait
         if ($item->pengajuan_anggaran_id) {
             $pengajuan = PengajuanAnggaran::find($item->pengajuan_anggaran_id);
@@ -66,7 +71,17 @@ class PengadaanBarangController extends Controller
         }
 
         $item->update($data);
-        return response()->json(['success' => true, 'data' => $item]);
+
+        // Jika status_beli berubah jadi "Sudah Dibeli", sync ke inventaris
+        $item->refresh();
+        $synced = $item->syncToInventaris();
+
+        return response()->json([
+            'success'              => true,
+            'data'                 => $item,
+            'is_inventory_created' => $item->is_inventory_created,
+            'synced_to_inventory'  => $synced,
+        ]);
     }
 
     public function destroy($id)

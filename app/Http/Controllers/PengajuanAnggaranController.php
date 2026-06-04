@@ -326,8 +326,7 @@ class PengajuanAnggaranController extends Controller
             }
 
             // Auto-sync ke Inventaris Kantor jika ACC disetujui (hindari duplikasi)
-            $pengadaanBarang->refresh();
-            $pengadaanBarang->syncToInventaris();
+            // DIHAPUS: sync sekarang dipicu saat status_beli = "Sudah Dibeli" oleh operasional
         }
 
         $message = $request->status === 'approved' ? 'Pengajuan anggaran disetujui.' : 'Pengajuan anggaran ditolak.';

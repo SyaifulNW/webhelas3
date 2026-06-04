@@ -986,23 +986,14 @@
                         LIST MONITORING KERUSAKAN FASILITAS GEDUNG
                     </div>
                     <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="font-weight-bold mb-0 text-dark"><i class="fas fa-tools mr-2 text-warning"></i>
-                                Data Monitoring</h5>
-                            <button class="btn btn-primary btn-sm shadow-sm" style="border-radius: 8px;"
-                                id="btnTambahPerbaikanInline">
-                                <i class="fas fa-plus mr-1"></i> Tambah Data
-                            </button>
-                        </div>
+                        <h5 class="font-weight-bold mb-4 text-dark"><i class="fas fa-tools mr-2 text-warning"></i>
+                            Data Monitoring</h5>
 
                         <!-- Filter Deadline Bar -->
                         <div class="d-flex align-items-center mb-2 flex-wrap" style="gap: 10px;">
                             <span class="font-weight-bold text-muted" style="font-size:0.82rem; white-space:nowrap;"><i
                                     class="fas fa-calendar-alt mr-1"></i> Filter Deadline:</span>
-                            <input type="date" id="filter-timeline-start" class="form-control form-control-sm"
-                                style="border-radius: 20px; font-weight: 600; width: 150px; height: 32px; padding: 2px 10px; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" />
-                            <span class="text-muted" style="font-size:0.8rem;">s/d</span>
-                            <input type="date" id="filter-timeline-end" class="form-control form-control-sm"
+                            <input type="date" id="filter-timeline-date" class="form-control form-control-sm"
                                 style="border-radius: 20px; font-weight: 600; width: 150px; height: 32px; padding: 2px 10px; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" />
                             <button id="filter-timeline-btn" class="btn btn-primary btn-sm" title="Filter Deadline"
                                 style="border-radius: 20px; padding: 4px 16px; font-size:0.8rem;">
@@ -1010,21 +1001,30 @@
                             </button>
                             <button id="filter-timeline-reset" class="btn btn-outline-secondary btn-sm"
                                 title="Reset Filter" style="border-radius: 20px; padding: 4px 16px; font-size:0.8rem;">
-                                <i class="fas fa-sync-alt mr-1"></i> Reset
+                                <i class="fas fa-sync-alt mr-1"></i>
                             </button>
                         </div>
 
-                        <!-- Filter Progress Bar -->
+                        <!-- Filter Search Fasilitas (Live Search) -->
                         <div class="d-flex align-items-center mb-3 flex-wrap" style="gap: 10px;">
                             <span class="font-weight-bold text-muted" style="font-size:0.82rem; white-space:nowrap;"><i
-                                    class="fas fa-tasks mr-1"></i> Filter Progress:</span>
-                            <select id="filter-progress" class="form-control form-control-sm"
-                                style="border-radius: 20px; font-weight: 700; width: 160px; height: 32px; padding: 2px 10px; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                <option value="all">-- Semua --</option>
-                                <option value="Pengajuan dana">Pengajuan dana</option>
-                                <option value="Pengerjaan">Pengerjaan</option>
-                                <option value="Selesai">Selesai</option>
-                            </select>
+                                    class="fas fa-search mr-1"></i> Cari Fasilitas:</span>
+                            <input type="text" id="filter-fasilitas-search" class="form-control form-control-sm"
+                                placeholder="Ketik nama fasilitas..."
+                                style="border-radius: 20px; font-weight: 600; width: 250px; height: 32px; padding: 2px 10px; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" />
+                            <button id="filter-fasilitas-reset" class="btn btn-outline-secondary btn-sm"
+                                title="Reset Filter Fasilitas"
+                                style="border-radius: 20px; padding: 4px 16px; font-size:0.8rem;">
+                                <i class="fas fa-sync-alt mr-1"></i>
+                            </button>
+                        </div>
+
+                        <!-- Tombol Tambah Data di kanan atas tabel -->
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-primary btn-sm shadow-sm" style="border-radius: 8px;"
+                                id="btnTambahPerbaikanInline">
+                                <i class="fas fa-plus mr-1"></i> Tambah Data
+                            </button>
                         </div>
 
                         <div class="table-responsive">
@@ -1034,7 +1034,17 @@
                                         <th class="text-center" style="width: 50px;">NO.</th>
                                         <th style="width: 200px;">FASILITAS</th>
                                         <th>RENCANA PERBAIKAN</th>
-                                        <th class="text-center" style="width: 160px;">PROGRESS</th>
+                                        <th class="text-center" style="width: 160px;">
+                                            <div class="mb-1 font-weight-bold"
+                                                style="font-size: 0.85rem; letter-spacing: 0.5px;">PROGRESS</div>
+                                            <select id="filter-progress" class="form-control form-control-sm mx-auto"
+                                                style="border-radius: 20px; font-weight: 700; text-align: center; text-align-last: center; width: 140px; cursor: pointer; height: 28px; padding: 2px 10px; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.2); background-color: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                                <option value="all">-- Semua --</option>
+                                                <option value="Pengajuan dana">Pengajuan dana</option>
+                                                <option value="Pengerjaan">Pengerjaan</option>
+                                                <option value="Selesai">Selesai</option>
+                                            </select>
+                                        </th>
                                         <th class="text-center" style="width: 130px;">BUDGET</th>
                                         <th class="text-center" style="width: 130px;">REALISASI DANA</th>
                                         <th class="text-center" style="width: 120px;">LPJ</th>
@@ -1060,11 +1070,6 @@
                                                     style="font-size:0.7rem; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">
                                                     Deadline</div>
                                                 <div class="d-flex align-items-center" style="gap:3px; flex-wrap:wrap;">
-                                                    <input type="date"
-                                                        class="form-control-inline text-center live-edit"
-                                                        data-field="tanggal_mulai" value="{{ $item->tanggal_mulai }}"
-                                                        style="width: 110px; font-size:0.72rem;">
-                                                    <span style="font-size: 0.7rem; color:#aaa;">s/d</span>
                                                     <input type="date"
                                                         class="form-control-inline text-center live-edit"
                                                         data-field="tanggal_selesai" value="{{ $item->tanggal_selesai }}"
@@ -1175,14 +1180,14 @@
                                         </tr>
                                     @empty
                                         <tr class="empty-row">
-                                            <td colspan="9" class="text-center py-5 text-muted">Belum ada data
+                                            <td colspan="8" class="text-center py-5 text-muted">Belum ada data
                                                 monitoring perbaikan.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                                 <tfoot>
                                     <tr style="background-color: #f8f9fc;">
-                                        <td colspan="5" class="text-right font-weight-bold"
+                                        <td colspan="4" class="text-right font-weight-bold"
                                             style="white-space: nowrap; padding-right: 15px;">TOTAL ESTIMASI DANA</td>
                                         <td class="text-right font-weight-bold text-danger"
                                             style="font-size: 1.1rem; white-space: nowrap;">
@@ -1232,6 +1237,7 @@
                                         <th class="text-right" style="width: 160px;">BUDGET</th>
                                         <th class="text-right" style="width: 160px;">REALISASI DANA</th>
                                         <th class="text-center" style="width: 150px;">STATUS ACC</th>
+                                        <th class="text-center" style="width: 140px;">STATUS BELI</th>
                                         <th class="text-center">
                                             BUKTI TRANSFER
                                             <div class="text-white-50"
@@ -1245,15 +1251,17 @@
                                     @php $totalBudgetPengadaan = 0; @endphp
                                     @forelse($pengadaanBarang as $key => $item)
                                         @php $totalBudgetPengadaan += (float)$item->budget; @endphp
-                                        <tr data-id="{{ $item->id }}">
+                                        <tr data-id="{{ $item->id }}"
+                                            style="{{ $item->is_inventory_created ? 'opacity: 0.35;' : '' }}">
                                             <td class="text-center no-col">{{ $loop->iteration }}</td>
                                             <td>
                                                 <div class="d-flex align-items-start" style="gap:4px;">
                                                     <textarea class="form-control-inline font-weight-bold pengadaan-live-edit auto-resize" data-field="nama_barang"
                                                         rows="1" placeholder="(Tulis Nama Barang)">{{ $item->nama_barang }}</textarea>
                                                     @if ($item->is_inventory_created)
-                                                        <span title="Sudah masuk ke Inventaris Kantor"
-                                                            style="color:#1cc88a; font-size:0.85rem; flex-shrink:0; margin-top:3px;">
+                                                        <span class="badge-masuk-inventaris"
+                                                            title="Sudah masuk ke Inventaris Kantor"
+                                                            style="color:#1cc88a; font-size:0.8rem; flex-shrink:0; margin-top:3px;">
                                                             <i class="fas fa-check-circle"></i>
                                                         </span>
                                                     @endif
@@ -1311,6 +1319,34 @@
                                                     style="{{ $accBadgeStyle }} border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
                                                     <i class="fas {{ $accIcon }} mr-1"></i>{{ $accLabel }}
                                                 </span>
+                                            </td>
+                                            {{-- STATUS BELI: hanya aktif jika ACC = Iya --}}
+                                            <td class="text-center align-middle">
+                                                @php
+                                                    $statusBeli = $item->status_beli ?? 'Belum Dibeli';
+                                                    $isApproved = $item->acc === 'Iya';
+                                                    $statusBeliStyle =
+                                                        $statusBeli === 'Sudah Dibeli'
+                                                            ? 'background:#1cc88a; color:#fff;'
+                                                            : 'background:#fd7e14; color:#fff;';
+                                                @endphp
+                                                @if ($isApproved)
+                                                    <select class="pengadaan-status-beli-select"
+                                                        data-id="{{ $item->id }}"
+                                                        style="{{ $statusBeliStyle }} border: none; border-radius: 20px; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 10px; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); text-align: center; text-align-last: center; width: 120px;">
+                                                        <option value="Belum Dibeli"
+                                                            {{ $statusBeli === 'Belum Dibeli' ? 'selected' : '' }}>Belum
+                                                            Dibeli</option>
+                                                        <option value="Sudah Dibeli"
+                                                            {{ $statusBeli === 'Sudah Dibeli' ? 'selected' : '' }}>Sudah
+                                                            Dibeli</option>
+                                                    </select>
+                                                @else
+                                                    <span class="badge shadow-sm px-3 py-2"
+                                                        style="background:#fd7e14; color:#fff; border-radius: 20px; font-size: 0.72rem; font-weight: 700; cursor: not-allowed; opacity: 0.7;">
+                                                        Belum Dibeli
+                                                    </span>
+                                                @endif
                                             </td>
                                             <td class="text-center align-middle bukti-transfer-cell"
                                                 style="min-width: 120px;">
@@ -1400,6 +1436,7 @@
                                             Rp <span
                                                 id="grand-total-budget-pengadaan">{{ number_format($totalBudgetPengadaan, 0, ',', '.') }}</span>
                                         </td>
+                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -1710,8 +1747,6 @@
                                 <textarea class="form-control-inline font-weight-bold live-edit auto-resize" data-field="fasilitas" rows="1" placeholder="(Tulis Data Baru)">${item.fasilitas || ''}</textarea>
                                 <div class="mt-1" style="font-size:0.7rem; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">Deadline</div>
                                 <div class="d-flex align-items-center" style="gap:3px; flex-wrap:wrap;">
-                                    <input type="date" class="form-control-inline text-center live-edit" data-field="tanggal_mulai" style="width: 110px; font-size:0.72rem;">
-                                    <span style="font-size: 0.7rem; color:#aaa;">s/d</span>
                                     <input type="date" class="form-control-inline text-center live-edit" data-field="tanggal_selesai" style="width: 110px; font-size:0.72rem;">
                                 </div>
                             </td>
@@ -1889,20 +1924,19 @@
             // Fungsi utama filter monitoring — gabungkan progress + timeline
             function applyMonitoringFilter() {
                 const progressFilter = $('#filter-progress').val() || 'all';
-                const startRaw = $('#filter-timeline-start').val();
-                const endRaw = $('#filter-timeline-end').val();
+                const filterDate = $('#filter-timeline-date').val();
+                const fasilitasSearch = $('#filter-fasilitas-search').val().toLowerCase().trim();
 
                 // Konversi ke objek Date untuk perbandingan akurat (hanya jika diisi)
-                const startDate = startRaw ? new Date(startRaw) : null;
-                const endDate = endRaw ? new Date(endRaw) : null;
+                const targetDate = filterDate ? new Date(filterDate) : null;
 
                 $('#monitoring-table-body tr').each(function() {
                     const tr = $(this);
                     if (tr.hasClass('empty-row') || tr.hasClass('filtered-empty-row')) return;
 
                     const rowProgress = tr.find('[data-field="progress"]').val();
-                    const rowStartRaw = tr.find('[data-field="tanggal_mulai"]').val();
-                    const rowEndRaw = tr.find('[data-field="tanggal_selesai"]').val();
+                    const rowDeadline = tr.find('[data-field="tanggal_selesai"]').val();
+                    const rowFasilitas = tr.find('[data-field="fasilitas"]').val().toLowerCase();
 
                     let keep = true;
 
@@ -1927,18 +1961,26 @@
                         }
                     }
 
-                    // Filter timeline — hanya aktif jika setidaknya satu tanggal filter diisi
-                    if (keep && (startDate || endDate)) {
-                        const rowStart = rowStartRaw ? new Date(rowStartRaw) : null;
-                        const rowEnd = rowEndRaw ? new Date(rowEndRaw) : null;
+                    // Filter deadline — tampilkan hanya data dengan tanggal_selesai yang sama
+                    if (keep && targetDate) {
+                        const deadline = rowDeadline ? new Date(rowDeadline) : null;
 
-                        // Baris ditampilkan jika ada overlap antara range baris dan range filter
-                        // Overlap: rowStart <= endDate AND rowEnd >= startDate
-                        if (startDate && rowEnd && rowEnd < startDate) keep = false;
-                        if (endDate && rowStart && rowStart > endDate) keep = false;
+                        if (deadline) {
+                            // Bandingkan tanggal saja (abaikan waktu)
+                            if (deadline.toDateString() !== targetDate.toDateString()) {
+                                keep = false;
+                            }
+                        } else {
+                            // Jika baris tidak punya deadline, sembunyikan saat filter aktif
+                            keep = false;
+                        }
+                    }
 
-                        // Jika baris tidak punya tanggal sama sekali, sembunyikan saat filter aktif
-                        if (!rowStart && !rowEnd) keep = false;
+                    // Filter fasilitas (live search)
+                    if (keep && fasilitasSearch !== '') {
+                        if (!rowFasilitas.includes(fasilitasSearch)) {
+                            keep = false;
+                        }
                     }
 
                     if (keep) {
@@ -1952,10 +1994,8 @@
                 updateGrandTotal();
             }
 
-            // Filter progress: langsung apply saat berubah (tetap mempertimbangkan timeline aktif)
-            $('#filter-progress').on('change', function() {
-                applyMonitoringFilter();
-            });
+            // Filter progress sudah dipindah ke handler di atas (baris 2930)
+            // Tidak perlu handler terpisah lagi
 
             // 4. Delete Data - Refresh-less
             $(document).on('click', '.delete-btn', function() {
@@ -2041,6 +2081,12 @@
                                 <span class="badge shadow-sm px-3 py-2"
                                     style="background:#f6c23e; color:#000; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
                                     <i class="fas fa-clock mr-1"></i>Menunggu ACC
+                                </span>
+                            </td>
+                            <td class="text-center align-middle">
+                                <span class="badge shadow-sm px-3 py-2"
+                                    style="background:#fd7e14; color:#fff; border-radius: 20px; font-size: 0.72rem; font-weight: 700; cursor: not-allowed; opacity: 0.7;">
+                                    Belum Dibeli
                                 </span>
                             </td>
                             <td class="text-center align-middle bukti-transfer-cell" style="min-width: 120px;">
@@ -2401,6 +2447,81 @@
                     });
                 });
             });
+            // ====================== STATUS BELI PENGADAAN ======================
+            $(document).on('change', '.pengadaan-status-beli-select', function() {
+                const $sel = $(this);
+                const id = $sel.data('id');
+                const val = $sel.val();
+                const $tr = $sel.closest('tr');
+
+                $sel.css('opacity', '0.5');
+                $.ajax({
+                    url: '/pengadaan-barang/update/' + id,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        _method: 'PUT',
+                        status_beli: val
+                    },
+                    success: function(res) {
+                        $sel.css('opacity', '1');
+
+                        // Update warna dropdown sesuai nilai
+                        if (val === 'Sudah Dibeli') {
+                            $sel.css({
+                                'background': '#1cc88a',
+                                'color': '#fff'
+                            });
+                        } else {
+                            $sel.css({
+                                'background': '#fd7e14',
+                                'color': '#fff'
+                            });
+                        }
+
+                        // Jika baru masuk inventaris, tampilkan badge ✅ dan fade baris
+                        if (res.synced_to_inventory) {
+                            const $namaTd = $tr.find('[data-field="nama_barang"]').closest(
+                                'td');
+                            if ($namaTd.find('.badge-masuk-inventaris').length === 0) {
+                                $namaTd.append(
+                                    '<span class="badge-masuk-inventaris ml-1" ' +
+                                    'style="color:#1cc88a; font-size:0.8rem;" ' +
+                                    'title="Sudah masuk ke Inventaris Kantor">' +
+                                    '<i class="fas fa-check-circle"></i></span>'
+                                );
+                            }
+
+                            // Fade baris ke opacity 0.35 dalam 1.8 detik
+                            setTimeout(function() {
+                                $tr.css({
+                                    transition: 'opacity 1.8s ease',
+                                    opacity: '0.35'
+                                });
+                            }, 800);
+                        }
+
+                        const msg = val === 'Sudah Dibeli' ?
+                            'Sudah dibeli — masuk inventaris!' : 'Tersimpan';
+                        Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 800,
+                                timerProgressBar: true
+                            })
+                            .fire({
+                                icon: 'success',
+                                title: msg
+                            });
+                    },
+                    error: function() {
+                        $sel.css('opacity', '1');
+                        Swal.fire('Error', 'Gagal menyimpan status beli', 'error');
+                    }
+                });
+            });
+
             // ====================== LIVE EDIT INVENTARIS KANTOR ======================
             $('#btnTambahInventarisInline').on('click', function() {
                 const btn = $(this);
@@ -2818,33 +2939,39 @@
             updatePagination('inventaris-table-body', 'inventaris-pagination');
             updatePagination('monitoring-table-body', 'monitoring-pagination');
             updatePagination('pengadaan-table-body', 'pengadaan-pagination');
+
             // 5. Deadline filter for monitoring — search button
             $('#filter-timeline-btn').on('click', function() {
-                const startRaw = $('#filter-timeline-start').val();
-                const endRaw = $('#filter-timeline-end').val();
-                if (!startRaw && !endRaw) {
-                    Swal.fire('Perhatian', 'Pilih setidaknya satu tanggal untuk memfilter deadline.',
+                const filterDate = $('#filter-timeline-date').val();
+                if (!filterDate) {
+                    Swal.fire('Perhatian', 'Pilih tanggal untuk memfilter deadline.',
                         'warning');
                     return;
                 }
                 applyMonitoringFilter();
             });
 
-            // Reset button — reset semua filter monitoring dan tampilkan semua data
+            // Reset deadline filter
             $('#filter-timeline-reset').on('click', function() {
-                $('#filter-timeline-start').val('');
-                $('#filter-timeline-end').val('');
-                $('#filter-progress').val('all');
-                $('#monitoring-table-body tr').each(function() {
-                    const tr = $(this);
-                    if (!tr.hasClass('empty-row') && !tr.hasClass('filtered-empty-row')) {
-                        tr.removeClass('filtered-out');
-                    }
-                });
-                updatePagination('monitoring-table-body', 'monitoring-pagination', 1);
-                updateGrandTotal();
+                $('#filter-timeline-date').val('');
+                applyMonitoringFilter();
             });
 
+            // 6. Live Search Fasilitas - filter saat user mengetik
+            $('#filter-fasilitas-search').on('input', function() {
+                applyMonitoringFilter();
+            });
+
+            // Reset filter fasilitas
+            $('#filter-fasilitas-reset').on('click', function() {
+                $('#filter-fasilitas-search').val('');
+                applyMonitoringFilter();
+            });
+
+            // 7. Filter Progress (di header tabel) - trigger filter saat berubah
+            $('#filter-progress').on('change', function() {
+                applyMonitoringFilter();
+            });
 
         });
 

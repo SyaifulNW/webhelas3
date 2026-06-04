@@ -1230,6 +1230,14 @@
                                     </div>
                                 </li>
                             @endif
+
+                            {{-- Minutes of Meeting (MoM) untuk Yasmin --}}
+                            <li class="nav-item {{ request()->routeIs('admin.mom.index') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.mom.index') }}" title="Minutes of Meeting (MoM)">
+                                    <i class="fas fa-fw fa-clipboard-list"></i>
+                                    <span><strong>Minutes of Meeting (MoM)</strong></span>
+                                </a>
+                            </li>
                         @endif
 
 

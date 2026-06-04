@@ -12,6 +12,7 @@ class PengadaanBarang extends Model
         'budget',
         'realisasi_dana',
         'acc',
+        'status_beli',
         'is_inventory_created',
         'bukti_transfer',
         'pengajuan_anggaran_id',
@@ -21,39 +22,33 @@ class PengadaanBarang extends Model
         'is_inventory_created' => 'boolean',
     ];
 
-    /**
-     * Relasi ke PengajuanAnggaran yang dibuat otomatis saat pengadaan dibuat.
-     */
     public function pengajuanAnggaran()
     {
         return $this->belongsTo(PengajuanAnggaran::class);
     }
 
-    /**
-     * Relasi ke multiple bukti transfer.
-     */
     public function buktiFotos()
     {
         return $this->hasMany(\App\Models\PengadaanBuktiTransfer::class);
     }
 
     /**
-     * Sinkronisasi ke Inventaris Kantor jika ACC disetujui dan belum pernah dibuat.
-     * Dipanggil setelah acc berubah jadi 'Iya'.
+     * Sinkronisasi ke Inventaris Kantor saat status_beli = "Sudah Dibeli".
+     * Dipanggil oleh controller saat operasional mengubah status_beli.
      */
     public function syncToInventaris(): bool
     {
-        // Hanya jika disetujui dan belum pernah dibuat
-        if ($this->acc !== 'Iya' || $this->is_inventory_created) {
+        // Hanya jika sudah dibeli dan belum pernah dibuat
+        if ($this->status_beli !== 'Sudah Dibeli' || $this->is_inventory_created) {
             return false;
         }
 
         InventarisKantor::create([
-            'nama_peralatan'   => $this->nama_barang ?: 'Barang Pengadaan',
-            'jumlah'           => $this->jumlah ?: 1,
-            'lokasi'           => '-',
-            'status'           => 'Normal',
-            'keterangan'       => 'Dari pengadaan barang.',
+            'nama_peralatan'    => $this->nama_barang ?: 'Barang Pengadaan',
+            'jumlah'            => $this->jumlah ?: 1,
+            'lokasi'            => '-',
+            'status'            => 'Normal',
+            'keterangan'        => 'Dari pengadaan barang. Budget: Rp ' . number_format((float)$this->budget, 0, ',', '.'),
             'tanggal_pembelian' => now()->toDateString(),
         ]);
 
