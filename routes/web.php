@@ -162,11 +162,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pengadaan-barang/{id}/upload-bukti', [\App\Http\Controllers\PengadaanBarangController::class, 'uploadBukti'])->name('pengadaan-barang.upload-bukti');
     Route::post('/pengadaan-barang/{id}/add-bukti', [\App\Http\Controllers\PengadaanBarangController::class, 'addBukti'])->name('pengadaan-barang.add-bukti');
     Route::delete('/pengadaan-barang/{id}/bukti/{buktiId}', [\App\Http\Controllers\PengadaanBarangController::class, 'deleteBukti'])->name('pengadaan-barang.delete-bukti');
+    Route::get('/pengadaan-barang/cetak-laporan', [\App\Http\Controllers\PengadaanBarangController::class, 'cetakLaporan'])->name('pengadaan-barang.cetak-laporan');
 
     // Inventaris Kantor
     Route::post('/inventaris-kantor/store', [\App\Http\Controllers\InventarisKantorController::class, 'store'])->name('inventaris-kantor.store');
     Route::put('/inventaris-kantor/update/{id}', [\App\Http\Controllers\InventarisKantorController::class, 'update'])->name('inventaris-kantor.update');
     Route::delete('/inventaris-kantor/destroy/{id}', [\App\Http\Controllers\InventarisKantorController::class, 'destroy'])->name('inventaris-kantor.destroy');
+    Route::get('/inventaris-kantor/checklist-pdf', [\App\Http\Controllers\InventarisKantorController::class, 'generateChecklistPdf'])->name('inventaris-kantor.checklist-pdf');
+    // Report Inventaris
+    Route::post('/inventaris-kantor/report/upload', [\App\Http\Controllers\InventarisKantorController::class, 'uploadReport'])->name('inventaris-kantor.report.upload');
+    Route::delete('/inventaris-kantor/report/{id}', [\App\Http\Controllers\InventarisKantorController::class, 'destroyReport'])->name('inventaris-kantor.report.destroy');
+    Route::get('/inventaris-kantor/report/{id}/download', [\App\Http\Controllers\InventarisKantorController::class, 'downloadReport'])->name('inventaris-kantor.report.download');
 
     // Zoom scheduling (CS and Admin)
     Route::post('/zoom-schedule/store', [\App\Http\Controllers\ZoomScheduleController::class, 'store'])->name('zoom-schedule.store');

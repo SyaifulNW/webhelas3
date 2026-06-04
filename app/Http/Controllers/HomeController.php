@@ -954,8 +954,22 @@ public function operasionalDashboard(Request $request)
     $pengadaanBarang = \App\Models\PengadaanBarang::with('buktiFotos')->orderBy('created_at', 'desc')->get();
     $inventarisKantor = \App\Models\InventarisKantor::orderBy('lokasi')->orderBy('created_at', 'desc')->get();
 
+    // Report Inventaris
+    $reportInventaris = \App\Models\ReportInventaris::with('uploader')
+        ->orderBy('tahun', 'desc')
+        ->orderBy('bulan', 'desc')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    $now = Carbon::now();
+    $reportBulanIni = \App\Models\ReportInventaris::where('bulan', $now->month)
+        ->where('tahun', $now->year)
+        ->exists();
+
     return view('operasional.dashboard', compact(
-        'role', 'kelasOmsetFiltered', 'totalNilaiHasil', 'historyNilai', 'bulan', 'namaBulan', 'tahun', 'csName', 'monitoringPerbaikan', 'pengadaanBarang', 'inventarisKantor'
+        'role', 'kelasOmsetFiltered', 'totalNilaiHasil', 'historyNilai', 'bulan', 'namaBulan', 'tahun', 'csName',
+        'monitoringPerbaikan', 'pengadaanBarang', 'inventarisKantor',
+        'reportInventaris', 'reportBulanIni'
     ));
 }
 }

@@ -74,7 +74,10 @@ class PengadaanBarangController extends Controller
 
         // Jika status_beli berubah jadi "Sudah Dibeli", sync ke inventaris
         $item->refresh();
-        $synced = $item->syncToInventaris();
+        $synced = false;
+        if (isset($data['status_beli'])) {
+            $synced = $item->syncToInventaris();
+        }
 
         return response()->json([
             'success'              => true,
@@ -242,5 +245,53 @@ class PengadaanBarangController extends Controller
         }
 
         return redirect()->back()->with('success', 'Bukti transfer berhasil diunggah.');
+    }
+
+    /**
+     * Tampilkan laporan cetak pengadaan barang (hanya status sudah dibeli).
+     * Dibuka di tab baru — halaman HTML dengan auto window.print().
+     */
+    public function cetakLaporan(Request $request)
+    {
+        $request->validate([
+            'bulan' => 'nullable|string',
+            'tahun' => 'required|integer|min:2020|max:2099',
+        ]);
+
+        $bulan = $request->bulan; // bisa 'all' atau integer string
+        $tahun = (int) $request->tahun;
+
+        $query = PengadaanBarang::where('status_beli', 'Sudah Dibeli')
+            ->where(function ($q) use ($tahun) {
+                // Gunakan tanggal_dibeli jika ada, fallback ke created_at untuk data lama
+                $q->whereYear('tanggal_dibeli', $tahun)
+                  ->orWhere(function ($q2) use ($tahun) {
+                      $q2->whereNull('tanggal_dibeli')
+                         ->whereYear('created_at', $tahun);
+                  });
+            });
+
+        if ($bulan && $bulan !== 'all') {
+            $query->where(function ($q) use ($bulan) {
+                $q->whereMonth('tanggal_dibeli', (int) $bulan)
+                  ->orWhere(function ($q2) use ($bulan) {
+                      $q2->whereNull('tanggal_dibeli')
+                         ->whereMonth('created_at', (int) $bulan);
+                  });
+            });
+            $namaBulan = Carbon::create($tahun, (int) $bulan, 1)->translatedFormat('F');
+        } else {
+            $namaBulan = 'Semua Bulan';
+        }
+
+        $items = $query->orderByRaw('ISNULL(tanggal_dibeli) ASC, tanggal_dibeli ASC')->get();
+
+        $totalBudget     = $items->sum(fn($i) => (float) $i->budget);
+        $totalRealisasi  = $items->sum(fn($i) => (float) ($i->realisasi_dana ?? 0));
+
+        // Return HTML view — window.print() dipanggil otomatis oleh blade
+        return view('operasional.cetak_pengadaan_pdf', compact(
+            'items', 'bulan', 'tahun', 'namaBulan', 'totalBudget', 'totalRealisasi'
+        ));
     }
 }

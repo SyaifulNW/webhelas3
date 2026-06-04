@@ -13,6 +13,7 @@ class PengadaanBarang extends Model
         'realisasi_dana',
         'acc',
         'status_beli',
+        'tanggal_dibeli',
         'is_inventory_created',
         'bukti_transfer',
         'pengajuan_anggaran_id',
@@ -20,6 +21,7 @@ class PengadaanBarang extends Model
 
     protected $casts = [
         'is_inventory_created' => 'boolean',
+        'tanggal_dibeli'       => 'date',
     ];
 
     public function pengajuanAnggaran()
@@ -52,7 +54,10 @@ class PengadaanBarang extends Model
             'tanggal_pembelian' => now()->toDateString(),
         ]);
 
-        $this->update(['is_inventory_created' => true]);
+        $this->update([
+            'is_inventory_created' => true,
+            'tanggal_dibeli'       => now()->toDateString(),
+        ]);
 
         return true;
     }

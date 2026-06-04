@@ -823,12 +823,39 @@
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="font-weight-bold mb-0 text-dark"><i class="fas fa-boxes mr-2 text-info"></i> Data
                                 Inventaris</h5>
-                            <button class="btn btn-info btn-sm shadow-sm"
-                                style="border-radius: 8px; background-color: #00ffff; color: #000; border: 1px solid #000;"
-                                id="btnTambahInventarisInline">
-                                <i class="fas fa-plus mr-1"></i> Tambah Inventaris
-                            </button>
+                            <div class="d-flex gap-2" style="gap: 8px;">
+                                <button class="btn btn-info btn-sm shadow-sm"
+                                    style="border-radius: 8px; background-color: #00ffff; color: #000; border: 1px solid #000;"
+                                    id="btnTambahInventarisInline">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Inventaris
+                                </button>
+                                <a href="{{ route('inventaris-kantor.checklist-pdf') }}" class="btn btn-sm shadow-sm"
+                                    style="border-radius: 8px; background-color: #4e73df; color: #fff; border: 1px solid #2e59d9; text-decoration: none;"
+                                    target="_blank">
+                                    <i class="fas fa-print mr-1"></i> Pengecekan Bulanan
+                                </a>
+                                <button class="btn btn-sm shadow-sm" id="btnUploadReport"
+                                    style="border-radius: 8px; background-color: #1cc88a; color: #fff; border: 1px solid #13855c;"
+                                    data-toggle="modal" data-target="#modalUploadReport">
+                                    <i class="fas fa-upload mr-1"></i> Upload Report
+                                </button>
+                            </div>
                         </div>
+
+                        {{-- Status pengecekan bulan berjalan --}}
+                        @if ($reportBulanIni)
+                            <div class="alert mb-3 py-2 px-3 d-flex align-items-center"
+                                style="background:#d4edda; border:1px solid #c3e6cb; border-radius:10px; font-size:0.88rem; color:#155724;">
+                                <span style="font-size:1.1rem; margin-right:8px;">&#x2705;</span>
+                                <strong>Report Inventaris Bulan Ini Sudah Diunggah</strong>
+                            </div>
+                        @else
+                            <div class="alert mb-3 py-2 px-3 d-flex align-items-center"
+                                style="background:#fff3cd; border:1px solid #ffeeba; border-radius:10px; font-size:0.88rem; color:#856404;">
+                                <span style="font-size:1.1rem; margin-right:8px;">&#x26A0;&#xFE0F;</span>
+                                <strong>Report Inventaris Bulan Ini Belum Diunggah</strong>
+                            </div>
+                        @endif
 
                         <div class="table-responsive">
                             <table class="table table-monitoring mb-0">
@@ -975,6 +1002,196 @@
                             </table>
                         </div>
                         <div id="inventaris-pagination" class="mt-3 d-flex justify-content-center"></div>
+                    </div>
+                </div>
+
+                {{-- ── Riwayat Report Pengecekan ── --}}
+                @if (session('success_report'))
+                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                        <i class="fas fa-check-circle mr-2"></i>{{ session('success_report') }}
+                        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                    </div>
+                @endif
+
+                <div class="card border-0 shadow-sm mt-4" style="border-radius: 15px; overflow: hidden;">
+                    <div class="card-header text-center font-weight-bold"
+                        style="background-color: #4e73df; color: #fff; border: none; text-transform: uppercase; letter-spacing: 1px;">
+                        <i class="fas fa-archive mr-2"></i> Riwayat Report Pengecekan Inventaris
+                    </div>
+                    <div class="card-body p-4">
+                        @if ($reportInventaris->isEmpty())
+                            <p class="text-muted text-center py-3">Belum ada report yang diunggah.</p>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table table-monitoring mb-0" id="tbl-riwayat-report">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center"
+                                                style="width:50px; background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                No</th>
+                                            <th
+                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                Periode</th>
+                                            <th
+                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                Tanggal Pemeriksaan</th>
+                                            <th
+                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                Nama File</th>
+                                            <th
+                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                Upload Oleh</th>
+                                            <th
+                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                Tanggal Upload</th>
+                                            <th class="text-center"
+                                                style="width:160px; background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($reportInventaris as $i => $rpt)
+                                            <tr>
+                                                <td class="text-center">{{ $i + 1 }}</td>
+                                                <td>{{ $rpt->periode }}</td>
+                                                <td class="text-center">{{ $rpt->tanggal_pemeriksaan->format('d-m-Y') }}
+                                                </td>
+                                                <td>
+                                                    <i class="fas fa-file-pdf text-danger mr-1"></i>
+                                                    {{ $rpt->nama_file }}
+                                                    @if ($rpt->catatan)
+                                                        <br><small class="text-muted"><i
+                                                                class="fas fa-comment mr-1"></i>{{ $rpt->catatan }}</small>
+                                                    @endif
+                                                </td>
+                                                <td>{{ optional($rpt->uploader)->name ?? '-' }}</td>
+                                                <td class="text-center">{{ $rpt->created_at->format('d-m-Y H:i') }}</td>
+                                                <td class="text-center">
+                                                    <div class="d-flex justify-content-center" style="gap:4px;">
+                                                        {{-- Lihat --}}
+                                                        <a href="{{ asset('storage/' . $rpt->file_pdf) }}"
+                                                            target="_blank" class="btn btn-primary btn-xs"
+                                                            style="padding:3px 8px; font-size:0.75rem; border-radius:6px;"
+                                                            title="Lihat PDF">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        {{-- Download --}}
+                                                        <a href="{{ route('inventaris-kantor.report.download', $rpt->id) }}"
+                                                            class="btn btn-info btn-xs"
+                                                            style="padding:3px 8px; font-size:0.75rem; border-radius:6px; color:#fff;"
+                                                            title="Download PDF">
+                                                            <i class="fas fa-download"></i>
+                                                        </a>
+                                                        {{-- Hapus --}}
+                                                        <form method="POST"
+                                                            action="{{ route('inventaris-kantor.report.destroy', $rpt->id) }}"
+                                                            onsubmit="return confirm('Hapus report ini?')"
+                                                            style="display:inline;">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-danger btn-xs"
+                                                                style="padding:3px 8px; font-size:0.75rem; border-radius:6px;"
+                                                                title="Hapus">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- ── Modal Upload Report ── --}}
+                <div class="modal fade" id="modalUploadReport" tabindex="-1" role="dialog"
+                    aria-labelledby="modalUploadReportLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-md" role="document">
+                        <div class="modal-content" style="border-radius:14px; overflow:hidden;">
+                            <div class="modal-header" style="background:#1cc88a; color:#fff;">
+                                <h5 class="modal-title font-weight-bold" id="modalUploadReportLabel">
+                                    <i class="fas fa-upload mr-2"></i> Upload Report Pengecekan Inventaris
+                                </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                                    style="color:#fff; opacity:1;">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <form action="{{ route('inventaris-kantor.report.upload') }}" method="POST"
+                                enctype="multipart/form-data">
+                                @csrf
+                                <div class="modal-body">
+                                    @if ($errors->any())
+                                        <div class="alert alert-danger py-2">
+                                            <ul class="mb-0 pl-3">
+                                                @foreach ($errors->all() as $err)
+                                                    <li style="font-size:0.85rem;">{{ $err }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+
+                                    <div class="form-row">
+                                        <div class="form-group col-6">
+                                            <label class="font-weight-bold" style="font-size:0.85rem;">Bulan Periode <span
+                                                    class="text-danger">*</span></label>
+                                            <select name="bulan" class="form-control form-control-sm" required>
+                                                <option value="">-- Pilih Bulan --</option>
+                                                @foreach ([1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'] as $num => $nama)
+                                                    <option value="{{ $num }}"
+                                                        {{ old('bulan', now()->month) == $num ? 'selected' : '' }}>
+                                                        {{ $nama }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-6">
+                                            <label class="font-weight-bold" style="font-size:0.85rem;">Tahun Periode <span
+                                                    class="text-danger">*</span></label>
+                                            <select name="tahun" class="form-control form-control-sm" required>
+                                                @for ($y = now()->year; $y >= now()->year - 3; $y--)
+                                                    <option value="{{ $y }}"
+                                                        {{ old('tahun', now()->year) == $y ? 'selected' : '' }}>
+                                                        {{ $y }}</option>
+                                                @endfor
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="font-weight-bold" style="font-size:0.85rem;">Tanggal Pemeriksaan
+                                            <span class="text-danger">*</span></label>
+                                        <input type="date" name="tanggal_pemeriksaan"
+                                            class="form-control form-control-sm"
+                                            value="{{ old('tanggal_pemeriksaan', now()->format('Y-m-d')) }}" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="font-weight-bold" style="font-size:0.85rem;">Upload File PDF <span
+                                                class="text-danger">*</span></label>
+                                        <input type="file" name="file_pdf" class="form-control form-control-sm"
+                                            accept=".pdf" required>
+                                        <small class="text-muted">Format: PDF. Maksimal 10 MB.</small>
+                                    </div>
+
+                                    <div class="form-group mb-0">
+                                        <label class="font-weight-bold" style="font-size:0.85rem;">Catatan <span
+                                                class="text-muted">(opsional)</span></label>
+                                        <textarea name="catatan" class="form-control form-control-sm" rows="2" placeholder="Catatan tambahan..."
+                                            maxlength="1000">{{ old('catatan') }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer py-2">
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                        data-dismiss="modal">Batal</button>
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fas fa-cloud-upload-alt mr-1"></i> Upload
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1221,10 +1438,16 @@
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="font-weight-bold mb-0 text-dark"><i
                                     class="fas fa-shopping-cart mr-2 text-success"></i> Data Pengadaan</h5>
-                            <button class="btn btn-success btn-sm shadow-sm" style="border-radius: 8px;"
-                                id="btnTambahPengadaanInline">
-                                <i class="fas fa-plus mr-1"></i> Tambah Barang
-                            </button>
+                            <div class="d-flex" style="gap: 8px;">
+                                <button class="btn btn-success btn-sm shadow-sm" style="border-radius: 8px;"
+                                    id="btnTambahPengadaanInline">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
+                                </button>
+                                <button class="btn btn-warning btn-sm shadow-sm" style="border-radius: 8px; color: #fff;"
+                                    data-toggle="modal" data-target="#modalCetakPengadaan">
+                                    <i class="fas fa-print mr-1"></i> Cetak Laporan
+                                </button>
+                            </div>
                         </div>
 
                         <div class="table-responsive">
@@ -1250,9 +1473,9 @@
                                 <tbody id="pengadaan-table-body">
                                     @php $totalBudgetPengadaan = 0; @endphp
                                     @forelse($pengadaanBarang as $key => $item)
-                                        @php $totalBudgetPengadaan += (float)$item->budget; @endphp
-                                        <tr data-id="{{ $item->id }}"
-                                            style="{{ $item->is_inventory_created ? 'opacity: 0.35;' : '' }}">
+                                        @continue($item->is_inventory_created)
+                                        @php $totalBudgetPengadaan += (float) $item->budget; @endphp
+                                        <tr data-id="{{ $item->id }}">
                                             <td class="text-center no-col">{{ $loop->iteration }}</td>
                                             <td>
                                                 <div class="d-flex align-items-start" style="gap:4px;">
@@ -1356,11 +1579,17 @@
                                                         style="gap: 4px;">
                                                         @foreach ($fotos as $foto)
                                                             @php
-                                                                $isPdf = strtolower(pathinfo($foto->file_path, PATHINFO_EXTENSION)) === 'pdf';
+                                                                $isPdf =
+                                                                    strtolower(
+                                                                        pathinfo($foto->file_path, PATHINFO_EXTENSION),
+                                                                    ) === 'pdf';
                                                             @endphp
                                                             @if ($isPdf)
-                                                                <a href="{{ asset($foto->file_path) }}" target="_blank" class="text-danger" title="Lihat PDF" style="display:inline-block; position:relative; width:44px; height:44px; text-align:center; vertical-align:middle; line-height:44px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
-                                                                    <i class="far fa-file-pdf fa-2x" style="vertical-align:middle;"></i>
+                                                                <a href="{{ asset($foto->file_path) }}" target="_blank"
+                                                                    class="text-danger" title="Lihat PDF"
+                                                                    style="display:inline-block; position:relative; width:44px; height:44px; text-align:center; vertical-align:middle; line-height:44px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
+                                                                    <i class="far fa-file-pdf fa-2x"
+                                                                        style="vertical-align:middle;"></i>
                                                                     <button type="button"
                                                                         class="btn-hapus-bukti-foto position-absolute"
                                                                         style="top:-5px; right:-5px; width:16px; height:16px; border-radius:50%; background:#e74a3b; border:none; color:#fff; font-size:9px; line-height:1; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center;"
@@ -1374,7 +1603,8 @@
                                                             @else
                                                                 <div class="position-relative d-inline-block bukti-foto-item"
                                                                     data-bukti-id="{{ $foto->id }}">
-                                                                    <img src="{{ asset($foto->file_path) }}" alt="Bukti"
+                                                                    <img src="{{ asset($foto->file_path) }}"
+                                                                        alt="Bukti"
                                                                         class="img-thumbnail shadow-sm preview-image"
                                                                         style="width: 44px; height: 44px; object-fit: cover; cursor: pointer;"
                                                                         onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $item->nama_barang }}')"
@@ -2187,7 +2417,9 @@
             // 3. Update Grand Total locally (based on active filtered items)
             function updateGrandTotalPengadaan() {
                 let total = 0;
-                $('#pengadaan-table-body tr').not('.filtered-out, .empty-pengadaan-row, .filtered-empty-row').find(
+                // Use all rows (including those in hidden tab) — check data-id exists to skip empty/filter rows
+                $('#pengadaan-table-body tr[data-id]').not(
+                    '.filtered-out, .empty-pengadaan-row, .filtered-empty-row').find(
                     '.pengadaan-budget-input').each(function() {
                     let valStr = $(this).val() || '0';
                     let valNum = parseFloat(valStr.replace(/\./g, '')) || 0;
@@ -2479,7 +2711,7 @@
                             });
                         }
 
-                        // Jika baru masuk inventaris, tampilkan badge ✅ dan fade baris
+                        // Jika baru masuk inventaris, tampilkan badge ✅ lalu fade-out dan sembunyikan baris
                         if (res.synced_to_inventory) {
                             const $namaTd = $tr.find('[data-field="nama_barang"]').closest(
                                 'td');
@@ -2492,13 +2724,26 @@
                                 );
                             }
 
-                            // Fade baris ke opacity 0.35 dalam 1.8 detik
+                            // Tampilkan centang sebentar, fade-out, lalu remove dari DOM (baris bawah naik otomatis)
                             setTimeout(function() {
                                 $tr.css({
-                                    transition: 'opacity 1.8s ease',
-                                    opacity: '0.35'
+                                    transition: 'opacity 1.4s ease',
+                                    opacity: '0'
                                 });
-                            }, 800);
+                                setTimeout(function() {
+                                    $tr.remove();
+                                    updatePagination('pengadaan-table-body',
+                                        'pengadaan-pagination');
+                                    updateGrandTotalPengadaan();
+                                    if ($('#pengadaan-table-body tr').not(
+                                            '.empty-pengadaan-row, .filtered-empty-row'
+                                        ).length === 0) {
+                                        $('#pengadaan-table-body').append(
+                                            '<tr class="empty-pengadaan-row"><td colspan="8" class="text-center py-5 text-muted">Belum ada data pengadaan barang.</td></tr>'
+                                        );
+                                    }
+                                }, 1500);
+                            }, 900);
                         }
 
                         const msg = val === 'Sudah Dibeli' ?
@@ -2997,4 +3242,54 @@
             }
         });
     </script>
+
+    {{-- ── Modal Cetak Laporan Pengadaan ── --}}
+    <div class="modal fade" id="modalCetakPengadaan" tabindex="-1" role="dialog"
+        aria-labelledby="modalCetakPengadaanLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header" style="background: #f6c23e; color: #111;">
+                    <h5 class="modal-title font-weight-bold" id="modalCetakPengadaanLabel">
+                        <i class="fas fa-print mr-2"></i> Cetak Laporan Pengadaan
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                        style="color: #111; opacity: 1;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {{-- form GET → buka di tab baru untuk window.print() --}}
+                <form method="GET" action="{{ route('pengadaan-barang.cetak-laporan') }}" target="_blank">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="font-weight-bold" style="font-size: 0.85rem;">Bulan</label>
+                            <select name="bulan" class="form-control form-control-sm">
+                                <option value="all">— Semua Bulan —</option>
+                                @foreach ([1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'] as $num => $nama)
+                                    <option value="{{ $num }}" {{ now()->month == $num ? 'selected' : '' }}>
+                                        {{ $nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold" style="font-size: 0.85rem;">Tahun <span
+                                    class="text-danger">*</span></label>
+                            <select name="tahun" class="form-control form-control-sm" required>
+                                @for ($y = now()->year; $y >= now()->year - 3; $y--)
+                                    <option value="{{ $y }}" {{ now()->year == $y ? 'selected' : '' }}>
+                                        {{ $y }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-warning btn-sm font-weight-bold" style="color: #111;">
+                            <i class="fas fa-print mr-1"></i> Tampilkan &amp; Cetak
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 @endsection
