@@ -379,6 +379,7 @@
             }
         </style>
 
+        @if(!in_array(strtolower(auth()->user()->role), ['chapter', 'reseller', 'agen']))
         <!-- Filter Card Section (At the Very Top) -->
         <div class="col-12 mb-3 @if(auth()->check() && (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->name === 'Linda')) d-none @endif">
             <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
@@ -472,7 +473,9 @@
                 </div>
             </div>
         </div>
+        @endif
 
+        @if(!in_array(strtolower(auth()->user()->role), ['chapter', 'reseller', 'agen']))
         <!-- Card Stats Section (Reorganized into 2 Tables) -->
         <div class="col-12 mb-3">
             <div class="row">
@@ -622,7 +625,9 @@
                 </div>
             </div>
         </div>
+        @endif
 
+        @if(!in_array(strtolower(auth()->user()->role), ['chapter', 'reseller', 'agen']))
         <!-- Legend Section -->
         <div class="col-12 mb-3">
             <div class="card shadow-sm border-0 bg-white p-2">
@@ -648,6 +653,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <div class="col-xl-12 col-md-12 mb-4">
             <div class="card shadow mb-4">

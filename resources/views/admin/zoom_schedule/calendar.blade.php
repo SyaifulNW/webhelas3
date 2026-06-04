@@ -5,7 +5,7 @@
     <!-- Header -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800 font-weight-bold">
-            <i class="fas fa-video text-primary mr-2"></i> Monitoring Jadwal Zoom One-on-One - {{ auth()->user()->name }}
+            <i class="fas fa-video text-primary mr-2"></i> Monitoring Jadwal Zoom One-on-One - <span id="calendarTitleCsName" class="ml-1">{{ $isAdmin ? 'ALL TIM CS' : auth()->user()->name }}</span>
         </h1>
     </div>
 
@@ -48,7 +48,15 @@
                                     </small>
                                 </div>
                             @else
-                                <input type="hidden" id="filterCs" value="{{ auth()->id() }}">
+                                <div class="bg-white text-dark p-3 rounded-lg shadow-sm d-inline-block text-left" style="min-width: 250px; border-radius: 12px;">
+                                    <label class="font-weight-bold text-muted small d-block mb-2" style="font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase;">Tim CS</label>
+                                    <select id="filterCs" class="form-control form-control-sm" style="border-radius: 8px; font-weight: 700; height: 38px; color: #000;">
+                                        <option value="">ALL Tim CS</option>
+                                        @foreach($csUsers as $cs)
+                                            <option value="{{ $cs->id }}">{{ $cs->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -205,8 +213,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Apply CS Filter for Admin
             var csFilter = document.getElementById('filterCs');
-            if (csFilter && csFilter.value) {
-                params.cs_id = csFilter.value;
+            if (csFilter) {
+                if (csFilter.value) {
+                    params.cs_id = csFilter.value;
+                    var selectedText = csFilter.options[csFilter.selectedIndex].text;
+                    $('#calendarTitleCsName').text(selectedText);
+                } else {
+                    $('#calendarTitleCsName').text('ALL TIM CS');
+                }
             }
 
             $.getJSON('{{ route("zoom-schedule.events") }}', params)

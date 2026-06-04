@@ -127,7 +127,7 @@
             </thead>
             <tbody>
                 @php 
-                    $calcTotalPendapatan = ($totalMbc ?? 0) + ($totalSmi ?? 0) + ($totalPrivate ?? 0) + ($pendapatan->where('keterangan', 'Pendapatan Lainnya')->first() ? $pendapatan->where('keterangan', 'Pendapatan Lainnya')->first()->jumlah : 0);
+                    $calcTotalPendapatan = ($totalMbc ?? 0) + ($totalSmi ?? 0) + ($totalPrivate ?? 0) + ($pendapatan ? $pendapatan->sum('jumlah') : 0);
                     $totalSmiPendaftaran = $totalSmiPendaftaran ?? 0;
                     $totalSmiSpp = $totalSmiSpp ?? 0;
                 @endphp
@@ -305,9 +305,24 @@
                         } else {
                             foreach ($group['members'] as $dbKey => $displayTitle) {
                                 $mSub = $biaya->filter(fn($r) => trim($r->parent_keterangan ?? '') === $dbKey);
-                                $mMainSum = $biaya->filter(fn($r) => trim($r->keterangan ?? '') === $dbKey && empty(trim($r->parent_keterangan ?? '')))->sum('jumlah');
+                                $mMainSum = $biaya->filter(function($r) use ($dbKey) {
+                                    $keterangan = trim($r->keterangan ?? '');
+                                    $parent = trim($r->parent_keterangan ?? '');
+                                    if (!empty($parent)) return false;
+                                    
+                                    if ($dbKey === 'Biaya Kuota') {
+                                        return $keterangan === 'Biaya Kuota' || $keterangan === 'Biaya Kuota/Pulsa';
+                                    }
+                                    if ($dbKey === 'Biaya Internet & Wifi') {
+                                        return $keterangan === 'Biaya Internet & Wifi' || $keterangan === 'Biaya Internet Wifi';
+                                    }
+                                    return $keterangan === $dbKey;
+                                })->sum('jumlah');
                                 $groupTotal += $mMainSum + $mSub->sum('jumlah');
                             }
+                            // Add any manually added items that have this group as parent but aren't members
+                            $extraItems = $biaya->filter(fn($r) => trim($r->parent_keterangan ?? '') === $group['title'] && !array_key_exists(trim($r->keterangan ?? ''), $group['members']));
+                            $groupTotal += $extraItems->sum('jumlah');
                         }
                         $totalBiaya += $groupTotal;
                     @endphp
@@ -335,7 +350,18 @@
                     @else
                         @foreach($group['members'] as $dbKey => $displayTitle)
                             @php
-                                $mAll = $biaya->filter(fn($r) => trim($r->keterangan ?? '') === $dbKey || trim($r->parent_keterangan ?? '') === $dbKey);
+                                $matchMember = function($r) use ($dbKey) {
+                                    $ket = trim($r->keterangan ?? '');
+                                    $parent = trim($r->parent_keterangan ?? '');
+                                    if ($parent === $dbKey) return true;
+                                    if (empty($parent)) {
+                                        if ($dbKey === 'Biaya Kuota') return $ket === 'Biaya Kuota' || $ket === 'Biaya Kuota/Pulsa';
+                                        if ($dbKey === 'Biaya Internet & Wifi') return $ket === 'Biaya Internet & Wifi' || $ket === 'Biaya Internet Wifi';
+                                        return $ket === $dbKey;
+                                    }
+                                    return false;
+                                };
+                                $mAll = $biaya->filter(fn($r) => $matchMember($r));
                                 $mTotal = $mAll->sum('jumlah');
                             @endphp
                             @if($mTotal > 0)
@@ -350,6 +376,20 @@
                                     <td class="text-center" style="font-size: 8px;">{{ $calcTotalPendapatan > 0 ? number_format(($mTotal / $calcTotalPendapatan) * 100, 1) . '%' : '0%' }}</td>
                                 </tr>
                             @endif
+                        @endforeach
+                        {{-- Extra items for Group --}}
+                        @php
+                            $extraGroupItems = $biaya->filter(fn($r) => trim($r->parent_keterangan ?? '') === $group['title'] && !array_key_exists(trim($r->keterangan ?? ''), $group['members']));
+                        @endphp
+                        @foreach($extraGroupItems as $sub)
+                            @if($sub->jumlah <= 0) @continue @endif
+                            <tr class="sub-item">
+                                <td></td>
+                                <td class="text-center">{{ $sub->tanggal ? date('d/m/Y', strtotime($sub->tanggal)) : '-' }}</td>
+                                <td style="padding-left: 20px;">{{ $letters[$lIdx++] ?? '-' }}. {{ $sub->keterangan }}</td>
+                                <td class="nominal text-danger">{{ number_format($sub->jumlah, 0, ',', '.') }}</td>
+                                <td class="text-center" style="font-size: 8px;">{{ $calcTotalPendapatan > 0 ? number_format(($sub->jumlah / $calcTotalPendapatan) * 100, 1) . '%' : '0%' }}</td>
+                            </tr>
                         @endforeach
                     @endif
                 @endforeach

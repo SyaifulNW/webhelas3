@@ -112,9 +112,10 @@ class ZoomScheduleController extends Controller
         // Load all CS users for Admin filter
         $csUsers = [];
         if ($isAdmin) {
-            $csUsers = User::whereIn('role', ['cs', 'marketing', 'user'])
+            $csUsers = User::whereIn('role', ['cs-mbc', 'cs-smi', 'customer_service'])
                 ->where('is_active', 1)
                 ->where('name', 'not like', '%umum%')
+                ->orderBy('name')
                 ->get();
         }
 
@@ -153,6 +154,11 @@ class ZoomScheduleController extends Controller
         if ($isAdmin) {
             if ($request->has('cs_id') && !empty($request->input('cs_id'))) {
                 $query->where('cs_id', $request->input('cs_id'));
+            } elseif ($request->has('cs_name') && !empty($request->input('cs_name'))) {
+                $csName = $request->input('cs_name');
+                $query->whereHas('cs', function($q) use ($csName) {
+                    $q->where('name', $csName);
+                });
             }
         } else {
             $query->where('cs_id', $user->id);
@@ -178,7 +184,7 @@ class ZoomScheduleController extends Controller
 
             $events[] = [
                 'id' => $schedule->id,
-                'title' => $participantName . ($isAdmin ? " (CS: {$csName})" : ""),
+                'title' => "{$csName} ({$participantName})",
                 'start' => $schedule->scheduled_at->toIso8601String(),
                 'backgroundColor' => $color,
                 'borderColor' => $color,

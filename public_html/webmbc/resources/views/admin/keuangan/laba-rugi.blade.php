@@ -627,7 +627,19 @@
                                     // Calculate total for Group
                                     foreach ($group['members'] as $dbKey => $displayTitle) {
                                         $mSub = $biaya->filter(fn($r) => trim($r->parent_keterangan ?? '') === $dbKey);
-                                        $mMainSum = $biaya->filter(fn($r) => trim($r->keterangan ?? '') === $dbKey && empty(trim($r->parent_keterangan ?? '')))->sum('jumlah');
+                                        $mMainSum = $biaya->filter(function($r) use ($dbKey) {
+                                            $keterangan = trim($r->keterangan ?? '');
+                                            $parent = trim($r->parent_keterangan ?? '');
+                                            if (!empty($parent)) return false;
+                                            
+                                            if ($dbKey === 'Biaya Kuota') {
+                                                return $keterangan === 'Biaya Kuota' || $keterangan === 'Biaya Kuota/Pulsa';
+                                            }
+                                            if ($dbKey === 'Biaya Internet & Wifi') {
+                                                return $keterangan === 'Biaya Internet & Wifi' || $keterangan === 'Biaya Internet Wifi';
+                                            }
+                                            return $keterangan === $dbKey;
+                                        })->sum('jumlah');
                                         $groupTotal += $mMainSum + $mSub->sum('jumlah');
                                     }
                                     // Add any manually added items that have this group as parent but aren't members
@@ -789,10 +801,21 @@
                                 {{-- Rendering for Groups (Rumah Tangga, Marketing, ATK) --}}
                                 @foreach($group['members'] as $dbKey => $displayTitle)
                                     @php
+                                        $matchMember = function($r) use ($dbKey) {
+                                            $ket = trim($r->keterangan ?? '');
+                                            $parent = trim($r->parent_keterangan ?? '');
+                                            if ($parent === $dbKey) return true;
+                                            if (empty($parent)) {
+                                                if ($dbKey === 'Biaya Kuota') return $ket === 'Biaya Kuota' || $ket === 'Biaya Kuota/Pulsa';
+                                                if ($dbKey === 'Biaya Internet & Wifi') return $ket === 'Biaya Internet & Wifi' || $ket === 'Biaya Internet Wifi';
+                                                return $ket === $dbKey;
+                                            }
+                                            return false;
+                                        };
                                         // Get all entries with transactions (> 0)
-                                        $mEntries = $biaya->filter(fn($r) => (trim($r->keterangan ?? '') === $dbKey || trim($r->parent_keterangan ?? '') === $dbKey) && $r->jumlah > 0);
+                                        $mEntries = $biaya->filter(fn($r) => $matchMember($r) && $r->jumlah > 0);
                                         // Get ALL entries for calculation (to handle 0 case correctly)
-                                        $mAll = $biaya->filter(fn($r) => trim($r->keterangan ?? '') === $dbKey || trim($r->parent_keterangan ?? '') === $dbKey);
+                                        $mAll = $biaya->filter(fn($r) => $matchMember($r));
                                         $mTotal = $mAll->sum('jumlah');
                                         $hasNested = ($dbKey === 'Biaya Iklan'); 
                                         
@@ -1277,6 +1300,36 @@ $(document).ready(function() {
     function recalculateTotals() {
         let totalPendapatan = 0;
         let totalBiaya = 0;
+
+        // Recalculate group totals from their sub-items first
+        $('tbody[class^="sub-"]').each(function() {
+            let $subTbody = $(this);
+            let subClass = $subTbody.attr('class').split(' ').filter(c => c.startsWith('sub-'))[0];
+            if (subClass) {
+                let groupSlug = subClass.substring(4); // e.g., biaya-event-kelas
+                
+                // Sum all amount-cells inside this sub-tbody
+                let groupSum = 0;
+                $subTbody.find('.amount-cell').each(function() {
+                    let $cell = $(this);
+                    let val = $cell.is('input') ? $cell.val() : $cell.text();
+                    groupSum += parseRupiah(val);
+                });
+                
+                // Find the parent row. The parent row is the row-biaya that has a button with data-target="groupSlug"
+                let $parentRow = $('.row-biaya').filter(function() {
+                    return $(this).find('.btn-toggle-sub').data('target') === groupSlug;
+                });
+                
+                if ($parentRow.length > 0) {
+                    let $groupAmtCell = $parentRow.find('.amount-cell');
+                    // Only update from sub-items if the parent amount-cell is NOT an input (which would overwrite manual parent values)
+                    if (!$groupAmtCell.is('input')) {
+                        $groupAmtCell.text(formatRupiah(groupSum));
+                    }
+                }
+            }
+        });
 
         $('.row-pendapatan').each(function() {
             let $amt = $(this).find('.amount-cell');

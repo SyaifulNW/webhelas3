@@ -1144,6 +1144,7 @@
                         </button>
 
                         @if (
+                            !in_array($userRole, ['chapter', 'reseller', 'agen']) &&
                             !(auth()->user()->role === 'operasional' && stripos(auth()->user()->name, 'Rafi') !== false) &&
                                 !($userRole === 'administrator' && request('view_type') == 'chapter'))
                             <button type="button" id="btnLihatJadwalZoomHariIni"
@@ -4915,7 +4916,7 @@
                             <h5 class="modal-title font-weight-bold mb-1 d-flex align-items-center"
                                 id="modalJadwalZoomHariIniLabel" style="font-size: 1.25rem; letter-spacing: 0.5px;">
                                 <i class="fas fa-video mr-2"></i> Monitoring Jadwal Zoom One-on-One -
-                                {{ auth()->user()->name }}
+                                <span id="modalJadwalTitleCsName" class="ml-1">{{ in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'operasional']) ? 'ALL TIM CS' : auth()->user()->name }}</span>
                             </h5>
                             <p class="mb-0 text-white-50 small">Pantau pencapaian target harian dan sebaran jadwal Zoom
                                 seluruh tim CS secara real-time.</p>
@@ -4968,15 +4969,16 @@
                                 <div class="flex-grow-1">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="font-weight-bold text-dark text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Target Zoom Bulanan</span>
-                                        <span class="font-weight-bold text-primary" style="font-size: 0.8rem;">{{ $zoomCountThisMonth }} / {{ $zoomTarget }} Zoom</span>
+                                        <span class="font-weight-bold text-primary" style="font-size: 0.8rem;"><span id="modalCountTotal">{{ $zoomCountThisMonth }}</span> / {{ $zoomTarget }} Zoom</span>
                                     </div>
                                     <div class="progress" style="height: 8px; border-radius: 5px; background-color: #f1f5f9;">
                                         <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" 
+                                            id="modalProgressBar"
                                             style="width: {{ $zoomProgressPercent }}%; border-radius: 5px;" 
                                             aria-valuenow="{{ $zoomCountThisMonth }}" aria-valuemin="0" aria-valuemax="{{ $zoomTarget }}"></div>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mt-1" style="font-size: 0.65rem; color: #64748b;">
-                                        <span>Pencapaian: {{ $zoomProgressPercent }}%</span>
+                                        <span id="modalProgressPercentText">Pencapaian: {{ $zoomProgressPercent }}%</span>
                                         <span>Target: 60 Zoom (Bulan Ini)</span>
                                     </div>
                                 </div>
@@ -4988,13 +4990,13 @@
                             style="gap: 15px; font-size: 0.8rem; font-weight: 700; color: #333;">
                             <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle"
                                     style="width: 10px; height: 10px; background-color: #25799E; display: inline-block;"></span>
-                                Scheduled ({{ $scheduledCountThisMonth }})</span>
+                                Scheduled (<span id="modalCountScheduled">{{ $scheduledCountThisMonth }}</span>)</span>
                             <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle"
                                     style="width: 10px; height: 10px; background-color: #3CDE1D; display: inline-block;"></span>
-                                Done / Sukses ({{ $doneCountThisMonth }})</span>
+                                Done / Sukses (<span id="modalCountDone">{{ $doneCountThisMonth }}</span>)</span>
                             <span class="d-flex align-items-center" style="gap: 5px;"><span class="rounded-circle"
                                     style="width: 10px; height: 10px; background-color: #E61717; display: inline-block;"></span>
-                                Cancelled ({{ $cancelledCountThisMonth }})</span>
+                                Cancelled (<span id="modalCountCancelled">{{ $cancelledCountThisMonth }}</span>)</span>
                         </div>
                     </div>
 
@@ -6485,13 +6487,59 @@
                             end: info.endStr
                         };
 
-                        let csFilter = document.getElementById('modalFilterCs');
-                        if (csFilter && csFilter.value) {
-                            params.cs_id = csFilter.value;
+                        let isAdmin = {{ in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'operasional']) ? 'true' : 'false' }};
+                        if (isAdmin) {
+                            let csFilterVal = '';
+                            let csSelects = document.querySelectorAll('#filterCS');
+                            csSelects.forEach(function(select) {
+                                if (select && select.value) {
+                                    csFilterVal = select.value;
+                                }
+                            });
+                            if (csFilterVal) {
+                                params.cs_name = csFilterVal;
+                                $('#modalJadwalTitleCsName').text(csFilterVal);
+                            } else {
+                                $('#modalJadwalTitleCsName').text('ALL TIM CS');
+                            }
+                        } else {
+                            let csFilter = document.getElementById('modalFilterCs');
+                            if (csFilter && csFilter.value) {
+                                params.cs_id = csFilter.value;
+                            }
                         }
 
                         $.getJSON('{{ route('zoom-schedule.events') }}', params)
                             .done(function(data) {
+                                // Count statuses from current range
+                                let countScheduled = 0;
+                                let countDone = 0;
+                                let countCancelled = 0;
+                                
+                                data.forEach(function(evt) {
+                                    if (evt.extendedProps && evt.extendedProps.status) {
+                                        let status = evt.extendedProps.status.toLowerCase();
+                                        if (status === 'scheduled') {
+                                            countScheduled++;
+                                        } else if (status === 'done') {
+                                            countDone++;
+                                        } else if (status === 'cancelled') {
+                                            countCancelled++;
+                                        }
+                                    }
+                                });
+                                
+                                let totalZoom = countScheduled + countDone + countCancelled;
+                                let zoomTarget = 60;
+                                let zoomProgressPercent = Math.min(100, Math.round((totalZoom / zoomTarget) * 100));
+                                
+                                $('#modalCountScheduled').text(countScheduled);
+                                $('#modalCountDone').text(countDone);
+                                $('#modalCountCancelled').text(countCancelled);
+                                $('#modalCountTotal').text(totalZoom);
+                                $('#modalProgressPercentText').text('Pencapaian: ' + zoomProgressPercent + '%');
+                                $('#modalProgressBar').css('width', zoomProgressPercent + '%').attr('aria-valuenow', totalZoom);
+
                                 successCallback(data);
                             })
                             .fail(function() {

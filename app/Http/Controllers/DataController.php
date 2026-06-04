@@ -1482,14 +1482,22 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         if (strtolower($identifier) === 'cs-mbc') {
             // Equal Rotator between Linda, Shafa Zahra, and Yasmin
             $sequence = ['Linda', 'Shafa Zahra', 'Yasmin'];
-            try {
-                $index = \Illuminate\Support\Facades\Cache::get('form_m1t_rotator_index', 0);
-                \Illuminate\Support\Facades\Cache::put('form_m1t_rotator_index', ($index + 1) % count($sequence), 43200); // Store for 30 days
-            } catch (\Exception $e) {
-                $index = rand(0, count($sequence) - 1);
+            
+            // Get the last lead submitted by one of these CSs to find who was assigned last
+            $lastLead = \App\Models\Data::whereIn('created_by', $sequence)
+                ->orderBy('id', 'desc')
+                ->first();
+                
+            $nextIndex = 0;
+            if ($lastLead) {
+                $lastCsName = $lastLead->created_by;
+                $lastIndex = array_search($lastCsName, $sequence);
+                if ($lastIndex !== false) {
+                    $nextIndex = ($lastIndex + 1) % count($sequence);
+                }
             }
             
-            $selectedCsName = $sequence[$index];
+            $selectedCsName = $sequence[$nextIndex];
             $user = \App\Models\User::where('name', 'LIKE', '%' . $selectedCsName . '%')->first();
             
             // Fallback to any cs-mbc if not found
@@ -1632,6 +1640,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         }
 
         // Send WhatsApp Notification to the assigned CS (Rotator or Specific Form Owner)
+        $waUrl = null;
         try {
             $waNumberMap = [
                 'Linda' => '08561490495',
@@ -1660,6 +1669,24 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $zoomTanggal = $request->input('jadwal_zoom_tanggal') ?? '-';
             $zoomJam = $request->input('jadwal_zoom_jam') ?? '-';
             $namaUsaha = $data->nama_bisnis ?? '-';
+
+            if (strtolower($user->role ?? '') === 'cs-mbc' && !empty($waNumber)) {
+                $formattedWa = preg_replace('/[^0-9]/', '', $waNumber);
+                if (strpos($formattedWa, '0') === 0) {
+                    $formattedWa = '62' . substr($formattedWa, 1);
+                }
+                
+                $clientMessage = "*Halo CS M1T Helas Corp,*\n"
+                               . "Saya sudah mengisi Form Pendaftaran & Penjadwalan Konsultasi Program M1T.\n\n"
+                               . "*Berikut Data Saya:*\n"
+                               . "- *Nama Lengkap:* " . $data->nama . "\n"
+                               . "- *No. WhatsApp:* " . $data->no_wa . "\n"
+                               . "- *Nama Usaha:* " . $namaUsaha . "\n"
+                               . "- *Jadwal Sesi Zoom:* " . $zoomTanggal . " @ " . $zoomJam . " WIB\n\n"
+                               . "Mohon dikonfirmasi jadwal konsultasi saya. Terima kasih!";
+                
+                $waUrl = "https://api.whatsapp.com/send?phone=" . $formattedWa . "&text=" . urlencode($clientMessage);
+            }
             
             $message = "*Notifikasi ADS Masuk*\n"
                      . "*Database Calon Peserta M1T*\n\n"
@@ -1700,6 +1727,10 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             }
         } catch (\Exception $e) {
             \Log::error("Failed to send WhatsApp notification: " . $e->getMessage());
+        }
+
+        if ($waUrl) {
+            return redirect()->back()->with('success', 'Data Open House M1T berhasil disubmit.')->with('wa_url', $waUrl);
         }
 
         return redirect()->back()->with('success', 'Data Open House M1T berhasil disubmit.');

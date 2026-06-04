@@ -112,12 +112,29 @@
     @if(session('success'))
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: 'Berhasil!',
-                    text: '{{ session('success') }}',
-                    icon: 'success',
-                    confirmButtonColor: '#673ab7'
-                });
+                @if(session('wa_url'))
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: '{{ session('success') }} Klik tombol di bawah ini untuk mengirim data ke WhatsApp CS agar jadwal segera dikonfirmasi.',
+                        icon: 'success',
+                        showCancelButton: false,
+                        confirmButtonText: 'Hubungi CS via WhatsApp',
+                        confirmButtonColor: '#25D366',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.open('{!! session('wa_url') !!}', '_blank');
+                        }
+                    });
+                @else
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: '{{ session('success') }}',
+                        icon: 'success',
+                        confirmButtonColor: '#673ab7'
+                    });
+                @endif
             });
         </script>
     @endif
