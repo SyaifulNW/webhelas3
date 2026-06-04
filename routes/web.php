@@ -46,6 +46,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/absensi', function () {
+    return view('absensi');
+})->name('absensi');
+
+Route::post('/api/absensi/store', [App\Http\Controllers\AbsensiController::class, 'store'])->name('api.absensi.store');
+Route::get('/api/absensi/history', [App\Http\Controllers\AbsensiController::class, 'history'])->name('api.absensi.history');
+
 
 Route::get('/form-m1t/{identifier}', [DataController::class, 'formM1t'])->name('form.m1t');
 Route::post('/form-m1t/store', [DataController::class, 'storeFormM1t'])->name('form.m1t.store');
@@ -134,9 +141,7 @@ Route::middleware(['auth'])->group(function () {
     // Dashboards
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::post('/pendapatan-lainnya/store', [HomeController::class, 'storePendapatanLainnya'])->name('pendapatan.lainnya.store');
-    Route::get('/hr', function () {
-        return view('hr');
-    })->name('hr');
+    Route::get('/hr', [App\Http\Controllers\AbsensiController::class, 'hr'])->name('hr');
     Route::get('/administrator', [AdminController::class, 'index'])->name('administrator');
     Route::get('/marketing', [MarketingController::class, 'index'])->name('marketing');
     Route::get('/advertising', [AdvertisingController::class, 'index'])->name('advertising');
