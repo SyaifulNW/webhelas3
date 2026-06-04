@@ -54,33 +54,25 @@ class KasKecilController extends Controller
     public function uploadBukti(Request $request, $id)
     {
         $request->validate([
-            'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'bukti_transfer' => 'required|file|mimes:jpeg,png,jpg,pdf|max:10240',
         ]);
 
         $kas = KasKecil::findOrFail($id);
 
         if ($request->hasFile('bukti_transfer')) {
-            // Robust path detection
-            $basePublic = public_path();
-            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
-                $basePublic = $_SERVER['DOCUMENT_ROOT'];
-            } elseif (is_dir(base_path('public_html'))) {
-                $basePublic = base_path('public_html');
-            }
-
             $subFolder = 'uploads/kas_kecil';
-            $destinationPath = rtrim($basePublic, '/') . '/' . $subFolder;
+            $destinationPath = public_path($subFolder);
 
             // Delete old file if exists
-            if ($kas->bukti_transfer && file_exists(rtrim($basePublic, '/') . '/' . $kas->bukti_transfer)) {
-                @unlink(rtrim($basePublic, '/') . '/' . $kas->bukti_transfer);
+            if ($kas->bukti_transfer && file_exists(public_path($kas->bukti_transfer))) {
+                @unlink(public_path($kas->bukti_transfer));
             }
 
             $file = $request->file('bukti_transfer');
             $filename = time() . '_' . \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
 
             if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
+                mkdir($destinationPath, 0777, true);
             }
 
             $file->move($destinationPath, $filename);
@@ -103,27 +95,19 @@ class KasKecilController extends Controller
             'keterangan' => 'required|string',
             'masuk' => 'nullable|numeric',
             'keluar' => 'nullable|numeric',
-            'bukti_transfer' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'bukti_transfer' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:10240',
         ]);
 
         $buktiPath = null;
         if ($request->hasFile('bukti_transfer')) {
-            // Robust path detection
-            $basePublic = public_path();
-            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
-                $basePublic = $_SERVER['DOCUMENT_ROOT'];
-            } elseif (is_dir(base_path('public_html'))) {
-                $basePublic = base_path('public_html');
-            }
-
             $subFolder = 'uploads/kas_kecil';
-            $destinationPath = rtrim($basePublic, '/') . '/' . $subFolder;
+            $destinationPath = public_path($subFolder);
 
             $file = $request->file('bukti_transfer');
             $filename = time() . '_' . \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
 
             if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
+                mkdir($destinationPath, 0777, true);
             }
 
             $file->move($destinationPath, $filename);

@@ -48,7 +48,16 @@
                     </a>
                 @endif
 
-                <button type="button" class="btn btn-primary btn-sm btn-riwayat rounded-pill shadow-sm px-3 border-0"
+                @php
+                    $fuCount = 0;
+                    for ($j = 1; $j <= 10; $j++) {
+                        $atProp = "fu{$j}_at";
+                        if (!empty($item->$atProp)) {
+                            $fuCount++;
+                        }
+                    }
+                @endphp
+                <button type="button" class="btn btn-primary btn-sm btn-riwayat rounded-pill shadow-sm px-3 border-0 position-relative"
                     style="height: 28px; line-height: 1; font-size: 0.75rem; font-weight: 700; background: linear-gradient(45deg, #4e73df, #224abe);"
                     data-id="{{ $item->id }}" data-nama="{{ $item->nama }}" data-fu1="{{ $item->fu1 }}"
                     data-fu1-wa="{{ $item->fu1_wa }}" data-fu1-telp="{{ $item->fu1_telp }}"
@@ -83,6 +92,9 @@
                     data-fu10-at="{{ $item->fu10_at ? $item->fu10_at->format('d/m/Y H:i') : '' }}"
                     data-fu10-hasil="{{ $item->fu10_hasil }}" data-fu10-tindak-lanjut="{{ $item->fu10_tindak_lanjut }}">
                     Follow Up
+                    @if($fuCount > 0)
+                        <span class="badge badge-danger position-absolute fu-badge" style="top: -5px; right: -5px; font-size: 0.6rem; border-radius: 50%; padding: 2px 5px;">{{ $fuCount }}</span>
+                    @endif
                 </button>
             </div>
         </div>

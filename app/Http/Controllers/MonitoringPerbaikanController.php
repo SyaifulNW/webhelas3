@@ -78,7 +78,7 @@ class MonitoringPerbaikanController extends Controller
         $filename = 'lpj_mon_' . time() . '_' . $safeName;
 
         if (!file_exists($destinationPath)) {
-            mkdir($destinationPath, 0755, true);
+            mkdir($destinationPath, 0777, true);
         }
 
         $file->move($destinationPath, $filename);

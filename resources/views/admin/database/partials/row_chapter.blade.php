@@ -133,8 +133,8 @@
                 $schedule = $sp ? \App\Models\ZoomSchedule::where('salesplan_id', $sp->id)->first() : null;
             @endphp
             <!-- Dedicated Zoom button for this prospect -->
-            <button type="button" class="btn btn-zoom-bant p-0 d-flex align-items-center justify-content-center border-0 shadow-sm text-white"
-                    style="width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(45deg, #2D8CFF, #1570E0); transition: all 0.2s;"
+            <button type="button" class="btn btn-zoom-bant p-0 d-flex align-items-center justify-content-center shadow-sm"
+                    style="width: 24px; height: 24px; border-radius: 6px; background: {{ ($schedule && strtolower($schedule->status) === 'done') || $item->ikut_zoom == 1 ? '#3CDE1D' : ($schedule && strtolower($schedule->status) === 'scheduled' ? '#25799E' : ($schedule && strtolower($schedule->status) === 'cancelled' ? '#E61717' : '#ffffff')) }}; color: {{ ($schedule && in_array(strtolower($schedule->status), ['done', 'scheduled', 'cancelled'])) || $item->ikut_zoom == 1 ? '#ffffff' : '#475569' }}; border: {{ ($schedule && in_array(strtolower($schedule->status), ['done', 'scheduled', 'cancelled'])) || $item->ikut_zoom == 1 ? 'none' : '1px solid #cbd5e1' }}; transition: all 0.2s;"
                     data-id="{{ $item->id }}" 
                     data-nama="{{ $item->nama }}"
                     data-kelas-nama="M1T"
@@ -154,7 +154,18 @@
             </button>
             
             <!-- Follow Up button for this specific class -->
-            <button type="button" class="btn btn-primary btn-sm btn-riwayat shadow-sm border-0 px-2"
+            @php
+                $fuCount = 0;
+                if ($sp) {
+                    for ($j = 1; $j <= 10; $j++) {
+                        $atProp = "fu{$j}_at";
+                        if (!empty($sp->$atProp)) {
+                            $fuCount++;
+                        }
+                    }
+                }
+            @endphp
+            <button type="button" class="btn btn-primary btn-sm btn-riwayat shadow-sm border-0 px-2 position-relative"
                     style="height: 24px; line-height: 1; font-size: 0.65rem; font-weight: 700; background: linear-gradient(45deg, #4e73df, #224abe); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;"
                     data-kelas-nama="M1T"
                     data-salesplan-id="{{ $sp ? $sp->id : '' }}"
@@ -200,6 +211,9 @@
                     data-fu10-at="{{ $sp && $sp->fu10_at ? ($sp->fu10_at instanceof \Carbon\Carbon ? $sp->fu10_at->format('d/m/Y H:i') : \Carbon\Carbon::parse($sp->fu10_at)->format('d/m/Y H:i')) : '' }}"
                     data-fu10-hasil="{{ $sp ? $sp->fu10_hasil : '' }}" data-fu10-tindak-lanjut="{{ $sp ? $sp->fu10_tindak_lanjut : '' }}">
                 Follow Up
+                @if($fuCount > 0)
+                    <span class="badge badge-danger position-absolute fu-badge" style="top: -5px; right: -5px; font-size: 0.6rem; border-radius: 50%; padding: 2px 5px;">{{ $fuCount }}</span>
+                @endif
             </button>
             <span class="badge shadow-sm" style="background:#25799E;color:#fff;font-size:0.85rem;font-weight:800;border-radius:8px;padding:7px 18px;border:2px solid #fff;">M1T</span>
         </div>

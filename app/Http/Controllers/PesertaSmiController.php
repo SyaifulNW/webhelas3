@@ -2283,33 +2283,25 @@ class PesertaSmiController extends Controller
     public function uploadBuktiTransfer(Request $request, $id)
     {
         $request->validate([
-            'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'bukti_transfer' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:5120',
         ]);
 
         $peserta = \App\Models\PesertaSmi::findOrFail($id);
 
         if ($request->hasFile('bukti_transfer')) {
-            // Robust path detection for various server environments (Shared Hosting, XAMPP, etc.)
-            $basePublic = public_path();
-            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
-                $basePublic = $_SERVER['DOCUMENT_ROOT'];
-            } elseif (is_dir(base_path('public_html'))) {
-                $basePublic = base_path('public_html');
-            }
-
             $subFolder = 'uploads/bukti_transfer';
-            $destinationPath = rtrim($basePublic, '/') . '/' . $subFolder;
+            $destinationPath = public_path($subFolder);
 
             // Delete old file if exists
-            if ($peserta->bukti_transfer && file_exists(rtrim($basePublic, '/') . '/' . $peserta->bukti_transfer)) {
-                @unlink(rtrim($basePublic, '/') . '/' . $peserta->bukti_transfer);
+            if ($peserta->bukti_transfer && file_exists(public_path($peserta->bukti_transfer))) {
+                @unlink(public_path($peserta->bukti_transfer));
             }
 
             $file = $request->file('bukti_transfer');
             $filename = time() . '_' . \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
 
             if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
+                mkdir($destinationPath, 0777, true);
             }
 
             $file->move($destinationPath, $filename);

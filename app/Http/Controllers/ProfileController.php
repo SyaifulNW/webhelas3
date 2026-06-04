@@ -44,27 +44,19 @@ class ProfileController extends Controller
         $data = $request->only(['name', 'email', 'wa', 'chapter', 'bio']);
 
         if ($request->hasFile('photo')) {
-            // Robust path detection (supports public_html for shared hosting)
-            $basePublic = public_path();
-            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
-                $basePublic = $_SERVER['DOCUMENT_ROOT'];
-            } elseif (is_dir(base_path('public_html'))) {
-                $basePublic = base_path('public_html');
-            }
-
             $subFolder = 'uploads/profile_photos';
-            $destinationPath = rtrim($basePublic, '/') . '/' . $subFolder;
+            $destinationPath = public_path($subFolder);
 
-            // Delete old file if exists using manual path
-            if ($user->photo && file_exists(rtrim($basePublic, '/') . '/' . $user->photo)) {
-                @unlink(rtrim($basePublic, '/') . '/' . $user->photo);
+            // Delete old file if exists
+            if ($user->photo && file_exists(public_path($user->photo))) {
+                @unlink(public_path($user->photo));
             }
 
             $file = $request->file('photo');
             $filename = time() . '_' . \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
 
             if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
+                mkdir($destinationPath, 0777, true);
             }
 
             $file->move($destinationPath, $filename);

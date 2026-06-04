@@ -1562,13 +1562,13 @@
                     <form id="formUploadBukti" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group mb-3">
-                            <label class="font-weight-bold text-dark" style="font-size: 0.85rem;">Pilih Foto Bukti Transfer <span class="text-danger">*</span></label>
+                            <label class="font-weight-bold text-dark" style="font-size: 0.85rem;">Pilih Bukti Transfer (Gambar / PDF) <span class="text-danger">*</span></label>
                             <div class="custom-file">
                                 <input type="file" class="custom-file-input" id="inputBuktiTransfer" name="bukti_transfer"
-                                    accept="image/jpeg,image/png,image/jpg,image/gif" required onchange="previewSelectedFile(this)">
-                                <label class="custom-file-label" for="inputBuktiTransfer">Pilih foto...</label>
+                                    accept="image/jpeg,image/png,image/jpg,image/gif,application/pdf" required onchange="previewSelectedFile(this)">
+                                <label class="custom-file-label" for="inputBuktiTransfer">Pilih file...</label>
                             </div>
-                            <small class="text-muted">Format: JPG, PNG, GIF. Maks. 2MB.</small>
+                            <small class="text-muted">Format: JPG, PNG, GIF, PDF. Maks. 5MB.</small>
                         </div>
                         {{-- New file preview --}}
                         <div id="newFilePreview" class="text-center mb-2 d-none">
@@ -1623,16 +1623,43 @@
             _currentUploadId = id;
             document.getElementById('uploadBuktiNama').textContent = nama;
             document.getElementById('inputBuktiTransfer').value = '';
-            document.querySelector('#formUploadBukti .custom-file-label').textContent = 'Pilih foto...';
+            document.querySelector('#formUploadBukti .custom-file-label').textContent = 'Pilih file...';
             document.getElementById('newFilePreview').classList.add('d-none');
+            const newPdfIcon = document.getElementById('newFilePreviewPdfIcon');
+            if (newPdfIcon) newPdfIcon.classList.add('d-none');
+            const newPreviewImg = document.getElementById('newFilePreviewImg');
+            newPreviewImg.src = '';
+            newPreviewImg.classList.remove('d-none');
 
             const previewWrapper = document.getElementById('buktiPreviewWrapper');
             const previewImg = document.getElementById('buktiPreviewImg');
             if (currentBuktiUrl) {
-                previewImg.src = currentBuktiUrl;
+                const isPdf = currentBuktiUrl.toLowerCase().endsWith('.pdf');
+                if (isPdf) {
+                    previewImg.src = '';
+                    previewImg.classList.add('d-none');
+                    let pdfLink = document.getElementById('buktiPreviewPdfLink');
+                    if (!pdfLink) {
+                        pdfLink = document.createElement('a');
+                        pdfLink.id = 'buktiPreviewPdfLink';
+                        pdfLink.target = '_blank';
+                        pdfLink.className = 'btn btn-outline-danger btn-sm mb-2';
+                        pdfLink.innerHTML = '<i class="far fa-file-pdf mr-1"></i>Lihat PDF';
+                        previewWrapper.appendChild(pdfLink);
+                    }
+                    pdfLink.href = currentBuktiUrl;
+                    pdfLink.classList.remove('d-none');
+                } else {
+                    previewImg.src = currentBuktiUrl;
+                    previewImg.classList.remove('d-none');
+                    const pdfLink = document.getElementById('buktiPreviewPdfLink');
+                    if (pdfLink) pdfLink.classList.add('d-none');
+                }
                 previewWrapper.classList.remove('d-none');
             } else {
                 previewWrapper.classList.add('d-none');
+                const pdfLink = document.getElementById('buktiPreviewPdfLink');
+                if (pdfLink) pdfLink.classList.add('d-none');
             }
 
             $('#modalUploadBukti').modal('show');
@@ -1642,12 +1669,35 @@
             const label = input.nextElementSibling;
             if (input.files && input.files[0]) {
                 label.textContent = input.files[0].name;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('newFilePreviewImg').src = e.target.result;
-                    document.getElementById('newFilePreview').classList.remove('d-none');
-                };
-                reader.readAsDataURL(input.files[0]);
+                const file = input.files[0];
+                const isPdf = file.name.toLowerCase().endsWith('.pdf');
+                
+                const previewWrapper = document.getElementById('newFilePreview');
+                const previewImg = document.getElementById('newFilePreviewImg');
+                let pdfIcon = document.getElementById('newFilePreviewPdfIcon');
+                
+                if (isPdf) {
+                    previewImg.src = '';
+                    previewImg.classList.add('d-none');
+                    if (!pdfIcon) {
+                        pdfIcon = document.createElement('div');
+                        pdfIcon.id = 'newFilePreviewPdfIcon';
+                        pdfIcon.className = 'mb-2';
+                        pdfIcon.innerHTML = '<i class="far fa-file-pdf fa-3x text-danger"></i><p class="small text-muted mt-1">File PDF Terpilih</p>';
+                        previewWrapper.insertBefore(pdfIcon, previewWrapper.firstChild);
+                    }
+                    pdfIcon.classList.remove('d-none');
+                    previewWrapper.classList.remove('d-none');
+                } else {
+                    if (pdfIcon) pdfIcon.classList.add('d-none');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewImg.classList.remove('d-none');
+                        previewWrapper.classList.remove('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                }
             }
         }
 
@@ -1656,7 +1706,7 @@
 
             const fileInput = document.getElementById('inputBuktiTransfer');
             if (!fileInput.files || !fileInput.files[0]) {
-                Swal.fire({ icon: 'warning', title: 'Pilih Foto', text: 'Silakan pilih foto bukti transfer terlebih dahulu.', timer: 2000, showConfirmButton: false });
+                Swal.fire({ icon: 'warning', title: 'Pilih File', text: 'Silakan pilih file bukti transfer terlebih dahulu.', timer: 2000, showConfirmButton: false });
                 return;
             }
 
@@ -1682,7 +1732,7 @@
                     Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Bukti transfer berhasil diunggah. Menunggu persetujuan admin.', timer: 2500, showConfirmButton: false })
                         .then(() => updateSmiFilters());
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Gagal Upload', text: 'Terjadi kesalahan. Pastikan ukuran file tidak lebih dari 2MB.', timer: 3000, showConfirmButton: false });
+                    Swal.fire({ icon: 'error', title: 'Gagal Upload', text: 'Terjadi kesalahan. Pastikan ukuran file tidak lebih dari 5MB.', timer: 3000, showConfirmButton: false });
                 }
             })
             .catch(() => {
@@ -1693,10 +1743,15 @@
         }
 
         function viewBuktiTransfer(url, nama) {
-            document.getElementById('viewBuktiNama').textContent = nama;
-            document.getElementById('viewBuktiImg').src = url;
-            document.getElementById('viewBuktiDownloadLink').href = url;
-            $('#modalViewBukti').modal('show');
+            const isPdf = url.toLowerCase().endsWith('.pdf');
+            if (isPdf) {
+                window.open(url, '_blank');
+            } else {
+                document.getElementById('viewBuktiNama').textContent = nama;
+                document.getElementById('viewBuktiImg').src = url;
+                document.getElementById('viewBuktiDownloadLink').href = url;
+                $('#modalViewBukti').modal('show');
+            }
         }
     </script>
 @endsection

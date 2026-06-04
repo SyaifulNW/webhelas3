@@ -88,7 +88,7 @@ class PengadaanBarangController extends Controller
     public function addBukti(Request $request, $id)
     {
         $request->validate([
-            'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'bukti_transfer' => 'required|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:10240',
         ]);
 
         $item = PengadaanBarang::findOrFail($id);
@@ -107,7 +107,7 @@ class PengadaanBarangController extends Controller
         $filename = 'bukti_trans_' . time() . '_' . $safeName;
 
         if (!file_exists($destinationPath)) {
-            mkdir($destinationPath, 0755, true);
+            mkdir($destinationPath, 0777, true);
         }
 
         $file->move($destinationPath, $filename);
@@ -172,7 +172,7 @@ class PengadaanBarangController extends Controller
     public function uploadBukti(Request $request, $id)
     {
         $request->validate([
-            'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'bukti_transfer' => 'required|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:10240',
         ]);
 
         $item = PengadaanBarang::findOrFail($id);
@@ -196,7 +196,7 @@ class PengadaanBarangController extends Controller
         $filename = 'bukti_trans_' . time() . '_' . $safeName;
 
         if (!file_exists($destinationPath)) {
-            mkdir($destinationPath, 0755, true);
+            mkdir($destinationPath, 0777, true);
         }
 
         $file->move($destinationPath, $filename);

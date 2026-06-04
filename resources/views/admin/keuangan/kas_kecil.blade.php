@@ -169,12 +169,23 @@
                                     <td class="text-center align-middle">
                                         <div class="d-flex flex-column align-items-center">
                                             @if($item->bukti_transfer)
-                                                <div class="position-relative mb-1">
-                                                    <img src="{{ asset($item->bukti_transfer) }}" alt="Bukti"
-                                                        class="img-thumbnail shadow-sm preview-image"
-                                                        style="width: 45px; height: 45px; object-fit: cover; cursor: pointer;"
-                                                        onclick="previewImage('{{ asset($item->bukti_transfer) }}', 'Bukti Kas - {{ $item->keterangan }}')">
-                                                </div>
+                                                @php
+                                                    $isPdf = strtolower(pathinfo($item->bukti_transfer, PATHINFO_EXTENSION)) === 'pdf';
+                                                @endphp
+                                                @if($isPdf)
+                                                    <div class="position-relative mb-1">
+                                                        <a href="{{ asset($item->bukti_transfer) }}" target="_blank" class="text-danger" title="Lihat PDF" style="display:inline-block; border: 1px solid #ddd; border-radius: 4px; padding: 2px 4px; background: #fff;">
+                                                            <i class="far fa-file-pdf fa-2x"></i>
+                                                        </a>
+                                                    </div>
+                                                @else
+                                                    <div class="position-relative mb-1">
+                                                        <img src="{{ asset($item->bukti_transfer) }}" alt="Bukti"
+                                                            class="img-thumbnail shadow-sm preview-image"
+                                                            style="width: 45px; height: 45px; object-fit: cover; cursor: pointer;"
+                                                            onclick="previewImage('{{ asset($item->bukti_transfer) }}', 'Bukti Kas - {{ $item->keterangan }}')">
+                                                    </div>
+                                                @endif
                                             @endif
 
                                             {{-- Tombol Upload untuk Lama/Baru --}}
@@ -183,7 +194,7 @@
                                                 <i class="fas fa-upload mr-1"></i>
                                                 {{ $item->bukti_transfer ? 'Ganti' : 'Upload' }}
                                                 <input type="file" class="d-none upload-bukti-existing"
-                                                    data-id="{{ $item->id }}" accept="image/*">
+                                                    data-id="{{ $item->id }}" accept="image/*,.pdf">
                                             </label>
                                         </div>
                                     </td>
@@ -245,8 +256,8 @@
                     <td class="text-center align-middle font-weight-bold">-</td>
                     <td class="p-2 align-middle">
                         <div class="custom-file" style="font-size: 10px;">
-                            <input type="file" class="custom-file-input" id="new_bukti" accept="image/*">
-                            <label class="custom-file-label" for="new_bukti" style="padding: 0.25rem 0.5rem; height: auto;">Pilih Gambar</label>
+                            <input type="file" class="custom-file-input" id="new_bukti" accept="image/*,.pdf">
+                            <label class="custom-file-label" for="new_bukti" style="padding: 0.25rem 0.5rem; height: auto;">Pilih File</label>
                         </div>
                     </td>
                     <td class="text-center align-middle">

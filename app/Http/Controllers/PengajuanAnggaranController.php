@@ -227,7 +227,7 @@ class PengajuanAnggaranController extends Controller
             'status' => 'required|in:approved,rejected',
             'catatan_admin' => 'nullable|string',
             'biaya_disetujui' => 'nullable|numeric|min:0',
-            'bukti_transfer' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'bukti_transfer' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:10240',
         ]);
 
         $anggaran = PengajuanAnggaran::findOrFail($id);
@@ -281,7 +281,7 @@ class PengajuanAnggaranController extends Controller
             $filename = 'bukti_trans_' . time() . '_' . $safeName;
 
             if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
+                mkdir($destinationPath, 0777, true);
             }
 
             $file->move($destinationPath, $filename);
@@ -337,7 +337,7 @@ class PengajuanAnggaranController extends Controller
     public function gantiBuktiFoto(Request $request, $id, $buktiId)
     {
         $request->validate([
-            'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'bukti_transfer' => 'required|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:10240',
         ]);
 
         $user = Auth::user();
@@ -373,7 +373,7 @@ class PengajuanAnggaranController extends Controller
         $filename = 'bukti_trans_' . time() . '_' . $safeName;
 
         if (!file_exists($destinationPath)) {
-            mkdir($destinationPath, 0755, true);
+            mkdir($destinationPath, 0777, true);
         }
 
         $file->move($destinationPath, $filename);
@@ -396,7 +396,7 @@ class PengajuanAnggaranController extends Controller
     public function uploadBukti(Request $request, $id)
     {
         $request->validate([
-            'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'bukti_transfer' => 'required|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:10240',
         ]);
 
         $anggaran = PengajuanAnggaran::findOrFail($id);
@@ -428,7 +428,7 @@ class PengajuanAnggaranController extends Controller
         $filename = 'bukti_trans_' . time() . '_' . $safeName;
 
         if (!file_exists($destinationPath)) {
-            mkdir($destinationPath, 0755, true);
+            mkdir($destinationPath, 0777, true);
         }
 
         $file->move($destinationPath, $filename);

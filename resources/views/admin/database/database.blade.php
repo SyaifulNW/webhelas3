@@ -1633,6 +1633,12 @@
                                     'statCountSudahTransfer').innerText = data.stats.countSudahTransfer;
                                 if (document.getElementById('statCountNo')) document.getElementById('statCountNo').innerText =
                                     data.stats.countNo;
+                                if (document.getElementById('zoomCountScheduled')) document.getElementById('zoomCountScheduled').innerText =
+                                    data.stats.countZoomScheduled ?? 0;
+                                if (document.getElementById('zoomCountDone')) document.getElementById('zoomCountDone').innerText =
+                                    data.stats.countZoomDone ?? 0;
+                                if (document.getElementById('zoomCountUnscheduled')) document.getElementById('zoomCountUnscheduled').innerText =
+                                    data.stats.countZoomUnscheduled ?? 0;
 
                                 // Update prospek summary card
                                 if (data.stats.prospekCounts !== undefined) {
@@ -1907,21 +1913,21 @@
                             <div
                                 style="width: 12px; height: 12px; background: #25799E; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Biru = Dijadwalkan</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Biru = Dijadwalkan (<span id="zoomCountScheduled">{{ $countZoomScheduled ?? 0 }}</span>)</span>
                         </div>
                         <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
                             style="border-radius: 50px; border: 1px solid #000;">
                             <div
                                 style="width: 12px; height: 12px; background: #3CDE1D; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Hijau = Selesai Zoom</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Hijau = Selesai Zoom (<span id="zoomCountDone">{{ $countZoomDone ?? 0 }}</span>)</span>
                         </div>
                         <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
                             style="border-radius: 50px; border: 1px solid #000;">
                             <div
-                                style="width: 12px; height: 12px; background: #E61717; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
+                                style="width: 12px; height: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Merah = Dibatalkan</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Putih = Belum dijadwalkan (<span id="zoomCountUnscheduled">{{ $countZoomUnscheduled ?? 0 }}</span>)</span>
                         </div>
                     </div>
                 @endif
@@ -2421,6 +2427,48 @@
                                             $row.find('.spin-content').removeClass('d-none');
                                         } else {
                                             $row.find('.spin-content').addClass('d-none');
+                                        }
+
+                                        // Sync dynamic button color if field is ikut_zoom
+                                        if (field === 'ikut_zoom') {
+                                            let $btnZoom = $row.find('.btn-zoom-bant');
+                                            if ($btnZoom.length) {
+                                                $btnZoom.attr('data-ikut-zoom', value);
+                                                let currentStatus = $btnZoom.attr('data-schedule-status') || '';
+                                                if (value == 1) {
+                                                    $btnZoom.css({
+                                                        'background': '#3CDE1D',
+                                                        'color': '#ffffff',
+                                                        'border': 'none'
+                                                    });
+                                                } else {
+                                                    if (currentStatus === 'scheduled') {
+                                                        $btnZoom.css({
+                                                            'background': '#25799E',
+                                                            'color': '#ffffff',
+                                                            'border': 'none'
+                                                        });
+                                                    } else if (currentStatus === 'done') {
+                                                        $btnZoom.css({
+                                                            'background': '#3CDE1D',
+                                                            'color': '#ffffff',
+                                                            'border': 'none'
+                                                        });
+                                                    } else if (currentStatus === 'cancelled') {
+                                                        $btnZoom.css({
+                                                            'background': '#E61717',
+                                                            'color': '#ffffff',
+                                                            'border': 'none'
+                                                        });
+                                                    } else {
+                                                        $btnZoom.css({
+                                                            'background': '#ffffff',
+                                                            'color': '#475569',
+                                                            'border': '1px solid #cbd5e1'
+                                                        });
+                                                    }
+                                                }
+                                            }
                                         }
 
                                         // Show Toast Success
@@ -3198,13 +3246,14 @@
                                                 style="font-size: 0.8rem; border-radius: 4px; resize: none; line-height: 1.2; font-weight: 700 !important; border-color: #dee2e6 !important;"
                                                 placeholder="Next..."></textarea>
                                         </div>
-                                        <div class="mt-2 bg-light p-2 rounded border d-flex align-items-center justify-content-between shadow-sm" style="border-radius: 6px; font-size: 0.75rem; border-color: #dee2e6 !important;">
-                                            <span class="text-secondary fw-bold" style="font-size: 0.65rem; font-weight: 800 !important;"><i class="fas fa-clock mr-1"></i> WAKTU FU:</span>
-                                            <input type="text" class="fu-at-display-input border-0 bg-transparent text-right fw-bold text-dark p-0" 
+                                        <div class="mt-2 bg-light p-2 rounded border shadow-sm" style="border-radius: 6px; border-color: #dee2e6 !important;">
+                                            <div class="text-secondary fw-bold mb-1" style="font-size: 0.65rem; font-weight: 800 !important;">
+                                                <i class="fas fa-clock mr-1"></i> Pilih waktu Tindak Lanjut:
+                                            </div>
+                                            <input type="datetime-local" class="fu-at-display-input form-control form-control-sm border fw-bold text-dark bg-white w-100" 
                                                 id="fu{{ $i }}_at_under"
                                                 {{ auth()->user()->role === 'administrator' ? 'readonly' : '' }}
-                                                style="outline: none; font-size: 0.75rem; width: 120px; font-weight: 700 !important;"
-                                                placeholder="-">
+                                                style="font-size: 0.75rem; font-weight: 700 !important; height: 28px; padding: 2px 5px;">
                                         </div>
                                     </div>
                                 </div>
@@ -3329,12 +3378,18 @@
 
             // Populate checkboxes
             document.getElementById('zoomBantIkutZoom').checked = $btn.attr('data-ikut-zoom') == '1';
+            if (document.getElementById('zoomBantIkutZoomRight')) {
+                document.getElementById('zoomBantIkutZoomRight').checked = $btn.attr('data-ikut-zoom') == '1';
+            }
             document.getElementById('zoomBantBudget').checked = $btn.attr('data-bant-budget') == '1';
             document.getElementById('zoomBantAuthority').checked = $btn.attr('data-bant-authority') == '1';
             document.getElementById('zoomBantTime').checked = $btn.attr('data-bant-time') == '1';
 
             // Enable/disable based on permissions
             document.getElementById('zoomBantIkutZoom').disabled = !canEdit;
+            if (document.getElementById('zoomBantIkutZoomRight')) {
+                document.getElementById('zoomBantIkutZoomRight').disabled = !canEdit;
+            }
             document.getElementById('zoomBantBudget').disabled = !canEdit;
             document.getElementById('zoomBantAuthority').disabled = !canEdit;
             document.getElementById('zoomBantTime').disabled = !canEdit;
@@ -3382,15 +3437,45 @@
                     $('#modalZoomBant').modal('hide');
 
                     // Dynamic sync to trigger button
-                    let $btnZoom = $(`.btn-zoom-bant[data-salesplan-id="${salesplanId}"]`);
+                    let $btnZoom = salesplanId ? $(`.btn-zoom-bant[data-salesplan-id="${salesplanId}"]`) : $(`.btn-zoom-bant[data-id="${dataId}"]`);
                     if ($btnZoom.length) {
                         $btnZoom.attr('data-schedule-date', scheduledAt);
                         $btnZoom.attr('data-schedule-link', zoomLink);
                         $btnZoom.attr('data-schedule-status', status);
                         $btnZoom.attr('data-schedule-notes', notes);
+                        
+                        let ikutZoomVal = $btnZoom.attr('data-ikut-zoom') || '0';
                         if (status === 'done') {
                             $btnZoom.attr('data-ikut-zoom', '1');
                             $btnZoom.closest('tr').find('.checkbox-ikut-zoom').prop('checked', true);
+                            ikutZoomVal = '1';
+                        }
+
+                        // Dynamically update Zoom button colors
+                        if (status === 'done' || ikutZoomVal == '1') {
+                            $btnZoom.css({
+                                'background': '#3CDE1D',
+                                'color': '#ffffff',
+                                'border': 'none'
+                            });
+                        } else if (status === 'scheduled') {
+                            $btnZoom.css({
+                                'background': '#25799E',
+                                'color': '#ffffff',
+                                'border': 'none'
+                            });
+                        } else if (status === 'cancelled') {
+                            $btnZoom.css({
+                                'background': '#E61717',
+                                'color': '#ffffff',
+                                'border': 'none'
+                            });
+                        } else {
+                            $btnZoom.css({
+                                'background': '#ffffff',
+                                'color': '#475569',
+                                'border': '1px solid #cbd5e1'
+                            });
                         }
                     }
 
@@ -3427,6 +3512,53 @@
                     let $btnZoom = $(`.btn-zoom-bant[data-id="${id}"]`);
                     if ($btnZoom.length) {
                         $btnZoom.attr('data-' + field.replace('_', '-'), value);
+
+                        if (field === 'ikut_zoom') {
+                            document.getElementById('zoomBantIkutZoom').checked = (value == 1);
+                            if (document.getElementById('zoomBantIkutZoomRight')) {
+                                document.getElementById('zoomBantIkutZoomRight').checked = (value == 1);
+                            }
+                            
+                            // Synchronize schedule status attribute and button color
+                            let currentStatus = $btnZoom.attr('data-schedule-status') || '';
+                            if (value == 1) {
+                                $btnZoom.attr('data-schedule-status', 'done');
+                                $btnZoom.css({
+                                    'background': '#3CDE1D',
+                                    'color': '#ffffff',
+                                    'border': 'none'
+                                });
+                            } else {
+                                if (currentStatus === 'done') {
+                                    $btnZoom.attr('data-schedule-status', 'scheduled');
+                                    currentStatus = 'scheduled';
+                                }
+                                if (currentStatus === 'scheduled') {
+                                    $btnZoom.css({
+                                        'background': '#25799E',
+                                        'color': '#ffffff',
+                                        'border': 'none'
+                                    });
+                                } else if (currentStatus === 'cancelled') {
+                                    $btnZoom.css({
+                                        'background': '#E61717',
+                                        'color': '#ffffff',
+                                        'border': 'none'
+                                    });
+                                } else {
+                                    $btnZoom.css({
+                                        'background': '#ffffff',
+                                        'color': '#475569',
+                                        'border': '1px solid #cbd5e1'
+                                    });
+                                }
+                            }
+                            
+                            // Refetch calendar events to display green instantly
+                            if (window.modalCalendar) {
+                                window.modalCalendar.refetchEvents();
+                            }
+                        }
                     }
 
                     let $btnDetail = $(`.btn-detail-peserta[data-id="${id}"]`);
@@ -3435,6 +3567,39 @@
                     }
                 }
             });
+        }
+        function convertToDateTimeLocal(dateStr) {
+            if (!dateStr) return '';
+            // Match d/m/Y H:i format (e.g. 02/06/2026 11:25)
+            let parts = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
+            if (parts) {
+                let day = parts[1];
+                let month = parts[2];
+                let year = parts[3];
+                let hours = parts[4];
+                let minutes = parts[5];
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+            // If it's already YYYY-MM-DD HH:mm:ss format
+            let dbParts = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+            if (dbParts) {
+                return `${dbParts[1]}-${dbParts[2]}-${dbParts[3]}T${dbParts[4]}:${dbParts[5]}`;
+            }
+            return '';
+        }
+
+        function convertToDisplayFormat(dateTimeLocalStr) {
+            if (!dateTimeLocalStr) return '';
+            let parts = dateTimeLocalStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+            if (parts) {
+                let year = parts[1];
+                let month = parts[2];
+                let day = parts[3];
+                let hours = parts[4];
+                let minutes = parts[5];
+                return `${day}/${month}/${year} ${hours}:${minutes}`;
+            }
+            return '';
         }
 
         function getCurrentDateTimeString() {
@@ -3451,12 +3616,14 @@
         $(document).on('input change', '.fu-at-input', function() {
             let id = $(this).attr('id');
             let underId = id + '_under';
-            $('#' + underId).val($(this).val());
+            let localVal = convertToDateTimeLocal($(this).val());
+            $('#' + underId).val(localVal);
         });
-        $(document).on('input change', '.fu-at-display-input', function() {
+        $(document).on('change', '.fu-at-display-input', function() {
             let id = $(this).attr('id');
             let parentId = id.replace('_under', '');
-            $('#' + parentId).val($(this).val());
+            let displayVal = convertToDisplayFormat($(this).val());
+            $('#' + parentId).val(displayVal);
         });
 
         $(document).on('click', '.btn-riwayat', function() {
@@ -3487,7 +3654,7 @@
                 $('#fu' + i + '_wa').prop('checked', wa);
                 $('#fu' + i + '_telp').prop('checked', telp);
                 $('#fu' + i + '_at').val(dateVal ? dateVal : '');
-                $('#fu' + i + '_at_under').val(dateVal ? dateVal : '');
+                $('#fu' + i + '_at_under').val(convertToDateTimeLocal(dateVal));
 
                 // Show card if it has data or if it's the first card
                 if (hasil !== '' || tindak !== '' || wa || telp || i === 1) {
@@ -3506,10 +3673,9 @@
             if ($nextCard.length) {
                 $nextCard.removeClass('d-none');
                 let nextIdx = $nextCard.data('index');
-                // Automatically pre-fill the date/time with the current timestamp when added
-                let currentAt = getCurrentDateTimeString();
-                $('#fu' + nextIdx + '_at').val(currentAt);
-                $('#fu' + nextIdx + '_at_under').val(currentAt);
+                // Do NOT automatically pre-fill the date/time (leave it empty for user to choose)
+                $('#fu' + nextIdx + '_at').val('');
+                $('#fu' + nextIdx + '_at_under').val('');
             } else {
                 Swal.fire({
                     icon: 'info',
@@ -3522,21 +3688,14 @@
             let id = $('#riwayat_data_id').val();
             let salesplanId = $('#riwayat_salesplan_id').val();
             let updates = {};
-            let currentAt = getCurrentDateTimeString();
             
             for (let i = 1; i <= 10; i++) {
                 let hasil = $('#fu' + i + '_hasil').val();
                 let tindak = $('#fu' + i + '_tindak_lanjut').val();
                 let wa = $('#fu' + i + '_wa').is(':checked');
                 let telp = $('#fu' + i + '_telp').is(':checked');
-                let atVal = $('#fu' + i + '_at').val();
-
-                // If the follow-up card is visible or has any filled content, and date/time is empty, default it
-                if ((hasil || tindak || wa || telp || !$('#fu_card_' + i).hasClass('d-none')) && !atVal) {
-                    atVal = currentAt;
-                    $('#fu' + i + '_at').val(atVal);
-                    $('#fu' + i + '_at_under').val(atVal);
-                }
+                let atLocalVal = $('#fu' + i + '_at_under').val();
+                let atVal = convertToDisplayFormat(atLocalVal);
 
                 updates['fu' + i + '_hasil'] = hasil;
                 updates['fu' + i + '_tindak_lanjut'] = tindak;
@@ -3588,7 +3747,29 @@
                         // Update the date attribute with the new timestamp from server
                         if (res.timestamps && res.timestamps['fu' + i + '_at']) {
                             $triggerBtn.attr('data-fu' + i + '-at', res.timestamps['fu' + i + '_at']);
+                        } else {
+                            $triggerBtn.attr('data-fu' + i + '-at', '');
                         }
+                    }
+
+                    // Dynamically calculate and update the badge notification
+                    let newFuCount = 0;
+                    for (let i = 1; i <= 10; i++) {
+                        let currentAtVal = $triggerBtn.attr('data-fu' + i + '-at');
+                        if (currentAtVal && currentAtVal !== '') {
+                            newFuCount++;
+                        }
+                    }
+
+                    let $badge = $triggerBtn.find('.fu-badge');
+                    if (newFuCount > 0) {
+                        if ($badge.length) {
+                            $badge.text(newFuCount).show();
+                        } else {
+                            $triggerBtn.append('<span class="badge badge-danger position-absolute fu-badge" style="top: -5px; right: -5px; font-size: 0.6rem; border-radius: 50%; padding: 2px 5px;">' + newFuCount + '</span>');
+                        }
+                    } else {
+                        $badge.remove();
                     }
                 },
                 error: function(xhr) {
@@ -4880,6 +5061,11 @@
                         </div>
                     </div>
 
+                    <button type="button" id="btnMarkZoomDone"
+                        class="btn btn-success btn-block border-0 shadow-sm py-2 font-weight-bold mb-2 text-white"
+                        style="border-radius: 10px; font-size: 0.85rem; background: #3CDE1D; display: none;">
+                        <i class="fas fa-check-circle mr-1"></i> Selesai Zoom
+                    </button>
                     <button type="button" id="btnRescheduleZoom"
                         class="btn btn-primary btn-block border-0 shadow-sm py-2 font-weight-bold mb-2 btn-zoom-bant"
                         style="border-radius: 10px; font-size: 0.85rem; background: linear-gradient(45deg, #1e3c72, #2a5298); display: none;">
@@ -5080,7 +5266,7 @@
                             </div>
 
                             {{-- Time --}}
-                            <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px;">
+                            <div class="card border-0 shadow-sm mb-2" style="border-radius: 12px;">
                                 <div class="card-body p-3 d-flex align-items-center justify-content-between">
                                     <div class="d-flex align-items-center" style="gap: 12px;">
                                         <div class="d-flex align-items-center justify-content-center bg-warning text-white rounded-circle shadow-sm"
@@ -5099,6 +5285,30 @@
                                         <input type="checkbox" class="custom-control-input" id="zoomBantTime"
                                             onchange="saveZoomBantField('bant_time', this.checked ? 1 : 0)">
                                         <label class="custom-control-label" for="zoomBantTime"
+                                            style="cursor: pointer;"></label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Selesai Zoom --}}
+                            <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px;">
+                                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center" style="gap: 12px;">
+                                        <div class="d-flex align-items-center justify-content-center bg-success text-white rounded-circle shadow-sm"
+                                            style="width: 36px; height: 36px; flex-shrink: 0; background: #3CDE1D !important;">
+                                            <i class="fas fa-check-double" style="font-size: 0.95rem;"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-weight-bold text-dark d-block"
+                                                style="font-size: 0.9rem; line-height: 1.2;">Selesai Zoom</span>
+                                            <small class="text-muted d-block"
+                                                style="font-size: 0.72rem; line-height: 1.2;">Menandakan peserta sudah selesai zoom</small>
+                                        </div>
+                                    </div>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="zoomBantIkutZoomRight"
+                                            onchange="saveZoomBantField('ikut_zoom', this.checked ? 1 : 0)">
+                                        <label class="custom-control-label" for="zoomBantIkutZoomRight"
                                             style="cursor: pointer;"></label>
                                     </div>
                                 </div>
@@ -6053,8 +6263,8 @@
                     newElem.style.gap = '8px';
                     newElem.innerHTML = `
                 <button type="button"
-                    class="btn btn-zoom-bant p-0 d-flex align-items-center justify-content-center border-0 shadow-sm text-white"
-                    style="width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(45deg, #2D8CFF, #1570E0); transition: all 0.2s; flex-shrink:0;"
+                    class="btn btn-zoom-bant p-0 d-flex align-items-center justify-content-center shadow-sm"
+                    style="width: 24px; height: 24px; border-radius: 6px; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; transition: all 0.2s; flex-shrink:0;"
                     data-id="${dataId}"
                     data-nama="${namaPeserta}"
                     data-kelas-nama="${namaKls}"
@@ -6307,6 +6517,7 @@
 
                         // [USER_REQUEST] Populate and show Reschedule Button with proper data properties
                         let $resBtn = $('#btnRescheduleZoom');
+                        let $doneBtn = $('#btnMarkZoomDone');
                         if (props.data_id) {
                             $resBtn.data('id', props.data_id);
                             $resBtn.data('nama', props.participant || '');
@@ -6324,8 +6535,15 @@
                             $resBtn.attr('data-bant-authority', props.bant_authority || 0);
                             $resBtn.attr('data-bant-time', props.bant_time || 0);
                             $resBtn.show();
+
+                            if ((props.status || '').toLowerCase() === 'done') {
+                                $doneBtn.hide();
+                            } else {
+                                $doneBtn.show();
+                            }
                         } else {
                             $resBtn.hide();
+                            $doneBtn.hide();
                         }
 
                         let status = (props.status || 'Scheduled').toLowerCase();
@@ -6361,6 +6579,52 @@
 
         $(document).on('click', '#btnRescheduleZoom', function() {
             $('#modalModalEventDetail').modal('hide');
+        });
+
+        $(document).on('click', '#btnMarkZoomDone', function() {
+            let dataId = $('#btnRescheduleZoom').data('id');
+            if (!dataId) return;
+
+            $.post('{{ route('admin.database.update-inline') }}', {
+                _token: '{{ csrf_token() }}',
+                id: dataId,
+                field: 'ikut_zoom',
+                value: 1
+            }).done(function(r) {
+                if (r.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Selesai Zoom',
+                        text: 'Peserta telah ditandai Selesai Zoom.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    $('#modalModalEventDetail').modal('hide');
+
+                    // Refetch Calendar
+                    if (window.modalCalendar) {
+                        window.modalCalendar.refetchEvents();
+                    }
+
+                    // Update Trigger Button on Main Table
+                    let $btnZoom = $(`.btn-zoom-bant[data-id="${dataId}"]`);
+                    if ($btnZoom.length) {
+                        $btnZoom.attr('data-ikut-zoom', '1');
+                        $btnZoom.attr('data-schedule-status', 'done');
+                        $btnZoom.css({
+                            'background': '#3CDE1D',
+                            'color': '#ffffff',
+                            'border': 'none'
+                        });
+                        
+                        let $tr = $btnZoom.closest('tr');
+                        if ($tr.length) {
+                            $tr.find('.checkbox-ikut-zoom').prop('checked', true);
+                        }
+                    }
+                }
+            });
         });
     </script>
 @endsection

@@ -610,6 +610,43 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         }
 
 
+        // Calculate Zoom Status Counts
+        $zoomCounts = \App\Models\ZoomSchedule::whereIn('data_id', $dataFilteredIds)
+            ->select('status', \DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+        $countZoomScheduled = $zoomCounts['scheduled'] ?? 0;
+        $countZoomDone = $zoomCounts['done'] ?? 0;
+
+        $scheduledDataIds = \App\Models\ZoomSchedule::whereIn('data_id', $dataFilteredIds)
+            ->where('status', 'scheduled')
+            ->pluck('data_id')
+            ->toArray();
+
+        $doneDataIds = \App\Models\ZoomSchedule::whereIn('data_id', $dataFilteredIds)
+            ->where('status', 'done')
+            ->pluck('data_id')
+            ->toArray();
+
+        $ikutZoomDataIds = \App\Models\Data::whereIn('id', $dataFilteredIds)
+            ->where('ikut_zoom', 1)
+            ->pluck('id')
+            ->toArray();
+
+        $scheduledOrDoneIds = array_unique(array_merge($scheduledDataIds, $doneDataIds, $ikutZoomDataIds));
+        
+        $countZoomUnscheduled = count($dataFilteredIds) - count(array_intersect($dataFilteredIds->toArray(), $scheduledOrDoneIds));
+
+        // If no ikut_kelas filter and no active class filter, force legend counts to 0 for UI clarity as requested
+        if (empty($ikutKelasFilter) && $ikutKelasFilter !== '0' && empty($activeKelasId) && (empty($prospekKelasId) || $prospekKelasId === 'all')) {
+            $countZoomScheduled = 0;
+            $countZoomDone = 0;
+            $countZoomUnscheduled = 0;
+        }
+
+
+
         // Fetch lists for filters
         $provinsiList = \App\Models\Data::select('provinsi_nama')
             ->whereNotNull('provinsi_nama')
@@ -660,6 +697,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                     'prospekCounts' => $prospekCounts,
                     'totalProspek' => $totalProspek,
                     'jumlahPotensi' => $jumlahPotensi,
+                    'countZoomScheduled' => $countZoomScheduled,
+                    'countZoomDone' => $countZoomDone,
+                    'countZoomUnscheduled' => $countZoomUnscheduled,
                 ]
             ]);
         }
@@ -684,6 +724,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             'prospekCounts' => $prospekCounts,
             'totalProspek' => $totalProspek,
             'jumlahPotensi' => $jumlahPotensi,
+            'countZoomScheduled' => $countZoomScheduled,
+            'countZoomDone' => $countZoomDone,
+            'countZoomUnscheduled' => $countZoomUnscheduled,
         ]);
 
     }
@@ -747,29 +790,31 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                         if (isset($updates[$waField]) && (int)$updates[$waField] !== (int)$targetModel->$waField) $hasChanged = true;
                         if (isset($updates[$telpField]) && (int)$updates[$telpField] !== (int)$targetModel->$telpField) $hasChanged = true;
 
-                        // If manual timestamp is provided, parse it
-                        $manualDate = null;
-                        if (isset($updates[$atField]) && !empty($updates[$atField])) {
-                            try {
-                                $manualDate = \Carbon\Carbon::createFromFormat('d/m/Y H:i', $updates[$atField]);
-                            } catch (\Exception $e) {}
-                        }
+                        // Handle follow-up timestamp (explicit user choice, no automatic defaults)
+                        if (array_key_exists($atField, $updates)) {
+                            if (empty($updates[$atField])) {
+                                $updates[$atField] = null;
+                            } else {
+                                $manualDate = null;
+                                try {
+                                    if (strpos($updates[$atField], 'T') !== false) {
+                                        $manualDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $updates[$atField]);
+                                    } else {
+                                        $manualDate = \Carbon\Carbon::createFromFormat('d/m/Y H:i', $updates[$atField]);
+                                    }
+                                } catch (\Exception $e) {
+                                    try {
+                                        $manualDate = \Carbon\Carbon::parse($updates[$atField]);
+                                    } catch (\Exception $ex) {}
+                                }
 
-                        // Check if it's actually changed from current database value (ignore seconds)
-                        $currentDate = $targetModel->$atField ? \Carbon\Carbon::parse($targetModel->$atField) : null;
-                        $isDateManuallyChanged = false;
-                        if ($manualDate) {
-                            if (!$currentDate || $manualDate->format('d/m/Y H:i') !== $currentDate->format('d/m/Y H:i')) {
-                                $isDateManuallyChanged = true;
+                                if ($manualDate) {
+                                    $updates[$atField] = $manualDate;
+                                } else {
+                                    unset($updates[$atField]);
+                                }
                             }
-                        }
-
-                        if ($isDateManuallyChanged) {
-                            $updates[$atField] = $manualDate;
-                        } elseif ($hasChanged) {
-                            $updates[$atField] = now();
                         } else {
-                            // If neither manual change nor content change, we shouldn't touch the date
                             unset($updates[$atField]);
                         }
                     }
@@ -821,6 +866,26 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                         
                         // Direct assignment and save to bypass mass-assignment issues if any
                         $data->$field = $request->value;
+
+                        if ($field === 'ikut_zoom') {
+                            if ($request->value == 1) {
+                                // Find any schedule for this participant and update it to 'done'
+                                $schedule = \App\Models\ZoomSchedule::where('data_id', $data->id)->first();
+                                if ($schedule) {
+                                    $schedule->status = 'done';
+                                    $schedule->save();
+                                }
+                            } else {
+                                // If they set ikut_zoom = 0, find any 'done' schedule and change it back to 'scheduled'
+                                $schedule = \App\Models\ZoomSchedule::where('data_id', $data->id)
+                                    ->where('status', 'done')
+                                    ->first();
+                                if ($schedule) {
+                                    $schedule->status = 'scheduled';
+                                    $schedule->save();
+                                }
+                            }
+                        }
 
                         // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
                         $authUser = Auth::user();
@@ -1501,15 +1566,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $subFolder = 'uploads/bukti_transfer';
             
-            // Robust path detection for various server environments (Shared Hosting, XAMPP, etc.)
-            $basePublic = public_path();
-            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
-                $basePublic = $_SERVER['DOCUMENT_ROOT'];
-            } elseif (is_dir(base_path('public_html'))) {
-                $basePublic = base_path('public_html');
-            }
-            
-            $destPath = rtrim($basePublic, '/') . '/' . $subFolder;
+            $destPath = public_path($subFolder);
             if (!file_exists($destPath)) {
                 mkdir($destPath, 0777, true);
             }

@@ -102,11 +102,31 @@
                         $statusKeySP = strtolower($sp->status);
                         $cfg = $statusConfig[$statusKeySP] ?? $statusConfig['cold'];
                         $schedule = \App\Models\ZoomSchedule::where('salesplan_id', $sp->id)->first();
+                        
+                        // Zoom status color configuration
+                        $zoomStatus = $schedule ? strtolower($schedule->status) : '';
+                        if ($zoomStatus === 'done' || $item->ikut_zoom == 1) {
+                            $zoomColorBg = '#3CDE1D'; // Hijau
+                            $zoomColorText = '#ffffff';
+                            $zoomBorder = 'none';
+                        } elseif ($zoomStatus === 'scheduled') {
+                            $zoomColorBg = '#25799E'; // Biru
+                            $zoomColorText = '#ffffff';
+                            $zoomBorder = 'none';
+                        } elseif ($zoomStatus === 'cancelled') {
+                            $zoomColorBg = '#E61717'; // Merah
+                            $zoomColorText = '#ffffff';
+                            $zoomBorder = 'none';
+                        } else {
+                            $zoomColorBg = '#ffffff'; // Putih
+                            $zoomColorText = '#475569';
+                            $zoomBorder = '1px solid #cbd5e1';
+                        }
                     @endphp
                     <div class="d-flex align-items-center justify-content-center mb-1" style="gap: 8px;">
                         <!-- Dedicated Zoom button for this prospect -->
-                        <button type="button" class="btn btn-zoom-bant p-0 d-flex align-items-center justify-content-center border-0 shadow-sm text-white"
-                                style="width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(45deg, #2D8CFF, #1570E0); transition: all 0.2s;"
+                        <button type="button" class="btn btn-zoom-bant p-0 d-flex align-items-center justify-content-center shadow-sm"
+                                style="width: 24px; height: 24px; border-radius: 6px; background: {{ $zoomColorBg }}; color: {{ $zoomColorText }}; border: {{ $zoomBorder }}; transition: all 0.2s;"
                                 data-id="{{ $item->id }}" 
                                 data-nama="{{ $item->nama }}"
                                 data-kelas-nama="{{ $namaKls }}"
@@ -126,7 +146,16 @@
                         </button>
                         
                         <!-- Follow Up button for this specific class -->
-                        <button type="button" class="btn btn-primary btn-sm btn-riwayat shadow-sm border-0 px-2"
+                        @php
+                            $fuCount = 0;
+                            for ($j = 1; $j <= 10; $j++) {
+                                $atProp = "fu{$j}_at";
+                                if (!empty($sp->$atProp)) {
+                                    $fuCount++;
+                                }
+                            }
+                        @endphp
+                        <button type="button" class="btn btn-primary btn-sm btn-riwayat shadow-sm border-0 px-2 position-relative"
                                 style="height: 24px; line-height: 1; font-size: 0.65rem; font-weight: 700; background: linear-gradient(45deg, #4e73df, #224abe); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;"
                                 data-kelas-nama="{{ $namaKls }}"
                                 data-salesplan-id="{{ $sp->id }}"
@@ -172,6 +201,9 @@
                                 data-fu10-at="{{ $sp->fu10_at ? ($sp->fu10_at instanceof \Carbon\Carbon ? $sp->fu10_at->format('d/m/Y H:i') : \Carbon\Carbon::parse($sp->fu10_at)->format('d/m/Y H:i')) : '' }}"
                                 data-fu10-hasil="{{ $sp->fu10_hasil }}" data-fu10-tindak-lanjut="{{ $sp->fu10_tindak_lanjut }}">
                             Follow Up
+                            @if($fuCount > 0)
+                                <span class="badge badge-danger position-absolute fu-badge" style="top: -5px; right: -5px; font-size: 0.6rem; border-radius: 50%; padding: 2px 5px;">{{ $fuCount }}</span>
+                            @endif
                         </button>
                         <span class="badge shadow-sm" style="background:{{ $cfg['bg'] }};color:{{ $cfg['text'] }};font-size:0.75rem;border-radius:8px;padding:6px 12px;border:1px solid #ccc; text-wrap: normal; word-break: break-word; min-width: 110px;">
                             {{ $shortKls }}

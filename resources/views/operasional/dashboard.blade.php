@@ -1319,22 +1319,40 @@
                                                     <div class="d-flex flex-wrap justify-content-center align-items-center"
                                                         style="gap: 4px;">
                                                         @foreach ($fotos as $foto)
-                                                            <div class="position-relative d-inline-block bukti-foto-item"
-                                                                data-bukti-id="{{ $foto->id }}">
-                                                                <img src="{{ asset($foto->file_path) }}" alt="Bukti"
-                                                                    class="img-thumbnail shadow-sm preview-image"
-                                                                    style="width: 44px; height: 44px; object-fit: cover; cursor: pointer;"
-                                                                    onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $item->nama_barang }}')"
-                                                                    title="Klik untuk memperbesar">
-                                                                <button type="button"
-                                                                    class="btn-hapus-bukti-foto position-absolute"
-                                                                    style="top:-5px; right:-5px; width:16px; height:16px; border-radius:50%; background:#e74a3b; border:none; color:#fff; font-size:9px; line-height:1; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center;"
-                                                                    data-id="{{ $item->id }}"
-                                                                    data-bukti-id="{{ $foto->id }}"
-                                                                    title="Hapus foto ini">
-                                                                    <i class="fas fa-times"></i>
-                                                                </button>
-                                                            </div>
+                                                            @php
+                                                                $isPdf = strtolower(pathinfo($foto->file_path, PATHINFO_EXTENSION)) === 'pdf';
+                                                            @endphp
+                                                            @if ($isPdf)
+                                                                <a href="{{ asset($foto->file_path) }}" target="_blank" class="text-danger" title="Lihat PDF" style="display:inline-block; position:relative; width:44px; height:44px; text-align:center; vertical-align:middle; line-height:44px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
+                                                                    <i class="far fa-file-pdf fa-2x" style="vertical-align:middle;"></i>
+                                                                    <button type="button"
+                                                                        class="btn-hapus-bukti-foto position-absolute"
+                                                                        style="top:-5px; right:-5px; width:16px; height:16px; border-radius:50%; background:#e74a3b; border:none; color:#fff; font-size:9px; line-height:1; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center;"
+                                                                        data-id="{{ $item->id }}"
+                                                                        data-bukti-id="{{ $foto->id }}"
+                                                                        title="Hapus foto ini"
+                                                                        onclick="event.stopPropagation();">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                </a>
+                                                            @else
+                                                                <div class="position-relative d-inline-block bukti-foto-item"
+                                                                    data-bukti-id="{{ $foto->id }}">
+                                                                    <img src="{{ asset($foto->file_path) }}" alt="Bukti"
+                                                                        class="img-thumbnail shadow-sm preview-image"
+                                                                        style="width: 44px; height: 44px; object-fit: cover; cursor: pointer;"
+                                                                        onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $item->nama_barang }}')"
+                                                                        title="Klik untuk memperbesar">
+                                                                    <button type="button"
+                                                                        class="btn-hapus-bukti-foto position-absolute"
+                                                                        style="top:-5px; right:-5px; width:16px; height:16px; border-radius:50%; background:#e74a3b; border:none; color:#fff; font-size:9px; line-height:1; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center;"
+                                                                        data-id="{{ $item->id }}"
+                                                                        data-bukti-id="{{ $foto->id }}"
+                                                                        title="Hapus foto ini">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                            @endif
                                                         @endforeach
                                                         {{-- Tombol + untuk tambah foto, hanya jika belum 2 --}}
                                                         @if ($fotos->count() < 2)
@@ -2179,7 +2197,7 @@
 
             // Input file tersembunyi untuk tambah foto
             $('body').append(
-                '<input type="file" id="inputTambahBuktiFoto" accept="image/*" style="display:none;">');
+                '<input type="file" id="inputTambahBuktiFoto" accept="image/*,.pdf" style="display:none;">');
 
             var _currentBuktiId = null;
             var _currentBuktiNama = null;
@@ -2252,7 +2270,16 @@
                         }
 
                         // Buat elemen foto baru
-                        const newFoto = `
+                        const isPdf = res.file_url.toLowerCase().endsWith('.pdf');
+                        const newFoto = isPdf ? `
+                            <a href="${res.file_url}" target="_blank" class="text-danger bukti-foto-item" data-bukti-id="${res.bukti_id}" style="display:inline-block; position:relative; width:44px; height:44px; text-align:center; vertical-align:middle; line-height:44px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
+                                <i class="far fa-file-pdf fa-2x" style="vertical-align:middle;"></i>
+                                <button type="button" class="btn-hapus-bukti-foto position-absolute"
+                                    style="top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:#e74a3b;border:none;color:#fff;font-size:9px;line-height:1;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;"
+                                    data-id="${_currentBuktiId}" data-bukti-id="${res.bukti_id}" title="Hapus foto ini" onclick="event.stopPropagation();">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </a>` : `
                             <div class="position-relative d-inline-block bukti-foto-item" data-bukti-id="${res.bukti_id}">
                                 <img src="${res.file_url}" alt="Bukti"
                                     class="img-thumbnail shadow-sm preview-image"
@@ -2640,12 +2667,12 @@
                 } else {
                     $('#modalUploadBukti .modal-title').html(
                         '<i class="fas fa-upload mr-2"></i>Upload Bukti Transfer');
-                    $('#modalUploadBukti label.font-weight-bold').text('Pilih File Bukti (Gambar)');
-                    $('#inputUploadBukti').attr('accept', 'image/*');
+                    $('#modalUploadBukti label.font-weight-bold').text('Pilih File Bukti (Gambar / PDF)');
+                    $('#inputUploadBukti').attr('accept', 'image/*,.pdf');
                     $('#modalUploadBukti .small.text-muted').html(
-                        '<i class="fas fa-info-circle mr-1"></i> Format: JPG, PNG, JPEG. Maks: 2MB.');
+                        '<i class="fas fa-info-circle mr-1"></i> Format: JPG, PNG, JPEG, PDF. Maks: 10MB.');
                     $('#inputUploadBukti').next('.custom-file-label').removeClass("selected").html(
-                        'Pilih file gambar...');
+                        'Pilih file gambar atau PDF...');
                 }
 
                 $('#inputUploadBukti').val('');
@@ -2726,21 +2753,38 @@
                                 </div>
                             `;
                             } else {
-                                newCellHtml = `
-                                <div class="position-relative d-inline-block">
-                                    <img src="${res.bukti_transfer}" alt="Bukti Transfer"
-                                        class="img-thumbnail shadow-sm preview-image"
-                                        style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;"
-                                        onclick="previewImage('${res.bukti_transfer}', 'Bukti Transfer - ${name}')"
-                                        title="Klik untuk memperbesar">
-                                </div>
-                                <div class="mt-1">
-                                    <a href="javascript:void(0)" class="small text-primary font-weight-bold"
-                                        onclick="openUploadModal(${id}, '${name}', '${type}')">
-                                        Ganti
-                                    </a>
-                                </div>
-                            `;
+                                const isPdf = res.bukti_transfer.toLowerCase().endsWith('.pdf');
+                                if (isPdf) {
+                                    newCellHtml = `
+                                    <div class="d-flex flex-column align-items-center">
+                                        <a href="${res.bukti_transfer}" target="_blank" class="text-danger" title="Lihat PDF" style="display:inline-block; position:relative; width:44px; height:44px; text-align:center; vertical-align:middle; line-height:44px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
+                                            <i class="far fa-file-pdf fa-2x" style="vertical-align:middle;"></i>
+                                        </a>
+                                        <div class="mt-1">
+                                            <a href="javascript:void(0)" class="small text-primary font-weight-bold"
+                                                onclick="openUploadModal(${id}, '${name}', '${type}')">
+                                                Ganti
+                                            </a>
+                                        </div>
+                                    </div>
+                                    `;
+                                } else {
+                                    newCellHtml = `
+                                    <div class="position-relative d-inline-block">
+                                        <img src="${res.bukti_transfer}" alt="Bukti Transfer"
+                                            class="img-thumbnail shadow-sm preview-image"
+                                            style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;"
+                                            onclick="previewImage('${res.bukti_transfer}', 'Bukti Transfer - ${name}')"
+                                            title="Klik untuk memperbesar">
+                                    </div>
+                                    <div class="mt-1">
+                                        <a href="javascript:void(0)" class="small text-primary font-weight-bold"
+                                            onclick="openUploadModal(${id}, '${name}', '${type}')">
+                                            Ganti
+                                        </a>
+                                    </div>
+                                    `;
+                                }
                             }
                             tr.find('.bukti-transfer-cell').html(newCellHtml);
 

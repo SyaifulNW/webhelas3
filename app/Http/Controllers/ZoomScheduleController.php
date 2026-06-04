@@ -72,19 +72,21 @@ class ZoomScheduleController extends Controller
 
             // Auto-sync "ikut_zoom" on the participant record
             $isDone = ($request->input('status') === 'done');
-            if ($isDone) {
-                if (!empty($salesplanId)) {
-                    $sp = SalesPlan::find($salesplanId);
-                    if ($sp) {
-                        $sp->ikut_zoom = 1;
-                        $sp->save();
+            $zoomVal = $isDone ? 1 : 0;
+            if (!empty($salesplanId)) {
+                $sp = SalesPlan::find($salesplanId);
+                if ($sp) {
+                    $d = Data::find($sp->data_id);
+                    if ($d) {
+                        $d->ikut_zoom = $zoomVal;
+                        $d->save();
                     }
-                } elseif (!empty($dataId)) {
-                    $data = Data::find($dataId);
-                    if ($data) {
-                        $data->ikut_zoom = 1;
-                        $data->save();
-                    }
+                }
+            } elseif (!empty($dataId)) {
+                $data = Data::find($dataId);
+                if ($data) {
+                    $data->ikut_zoom = $zoomVal;
+                    $data->save();
                 }
             }
 

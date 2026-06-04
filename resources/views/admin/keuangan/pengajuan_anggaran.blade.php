@@ -391,64 +391,82 @@
                                                 : collect();
                                         @endphp
                                         @if ($multiFotos->isNotEmpty())
-                                            <div class="d-flex flex-wrap justify-content-center"
-                                                style="gap:4px; max-width:180px; margin:0 auto;">
-                                                @foreach ($multiFotos as $foto)
-                                                    <div class="d-inline-block text-center" style="max-width:60px;">
-                                                        <div class="position-relative d-inline-block">
-                                                            <img src="{{ asset($foto->file_path) }}" alt="Bukti"
-                                                                class="img-thumbnail shadow-sm preview-image"
-                                                                style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;"
-                                                                onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')"
-                                                                title="Klik untuk memperbesar">
-                                                            <div class="preview-overlay"
-                                                                onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')">
-                                                                <i class="fas fa-search-plus text-white"></i>
-                                                            </div>
-                                                        </div>
-                                                        @if (!$isAdminMonitor)
-                                                            <div style="margin-top:2px;">
-                                                                <a href="javascript:void(0)"
-                                                                    class="small text-primary font-weight-bold"
-                                                                    style="font-size:0.65rem;"
-                                                                    onclick="openGantiFotoModal({{ $req->id }}, {{ $foto->id }}, '{{ $req->nama_pengajuan }}')">
-                                                                    <i class="fas fa-sync-alt"></i> Ganti
-                                                                </a>
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                            @if (!$isAdminMonitor)
-                                                <div class="mt-1">
-                                                    <a href="javascript:void(0)"
-                                                        class="small text-primary font-weight-bold"
-                                                        onclick="openUploadModal({{ $req->id }}, '{{ $req->nama_pengajuan }}')">
-                                                        <i class="fas fa-plus mr-1"></i>Tambah
-                                                    </a>
-                                                </div>
-                                            @endif
-                                        @elseif($req->bukti_transfer)
-                                            <div class="position-relative d-inline-block">
-                                                <img src="{{ asset($req->bukti_transfer) }}" alt="Bukti Transfer"
-                                                    class="img-thumbnail shadow-sm preview-image"
-                                                    style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;"
-                                                    onclick="previewImage('{{ asset($req->bukti_transfer) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')"
-                                                    title="Klik untuk memperbesar">
-                                                <div class="preview-overlay"
-                                                    onclick="previewImage('{{ asset($req->bukti_transfer) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')">
-                                                    <i class="fas fa-search-plus text-white"></i>
-                                                </div>
-                                            </div>
-                                            <div class="mt-1">
-                                                @if (!$isAdminMonitor)
-                                                    <a href="javascript:void(0)"
-                                                        class="small text-primary font-weight-bold"
-                                                        onclick="openUploadModal({{ $req->id }}, '{{ $req->nama_pengajuan }}')">
-                                                        <i class="fas fa-sync-alt mr-1"></i>Ganti
-                                                    </a>
-                                                @endif
-                                            </div>
+                                             <div class="d-flex flex-wrap justify-content-center"
+                                                 style="gap:4px; max-width:180px; margin:0 auto;">
+                                                 @foreach ($multiFotos as $foto)
+                                                     @php
+                                                         $isPdf = strtolower(pathinfo($foto->file_path, PATHINFO_EXTENSION)) === 'pdf';
+                                                     @endphp
+                                                     <div class="d-inline-block text-center" style="max-width:60px;">
+                                                         <div class="position-relative d-inline-block">
+                                                             @if ($isPdf)
+                                                                 <a href="{{ asset($foto->file_path) }}" target="_blank" class="text-danger" title="Lihat PDF" style="display:inline-block; border: 1px solid #ddd; border-radius: 4px; padding: 2px 4px; background: #fff; width: 50px; height: 50px; text-align: center; line-height: 44px; vertical-align: middle;">
+                                                                     <i class="far fa-file-pdf fa-2x" style="vertical-align: middle;"></i>
+                                                                 </a>
+                                                             @else
+                                                                 <img src="{{ asset($foto->file_path) }}" alt="Bukti"
+                                                                     class="img-thumbnail shadow-sm preview-image"
+                                                                     style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;"
+                                                                     onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')"
+                                                                     title="Klik untuk memperbesar">
+                                                                 <div class="preview-overlay"
+                                                                     onclick="previewImage('{{ asset($foto->file_path) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')">
+                                                                     <i class="fas fa-search-plus text-white"></i>
+                                                                 </div>
+                                                             @endif
+                                                         </div>
+                                                         @if (!$isAdminMonitor)
+                                                             <div style="margin-top:2px;">
+                                                                 <a href="javascript:void(0)"
+                                                                     class="small text-primary font-weight-bold"
+                                                                     style="font-size:0.65rem;"
+                                                                     onclick="openGantiFotoModal({{ $req->id }}, {{ $foto->id }}, '{{ $req->nama_pengajuan }}')">
+                                                                     <i class="fas fa-sync-alt"></i> Ganti
+                                                                 </a>
+                                                             </div>
+                                                         @endif
+                                                     </div>
+                                                 @endforeach
+                                             </div>
+                                             @if (!$isAdminMonitor)
+                                                 <div class="mt-1">
+                                                     <a href="javascript:void(0)"
+                                                         class="small text-primary font-weight-bold"
+                                                         onclick="openUploadModal({{ $req->id }}, '{{ $req->nama_pengajuan }}')">
+                                                         <i class="fas fa-plus mr-1"></i>Tambah
+                                                     </a>
+                                                 </div>
+                                             @endif
+                                         @elseif($req->bukti_transfer)
+                                             @php
+                                                 $isPdf = strtolower(pathinfo($req->bukti_transfer, PATHINFO_EXTENSION)) === 'pdf';
+                                             @endphp
+                                             <div class="position-relative d-inline-block">
+                                                 @if ($isPdf)
+                                                     <a href="{{ asset($req->bukti_transfer) }}" target="_blank" class="text-danger" title="Lihat PDF" style="display:inline-block; border: 1px solid #ddd; border-radius: 4px; padding: 2px 4px; background: #fff; width: 60px; height: 60px; text-align: center; line-height: 54px; vertical-align: middle;">
+                                                         <i class="far fa-file-pdf fa-2x" style="vertical-align: middle;"></i>
+                                                     </a>
+                                                 @else
+                                                     <img src="{{ asset($req->bukti_transfer) }}" alt="Bukti Transfer"
+                                                         class="img-thumbnail shadow-sm preview-image"
+                                                         style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;"
+                                                         onclick="previewImage('{{ asset($req->bukti_transfer) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')"
+                                                         title="Klik untuk memperbesar">
+                                                     <div class="preview-overlay"
+                                                         onclick="previewImage('{{ asset($req->bukti_transfer) }}', 'Bukti Transfer - {{ $req->nama_pengajuan }}')">
+                                                         <i class="fas fa-search-plus text-white"></i>
+                                                     </div>
+                                                 @endif
+                                             </div>
+                                             <div class="mt-1">
+                                                 @if (!$isAdminMonitor)
+                                                     <a href="javascript:void(0)"
+                                                         class="small text-primary font-weight-bold"
+                                                         onclick="openUploadModal({{ $req->id }}, '{{ $req->nama_pengajuan }}')">
+                                                         <i class="fas fa-sync-alt mr-1"></i>Ganti
+                                                     </a>
+                                                 @endif
+                                             </div>
                                         @else
                                             <div class="d-flex flex-column align-items-center">
                                                 @if (!$isAdminMonitor)
@@ -624,10 +642,10 @@
                             <label class="font-weight-bold">Upload Bukti Transfer</label>
                             <div class="custom-file">
                                 <input type="file" name="bukti_transfer" class="custom-file-input"
-                                    id="inputBuktiTransfer" accept="image/*">
-                                <label class="custom-file-label" for="inputBuktiTransfer">Pilih file gambar...</label>
+                                    id="inputBuktiTransfer" accept="image/*,.pdf">
+                                <label class="custom-file-label" for="inputBuktiTransfer">Pilih file gambar atau PDF...</label>
                             </div>
-                            <small class="text-muted">Maksimal 2MB (jpeg, png, jpg).</small>
+                            <small class="text-muted">Maksimal 10MB (jpeg, png, jpg, pdf).</small>
                         </div>
                     </div>
                     <div class="modal-footer bg-light">
@@ -659,14 +677,14 @@
                             <p class="mb-3 text-dark">Ganti foto untuk: <strong id="namaGantiFoto"
                                     class="text-warning"></strong></p>
                             <div class="form-group mb-0">
-                                <label class="font-weight-bold text-dark">Pilih Foto Pengganti</label>
+                                <label class="font-weight-bold text-dark">Pilih File Pengganti (Gambar / PDF)</label>
                                 <div class="custom-file">
                                     <input type="file" name="bukti_transfer" class="custom-file-input"
-                                        id="inputGantiFoto" accept="image/*" required>
-                                    <label class="custom-file-label" for="inputGantiFoto">Pilih file gambar...</label>
+                                        id="inputGantiFoto" accept="image/*,.pdf" required>
+                                    <label class="custom-file-label" for="inputGantiFoto">Pilih file gambar atau PDF...</label>
                                 </div>
                                 <div class="mt-2 small text-muted">
-                                    <i class="fas fa-info-circle mr-1"></i> Format: JPG, PNG, JPEG. Maks: 2MB.
+                                    <i class="fas fa-info-circle mr-1"></i> Format: JPG, PNG, JPEG, PDF. Maks: 10MB.
                                 </div>
                             </div>
                         </div>
@@ -695,14 +713,14 @@
                         <p class="mb-3 text-dark">Mengunggah bukti untuk: <strong id="namaPengajuanUpload"
                                 class="text-primary"></strong></p>
                         <div class="form-group mb-0">
-                            <label class="font-weight-bold text-dark">Pilih File Bukti (Gambar)</label>
+                            <label class="font-weight-bold text-dark">Pilih File Bukti (Gambar / PDF)</label>
                             <div class="custom-file">
                                 <input type="file" name="bukti_transfer" class="custom-file-input"
-                                    id="inputUploadBukti" accept="image/*" required>
-                                <label class="custom-file-label" for="inputUploadBukti">Pilih file gambar...</label>
+                                    id="inputUploadBukti" accept="image/*,.pdf" required>
+                                <label class="custom-file-label" for="inputUploadBukti">Pilih file gambar atau PDF...</label>
                             </div>
                             <div class="mt-2 small text-muted">
-                                <i class="fas fa-info-circle mr-1"></i> Format: JPG, PNG, JPEG. Maks: 2MB.
+                                <i class="fas fa-info-circle mr-1"></i> Format: JPG, PNG, JPEG, PDF. Maks: 10MB.
                             </div>
                         </div>
                     </div>
