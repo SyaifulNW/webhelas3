@@ -28,7 +28,11 @@ class User extends Authenticatable
         'photo',
         'bio',
         'created_by',
-        'is_active'
+        'is_active',
+        'divisi',
+        'tipe_kontrak',
+        'status_sdm',
+        'kategori',
     ];
 
     /**

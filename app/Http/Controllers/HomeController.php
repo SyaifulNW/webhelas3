@@ -950,7 +950,7 @@ public function operasionalDashboard(Request $request)
     $namaBulan = $carbonBulan->translatedFormat('F');
     $role = 'operasional';
 
-    $monitoringPerbaikan = \App\Models\MonitoringPerbaikan::orderBy('created_at', 'desc')->get();
+    $monitoringPerbaikan = \App\Models\MonitoringPerbaikan::with('inventaris')->orderBy('created_at', 'desc')->get();
     $pengadaanBarang = \App\Models\PengadaanBarang::with('buktiFotos')->orderBy('created_at', 'desc')->get();
     $inventarisKantor = \App\Models\InventarisKantor::orderBy('lokasi')->orderBy('created_at', 'desc')->get();
 

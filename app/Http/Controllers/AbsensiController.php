@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Absensi;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -14,26 +15,34 @@ class AbsensiController extends Controller
      */
     public function hr(Request $request)
     {
-        $selectedDate = $request->get('date', Carbon::today()->toDateString());
+        $selectedDate  = $request->get('date', Carbon::today()->toDateString());
         $selectedMonth = $request->get('month', Carbon::today()->format('Y-m'));
 
         // Fetch records for the selected day
         $attendances = Absensi::where('tanggal', $selectedDate)->orderBy('created_at', 'desc')->get();
 
         // Calculate statistics for the selected day
-        $totalAbsen = Absensi::where('tanggal', $selectedDate)->count();
-        $totalHadir = Absensi::where('tanggal', $selectedDate)->where('status_kehadiran', 'Hadir')->count();
+        $totalAbsen    = Absensi::where('tanggal', $selectedDate)->count();
+        $totalHadir    = Absensi::where('tanggal', $selectedDate)->where('status_kehadiran', 'Hadir')->count();
         $totalTerlambat = Absensi::where('tanggal', $selectedDate)->where('is_late', 'Terlambat')->count();
-        $totalIzin = Absensi::where('tanggal', $selectedDate)->whereIn('status_kehadiran', ['Sakit', 'Izin', 'Dinas'])->count();
+        $totalIzin     = Absensi::where('tanggal', $selectedDate)->whereIn('status_kehadiran', ['Sakit', 'Izin', 'Dinas'])->count();
 
-        $persenHadir = $totalAbsen > 0 ? round(($totalHadir / $totalAbsen) * 100) : 0;
+        $persenHadir    = $totalAbsen > 0 ? round(($totalHadir / $totalAbsen) * 100) : 0;
         $persenTerlambat = $totalAbsen > 0 ? round(($totalTerlambat / $totalAbsen) * 100) : 0;
-        $persenIzin = $totalAbsen > 0 ? round(($totalIzin / $totalAbsen) * 100) : 0;
+        $persenIzin     = $totalAbsen > 0 ? round(($totalIzin / $totalAbsen) * 100) : 0;
 
         // Fetch monthly recap data
         $monthlyAttendances = Absensi::where('tanggal', 'like', $selectedMonth . '%')
             ->orderBy('tanggal', 'desc')
             ->orderBy('employee_id', 'asc')
+            ->get();
+
+        // Fetch active employees from users table (is_active = 1, kategori = Pusat, exclude administrator)
+        $employees = User::where('is_active', 1)
+            ->where('kategori', 'Pusat')
+            ->where('role', '!=', 'administrator')
+            ->select('id', 'name', 'divisi', 'tipe_kontrak', 'status_sdm')
+            ->orderBy('name')
             ->get();
 
         return view('hr', compact(
@@ -47,12 +56,42 @@ class AbsensiController extends Controller
             'persenHadir',
             'persenTerlambat',
             'persenIzin',
-            'monthlyAttendances'
+            'monthlyAttendances',
+            'employees'
         ));
     }
 
     /**
-     * Store or update attendance via AJAX from Android view.
+     * Update employee SDM fields via AJAX.
+     */
+    public function updateEmployee(Request $request)
+    {
+        $request->validate([
+            'id'    => 'required|exists:users,id',
+            'field' => 'required|in:divisi,tipe_kontrak,status_sdm',
+            'value' => 'required|string|max:100',
+        ]);
+
+        User::where('id', $request->id)->update([
+            $request->field => $request->value,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Delete employee permanently via AJAX.
+     */
+    public function destroyEmployee($id)
+    {
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Store attendance via AJAX from Android view.
      */
     public function store(Request $request)
     {

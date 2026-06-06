@@ -633,6 +633,112 @@
             min-width: 120px;
         }
 
+        /* ===== FASILITAS CELL (SELECT2 + MANUAL INPUT TOGGLE) ===== */
+        .fasilitas-cell-wrapper {
+            min-width: 210px;
+        }
+
+        .fasilitas-manual-container .input-group,
+        .inventaris-select-container .input-group {
+            flex-wrap: nowrap !important;
+            display: flex !important;
+            width: 100% !important;
+        }
+
+        .fasilitas-manual-container .manual-input {
+            font-size: 0.82rem !important;
+            height: 31px !important;
+            border-top-left-radius: 4px !important;
+            border-bottom-left-radius: 4px !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+
+        .btn-switch-to-select,
+        .btn-switch-to-manual {
+            height: 31px !important;
+            padding: 0 10px !important;
+            font-size: 0.8rem !important;
+            white-space: nowrap !important;
+            border-top-right-radius: 4px !important;
+            border-bottom-right-radius: 4px !important;
+            border: 1px solid #ced4da !important;
+            background-color: #6c757d !important;
+            color: #fff !important;
+            transition: all 0.2s !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .btn-switch-to-select:hover,
+        .btn-switch-to-manual:hover {
+            background-color: #5a6268 !important;
+            color: #fff !important;
+        }
+
+        .inventaris-select-container .select2-container {
+            width: 100% !important;
+        }
+
+        .inventaris-select-container .select2-selection--single {
+            height: 31px !important;
+            border: 1px solid #ced4da !important;
+            border-top-left-radius: 4px !important;
+            border-bottom-left-radius: 4px !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            position: relative !important;
+        }
+
+        .inventaris-select-container .select2-selection__rendered {
+            line-height: 29px !important;
+            font-size: 0.82rem;
+            padding-left: 8px !important;
+            padding-right: 25px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: block !important;
+        }
+
+        .inventaris-select-container .select2-selection__clear {
+            position: absolute !important;
+            right: 25px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            font-weight: bold !important;
+            color: #e74a3b !important;
+            font-size: 1.1rem !important;
+            z-index: 10 !important;
+            cursor: pointer !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            line-height: 1 !important;
+        }
+
+        .inventaris-select-container .select2-selection__arrow {
+            height: 29px !important;
+        }
+
+        .btn-back-to-select {
+            height: 31px;
+            padding: 0 8px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .deadline-label {
+            font-size: 0.68rem;
+            color: #888;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-top: 4px;
+            margin-bottom: 1px;
+        }
+
         /* ===== TEXT DETAIL POPUP ===== */
         .text-truncate-cell {
             max-width: 200px;
@@ -787,13 +893,13 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active fw-bold premium-tab color-primary" id="inventaris-tab" data-toggle="tab"
                     data-target="#inventaris" type="button" role="tab">
-                    <i class="fas fa-building"></i> <span>Inventaris Kantor</span>
+                    <i class="fas fa-building"></i> <span>Monitoring Inventaris</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold premium-tab color-warning" id="kebutuhan-mbc-tab" data-toggle="tab"
                     data-target="#kebutuhan-mbc" type="button" role="tab">
-                    <i class="fas fa-chalkboard-teacher"></i> <span>Monitoring Perbaikan</span>
+                    <i class="fas fa-chalkboard-teacher"></i> <span>Perbaikan</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -815,13 +921,9 @@
             <!-- Tab 2: Inventaris -->
             <div class="tab-pane fade show active" id="inventaris" role="tabpanel">
                 <div class="card border-0 shadow-sm mt-4" style="border-radius: 15px; overflow: hidden;">
-                    <div class="card-header text-center font-weight-bold"
-                        style="background-color: #00ffff; color: #000; border: 2px solid #000; text-transform: uppercase; letter-spacing: 1px;">
-                        LIST INVENTARIS KANTOR
-                    </div>
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="font-weight-bold mb-0 text-dark"><i class="fas fa-boxes mr-2 text-info"></i> Data
+                            <h5 class="font-weight-bold mb-0 text-dark"><i class="fas fa-boxes mr-2 text-info"></i> Data Monitoring
                                 Inventaris</h5>
                             <div class="d-flex gap-2" style="gap: 8px;">
                                 <button class="btn btn-info btn-sm shadow-sm"
@@ -834,28 +936,16 @@
                                     target="_blank">
                                     <i class="fas fa-print mr-1"></i> Pengecekan Bulanan
                                 </a>
+                                {{-- Upload Report button hidden (not used) --}}
                                 <button class="btn btn-sm shadow-sm" id="btnUploadReport"
-                                    style="border-radius: 8px; background-color: #1cc88a; color: #fff; border: 1px solid #13855c;"
+                                    style="display:none; border-radius: 8px; background-color: #1cc88a; color: #fff; border: 1px solid #13855c;"
                                     data-toggle="modal" data-target="#modalUploadReport">
                                     <i class="fas fa-upload mr-1"></i> Upload Report
                                 </button>
                             </div>
                         </div>
 
-                        {{-- Status pengecekan bulan berjalan --}}
-                        @if ($reportBulanIni)
-                            <div class="alert mb-3 py-2 px-3 d-flex align-items-center"
-                                style="background:#d4edda; border:1px solid #c3e6cb; border-radius:10px; font-size:0.88rem; color:#155724;">
-                                <span style="font-size:1.1rem; margin-right:8px;">&#x2705;</span>
-                                <strong>Report Inventaris Bulan Ini Sudah Diunggah</strong>
-                            </div>
-                        @else
-                            <div class="alert mb-3 py-2 px-3 d-flex align-items-center"
-                                style="background:#fff3cd; border:1px solid #ffeeba; border-radius:10px; font-size:0.88rem; color:#856404;">
-                                <span style="font-size:1.1rem; margin-right:8px;">&#x26A0;&#xFE0F;</span>
-                                <strong>Report Inventaris Bulan Ini Belum Diunggah</strong>
-                            </div>
-                        @endif
+                        {{-- Status pengecekan bulan berjalan (hidden - not used) --}}
 
                         <div class="table-responsive">
                             <table class="table table-monitoring mb-0">
@@ -1005,7 +1095,8 @@
                     </div>
                 </div>
 
-                {{-- ── Riwayat Report Pengecekan ── --}}
+                {{-- ── Riwayat Report Pengecekan (hidden - not used) ── --}}
+                <div style="display:none;">
                 @if (session('success_report'))
                     <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
                         <i class="fas fa-check-circle mr-2"></i>{{ session('success_report') }}
@@ -1105,8 +1196,10 @@
                         @endif
                     </div>
                 </div>
+                </div>{{-- end hidden riwayat report --}}
 
-                {{-- ── Modal Upload Report ── --}}
+                {{-- ── Modal Upload Report (hidden - not used) ── --}}
+                <div style="display:none;">
                 <div class="modal fade" id="modalUploadReport" tabindex="-1" role="dialog"
                     aria-labelledby="modalUploadReportLabel" aria-hidden="true">
                     <div class="modal-dialog modal-md" role="document">
@@ -1194,17 +1287,15 @@
                         </div>
                     </div>
                 </div>
+                </div>{{-- end hidden modal upload report --}}
             </div>
 
             <!-- Tab 3: Monitoring Perbaikan -->
             <div class="tab-pane fade" id="kebutuhan-mbc" role="tabpanel">
                 <div class="card border-0 shadow-sm mt-4" style="border-radius: 15px; overflow: hidden;">
-                    <div class="card-header monitoring-header text-center">
-                        LIST MONITORING KERUSAKAN FASILITAS GEDUNG
-                    </div>
                     <div class="card-body p-4">
                         <h5 class="font-weight-bold mb-4 text-dark"><i class="fas fa-tools mr-2 text-warning"></i>
-                            Data Monitoring</h5>
+                            Data Perbaikan</h5>
 
                         <!-- Filter Deadline Bar -->
                         <div class="d-flex align-items-center mb-2 flex-wrap" style="gap: 10px;">
@@ -1240,7 +1331,7 @@
                         <div class="d-flex justify-content-end mb-3">
                             <button class="btn btn-primary btn-sm shadow-sm" style="border-radius: 8px;"
                                 id="btnTambahPerbaikanInline">
-                                <i class="fas fa-plus mr-1"></i> Tambah Data
+                                <i class="fas fa-plus mr-1"></i> Perbaikan
                             </button>
                         </div>
 
@@ -1281,17 +1372,50 @@
                                         <tr data-id="{{ $item->id }}">
                                             <td class="text-center no-col">{{ $loop->iteration }}</td>
                                             <td>
-                                                <textarea class="form-control-inline font-weight-bold live-edit auto-resize" data-field="fasilitas" rows="1"
-                                                    placeholder="(Tulis Data Baru)">{{ $item->fasilitas }}</textarea>
-                                                <div class="mt-1"
-                                                    style="font-size:0.7rem; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">
-                                                    Deadline</div>
-                                                <div class="d-flex align-items-center" style="gap:3px; flex-wrap:wrap;">
-                                                    <input type="date"
-                                                        class="form-control-inline text-center live-edit"
-                                                        data-field="tanggal_selesai" value="{{ $item->tanggal_selesai }}"
-                                                        style="width: 110px; font-size:0.72rem;">
+                                                <div class="fasilitas-cell-wrapper">
+                                                    {{-- SELECT2 container (shown when inventaris dipilih) --}}
+                                                    <div class="inventaris-select-container" style="{{ $item->inventaris_id ? '' : 'display:none;' }}">
+                                                        <div class="input-group input-group-sm">
+                                                            <div style="flex-grow: 1;">
+                                                                <select class="form-control form-control-sm select2-inventaris live-edit" data-field="inventaris_id" style="width:100%;">
+                                                                    @if($item->inventaris_id)
+                                                                        <option value="{{ $item->inventaris_id }}" selected>{{ optional($item->inventaris)->nama_peralatan }}{{ optional($item->inventaris)->lokasi ? ' (' . optional($item->inventaris)->lokasi . ')' : '' }}</option>
+                                                                    @else
+                                                                        <option value=""></option>
+                                                                    @endif
+                                                                </select>
+                                                            </div>
+                                                            <div class="input-group-append">
+                                                                <button class="btn btn-switch-to-manual" type="button" title="Ketik manual">
+                                                                    <i class="fas fa-keyboard"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {{-- MANUAL INPUT container (shown when manual input / empty) --}}
+                                                    <div class="fasilitas-manual-container" style="{{ $item->inventaris_id ? 'display:none;' : '' }}">
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="text"
+                                                                   class="form-control form-control-sm live-edit manual-input"
+                                                                   data-field="fasilitas_manual"
+                                                                   value="{{ $item->fasilitas_manual ?? $item->fasilitas }}"
+                                                                   placeholder="Tulis nama fasilitas..."
+                                                                   autocomplete="off">
+                                                            <div class="input-group-append">
+                                                                <button class="btn btn-switch-to-select" type="button" title="Pilih dari inventaris">
+                                                                    <i class="fas fa-list"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                                {{-- Deadline --}}
+                                                <div class="deadline-label">Deadline</div>
+                                                <input type="date"
+                                                       class="form-control-inline text-center live-edit"
+                                                       data-field="tanggal_selesai"
+                                                       value="{{ $item->tanggal_selesai }}"
+                                                       style="width:110px; font-size:0.72rem;">
                                             </td>
                                             <td class="text-truncate-cell">
                                                 <textarea class="form-control-inline live-edit auto-resize kerusakan-field" data-field="kerusakan" rows="1"
@@ -1374,12 +1498,12 @@
                                                         </a>
                                                         <div class="mt-1"><a href="javascript:void(0)"
                                                                 class="small text-primary font-weight-bold"
-                                                                onclick="openUploadModal({{ $item->id }}, '{{ $item->fasilitas }}', 'monitoring')">Ganti</a>
+                                                                onclick="openUploadModal({{ $item->id }}, '{{ addslashes($item->inventaris_id ? (optional($item->inventaris)->nama_peralatan) : ($item->fasilitas_manual ?? $item->fasilitas)) }}', 'monitoring')">Ganti</a>
                                                         </div>
                                                 </div>@else<div class="d-flex flex-column align-items-center"><button
                                                             type="button"
                                                             class="btn btn-outline-primary btn-xs px-2 shadow-sm font-weight-bold"
-                                                            onclick="openUploadModal({{ $item->id }}, '{{ $item->fasilitas }}', 'monitoring')"
+                                                            onclick="openUploadModal({{ $item->id }}, '{{ addslashes($item->inventaris_id ? (optional($item->inventaris)->nama_peralatan) : ($item->fasilitas_manual ?? $item->fasilitas)) }}', 'monitoring')"
                                                             style="font-size: 0.7rem; padding: 2px 5px;"><i
                                                                 class="fas fa-upload mr-1"></i> Upload</button></div>
                                                 @endif
@@ -1430,10 +1554,6 @@
             <!-- Tab 4: Pengadaan Barang -->
             <div class="tab-pane fade" id="kebutuhan-m1t" role="tabpanel">
                 <div class="card border-0 shadow-sm mt-4" style="border-radius: 15px; overflow: hidden;">
-                    <div class="card-header text-center font-weight-bold"
-                        style="background-color: #4e73df; color: #ffff; border: 2px solid #000;">
-                        LIST PENGADAAN BARANG
-                    </div>
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="font-weight-bold mb-0 text-dark"><i
@@ -1947,6 +2067,75 @@
                 resizeTextarea(this);
             });
 
+            // ====================== SELECT2 INVENTARIS INITIALIZATION ======================
+            function initSelect2(element) {
+                // Destroy previous instance if any (safe for re-init)
+                if (element.hasClass('select2-hidden-accessible')) {
+                    element.select2('destroy');
+                }
+                element.select2({
+                    theme: 'bootstrap4',
+                    placeholder: '-- Cari fasilitas... --',
+                    allowClear: true,
+                    dropdownParent: $('body'),
+                    dropdownAutoWidth: false,
+                    width: '100%',
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: "{{ route('inventaris-kantor.search') }}",
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return { q: params.term || '' };
+                        },
+                        processResults: function (data) {
+                            return { results: data.results };
+                        },
+                        cache: true
+                    }
+                });
+            }
+
+            // Initialize Select2 on document ready for existing rows
+            initSelect2($('.select2-inventaris'));
+
+            // Toggle to manual input field
+            $(document).on('click', '.btn-switch-to-manual', function() {
+                const td = $(this).closest('td');
+                const selectContainer = td.find('.inventaris-select-container');
+                const manualContainer = td.find('.fasilitas-manual-container');
+                const manualInput     = td.find('.manual-input');
+                const selectEl        = td.find('.select2-inventaris');
+
+                selectContainer.hide();
+                manualContainer.show();
+                
+                // Reset select2 value
+                selectEl.val(null).trigger('change.select2');
+
+                setTimeout(function() { manualInput.focus(); }, 50);
+            });
+
+            // Toggle to select2 search
+            $(document).on('click', '.btn-switch-to-select', function() {
+                const td = $(this).closest('td');
+                const selectContainer = td.find('.inventaris-select-container');
+                const manualContainer = td.find('.fasilitas-manual-container');
+                const manualInput     = td.find('.manual-input');
+                const selectEl        = td.find('.select2-inventaris');
+
+                manualContainer.hide();
+                selectContainer.show();
+
+                // Clear manual input and trigger update
+                manualInput.val('');
+                manualInput.trigger('change');
+
+                // Re-initialize Select2 and open dropdown
+                initSelect2(selectEl);
+                setTimeout(function() { selectEl.select2('open'); }, 50);
+            });
+
             // ====================== LIVE EDIT MONITORING ======================
 
             // 1. Add New Row - Refresh-less
@@ -1959,12 +2148,13 @@
                     type: "POST",
                     data: {
                         _token: "{{ csrf_token() }}",
-                        fasilitas: "",
+                        inventaris_id: "",
+                        fasilitas_manual: "",
                         progress: "Pengajuan dana"
                     },
                     success: function(res) {
                         btn.prop('disabled', false).html(
-                            '<i class="fas fa-plus mr-1"></i> Tambah Data');
+                            '<i class="fas fa-plus mr-1"></i> Perbaikan');
                         $('.empty-row').remove();
 
                         const item = res.data; // Assuming controller returns the object
@@ -1974,11 +2164,41 @@
                         <tr data-id="${item.id}">
                             <td class="text-center no-col">${rowCount}</td>
                             <td>
-                                <textarea class="form-control-inline font-weight-bold live-edit auto-resize" data-field="fasilitas" rows="1" placeholder="(Tulis Data Baru)">${item.fasilitas || ''}</textarea>
-                                <div class="mt-1" style="font-size:0.7rem; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">Deadline</div>
-                                <div class="d-flex align-items-center" style="gap:3px; flex-wrap:wrap;">
-                                    <input type="date" class="form-control-inline text-center live-edit" data-field="tanggal_selesai" style="width: 110px; font-size:0.72rem;">
+                                <div class="fasilitas-cell-wrapper">
+                                    {{-- SELECT2 container (hidden by default on new rows) --}}
+                                    <div class="inventaris-select-container" style="display:none;">
+                                        <div class="input-group input-group-sm">
+                                            <div style="flex-grow: 1;">
+                                                <select class="form-control form-control-sm select2-inventaris live-edit" data-field="inventaris_id" style="width:100%;">
+                                                    <option value=""></option>
+                                                </select>
+                                            </div>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-switch-to-manual" type="button" title="Ketik manual">
+                                                    <i class="fas fa-keyboard"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{-- MANUAL INPUT container (shown by default on new rows) --}}
+                                    <div class="fasilitas-manual-container" style="display:block;">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text"
+                                                   class="form-control form-control-sm live-edit manual-input"
+                                                   data-field="fasilitas_manual"
+                                                   value=""
+                                                   placeholder="Tulis nama fasilitas..."
+                                                   autocomplete="off">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-switch-to-select" type="button" title="Pilih dari inventaris">
+                                                    <i class="fas fa-list"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
+                                <div class="deadline-label">Deadline</div>
+                                <input type="date" class="form-control-inline text-center live-edit" data-field="tanggal_selesai" style="width:110px; font-size:0.72rem;">
                             </td>
                             <td class="text-truncate-cell">
                                 <textarea class="form-control-inline live-edit auto-resize" data-field="kerusakan" rows="1" spellcheck="false"></textarea>
@@ -2006,7 +2226,7 @@
                             <td class="text-center align-middle bukti-transfer-cell">
                                 <div class="d-flex flex-column align-items-center">
                                     <button type="button" class="btn btn-outline-primary btn-xs px-2 shadow-sm font-weight-bold"
-                                        onclick="openUploadModal(${item.id}, '${item.fasilitas || 'Perbaikan'}', 'monitoring')" style="font-size: 0.7rem; padding: 2px 5px;">
+                                        onclick="openUploadModal(${item.id}, 'Perbaikan', 'monitoring')" style="font-size: 0.7rem; padding: 2px 5px;">
                                         <i class="fas fa-upload mr-1"></i> Upload
                                     </button>
                                 </div>
@@ -2017,6 +2237,9 @@
                         </tr>
                     `;
                         $('#monitoring-table-body').prepend(newRow);
+
+                        // Initialize Select2 on the new row
+                        initSelect2($('#monitoring-table-body tr').first().find('.select2-inventaris'));
 
                         // Re-index numbers
                         $('#monitoring-table-body tr').each(function(index) {
@@ -2035,7 +2258,7 @@
                     },
                     error: function() {
                         btn.prop('disabled', false).html(
-                            '<i class="fas fa-plus mr-1"></i> Tambah Data');
+                            '<i class="fas fa-plus mr-1"></i> Pilih perbaikan');
                     }
                 });
             });
@@ -2079,7 +2302,8 @@
                         _token: "{{ csrf_token() }}",
                         _method: "PUT",
                         [field]: sendValue,
-                        fasilitas: getRawValue('fasilitas'),
+                        inventaris_id: getRawValue('inventaris_id'),
+                        fasilitas_manual: getRawValue('fasilitas_manual'),
                         kerusakan: getRawValue('kerusakan'),
                         tanggal_mulai: getRawValue('tanggal_mulai'),
                         tanggal_selesai: getRawValue('tanggal_selesai'),
@@ -2166,7 +2390,16 @@
 
                     const rowProgress = tr.find('[data-field="progress"]').val();
                     const rowDeadline = tr.find('[data-field="tanggal_selesai"]').val();
-                    const rowFasilitas = tr.find('[data-field="fasilitas"]').val().toLowerCase();
+                    
+                    let rowFasilitas = '';
+                    const selectEl = tr.find('[data-field="inventaris_id"]');
+                    const isManualVisible = tr.find('.fasilitas-manual-container').is(':visible');
+                    if (isManualVisible || !selectEl.val()) {
+                        rowFasilitas = tr.find('[data-field="fasilitas_manual"]').val() || '';
+                    } else {
+                        rowFasilitas = selectEl.find('option:selected').text() || '';
+                    }
+                    rowFasilitas = rowFasilitas.toLowerCase();
 
                     let keep = true;
 
@@ -2259,7 +2492,7 @@
                                         .length === 0) {
                                         $('#monitoring-table-body').append(`
                                         <tr class="empty-row">
-                                            <td colspan="9" class="text-center py-5 text-muted">Belum ada data monitoring perbaikan.</td>
+                                            <td colspan="9" class="text-center py-5 text-muted">Belum ada data perbaikan.</td>
                                         </tr>
                                     `);
                                     }
