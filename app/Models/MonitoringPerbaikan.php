@@ -11,6 +11,8 @@ class MonitoringPerbaikan extends Model
 
     protected $fillable = [
         'fasilitas',
+        'inventaris_id',
+        'fasilitas_manual',
         'kerusakan',
         'timeline',
         'progress',
@@ -19,4 +21,9 @@ class MonitoringPerbaikan extends Model
         'tanggal_selesai',
         'bukti_transfer',
     ];
+
+    public function inventaris()
+    {
+        return $this->belongsTo(InventarisKantor::class, 'inventaris_id');
+    }
 }

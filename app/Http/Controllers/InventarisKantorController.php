@@ -13,6 +13,25 @@ class InventarisKantorController extends Controller
 {
     // ─── Inventaris CRUD ────────────────────────────────────────────────────────
 
+    public function search(Request $request)
+    {
+        $q = $request->input('q');
+        $items = InventarisKantor::where('nama_peralatan', 'LIKE', '%' . $q . '%')
+            ->orWhere('lokasi', 'LIKE', '%' . $q . '%')
+            ->orderBy('nama_peralatan')
+            ->limit(30)
+            ->get();
+
+        $results = $items->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'text' => $item->nama_peralatan . ($item->lokasi ? ' (' . $item->lokasi . ')' : '')
+            ];
+        })->toArray();
+
+        return response()->json(['results' => $results]);
+    }
+
     public function store(Request $request)
     {
         $item = InventarisKantor::create([

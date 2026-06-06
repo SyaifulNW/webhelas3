@@ -9,8 +9,22 @@ class MonitoringPerbaikanController extends Controller
 {
     public function store(Request $request)
     {
+        $input = $request->all();
+        if (isset($input['inventaris_id'])) {
+            if ($input['inventaris_id'] === 'other') {
+                $input['inventaris_id'] = null;
+            } elseif (empty($input['inventaris_id'])) {
+                $input['inventaris_id'] = null;
+                $input['fasilitas_manual'] = null;
+            } else {
+                $input['fasilitas_manual'] = null;
+            }
+        }
+        $request->replace($input);
+
         $validated = $request->validate([
-            'fasilitas' => 'nullable|string',
+            'inventaris_id' => 'nullable|exists:inventaris_kantors,id',
+            'fasilitas_manual' => 'nullable|string',
             'kerusakan' => 'nullable|string',
             'timeline'  => 'nullable|string',
             'tanggal_mulai' => 'nullable|date',
@@ -21,13 +35,28 @@ class MonitoringPerbaikanController extends Controller
         ]);
 
         $item = MonitoringPerbaikan::create($validated);
+        $item->load('inventaris');
         return response()->json(['success' => true, 'message' => 'Data berhasil ditambahkan.', 'data' => $item]);
     }
 
     public function update(Request $request, $id)
     {
+        $input = $request->all();
+        if (isset($input['inventaris_id'])) {
+            if ($input['inventaris_id'] === 'other') {
+                $input['inventaris_id'] = null;
+            } elseif (empty($input['inventaris_id'])) {
+                $input['inventaris_id'] = null;
+                $input['fasilitas_manual'] = null;
+            } else {
+                $input['fasilitas_manual'] = null;
+            }
+        }
+        $request->replace($input);
+
         $validated = $request->validate([
-            'fasilitas' => 'nullable|string',
+            'inventaris_id' => 'nullable|exists:inventaris_kantors,id',
+            'fasilitas_manual' => 'nullable|string',
             'kerusakan' => 'nullable|string',
             'timeline'  => 'nullable|string',
             'tanggal_mulai' => 'nullable|date',

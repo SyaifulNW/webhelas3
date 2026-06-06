@@ -142,6 +142,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::post('/pendapatan-lainnya/store', [HomeController::class, 'storePendapatanLainnya'])->name('pendapatan.lainnya.store');
     Route::get('/hr', [App\Http\Controllers\AbsensiController::class, 'hr'])->name('hr');
+    Route::post('/hr/employee/update', [App\Http\Controllers\AbsensiController::class, 'updateEmployee'])->name('hr.employee.update');
+    Route::post('/hr/employee/store', [App\Http\Controllers\AbsensiController::class, 'storeEmployee'])->name('hr.employee.store');
+    Route::delete('/hr/employee/{id}', [App\Http\Controllers\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
     Route::get('/administrator', [AdminController::class, 'index'])->name('administrator');
     Route::get('/marketing', [MarketingController::class, 'index'])->name('marketing');
     Route::get('/advertising', [AdvertisingController::class, 'index'])->name('advertising');
@@ -170,6 +173,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pengadaan-barang/cetak-laporan', [\App\Http\Controllers\PengadaanBarangController::class, 'cetakLaporan'])->name('pengadaan-barang.cetak-laporan');
 
     // Inventaris Kantor
+    Route::get('/inventaris-kantor/search', [\App\Http\Controllers\InventarisKantorController::class, 'search'])->name('inventaris-kantor.search');
     Route::post('/inventaris-kantor/store', [\App\Http\Controllers\InventarisKantorController::class, 'store'])->name('inventaris-kantor.store');
     Route::put('/inventaris-kantor/update/{id}', [\App\Http\Controllers\InventarisKantorController::class, 'update'])->name('inventaris-kantor.update');
     Route::delete('/inventaris-kantor/destroy/{id}', [\App\Http\Controllers\InventarisKantorController::class, 'destroy'])->name('inventaris-kantor.destroy');

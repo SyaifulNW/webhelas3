@@ -92,6 +92,7 @@ class SettingController extends Controller
             'email' => $validated['email'],
             'role' => $validated['role'],
             'chapter' => $request->chapter,
+            'kategori' => $request->kategori ?? 'Pusat',
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
 
@@ -114,6 +115,7 @@ class SettingController extends Controller
             'email' => $validated['email'],
             'role' => $validated['role'],
             'chapter' => $request->chapter,
+            'kategori' => $request->kategori ?? 'Pusat',
         ];
 
         if ($request->filled('password')) {
