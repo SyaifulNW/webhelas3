@@ -85,12 +85,22 @@ class DashboardController extends Controller
             $buildDateFilter($query, $tahun, $bulan);
         };
 
+        $excludePartnerSales = function ($query) {
+            $query->where(function ($q) {
+                $q->whereDoesntHave('createdBy')
+                  ->orWhereHas('createdBy', function ($sq) {
+                      $sq->whereNotIn('role', ['chapter', 'reseller', 'agen']);
+                  });
+            });
+        };
+
         // 1. SMI (System Auto Data with Fallback)
         $smiQuery = \App\Models\SalesPlan::where('status', 'sudah_transfer')
             ->whereHas('kelas', function ($q) {
                 $q->where('nama_kelas', 'like', '%Muslim Indonesia%')
                     ->orWhere('nama_kelas', 'like', 'SMI - %');
             });
+        $excludePartnerSales($smiQuery);
         $applySalesPlanDateFilter($smiQuery);
 
         $smiBreakdown = $smiQuery->with('kelas:id,nama_kelas')
@@ -107,7 +117,7 @@ class DashboardController extends Controller
 
             $nominalAwal = $plan->nominal;
             if ($plan->pesertaSmi) {
-                $calc = (float) $plan->pesertaSmi->biaya_pendaftaran + (float) $plan->pesertaSmi->pembayaran_spp;
+                $calc = (float) $plan->pesertaSmi->spp_awal + (float) $plan->pesertaSmi->pembayaran_spp;
                 if ($calc > 0) {
                     return $calc;
                 }
@@ -138,6 +148,7 @@ class DashboardController extends Controller
                             ->where('nama_kelas', 'not like', '%Coaching%');
                     });
             });
+        $excludePartnerSales($mbcQuery);
         $applySalesPlanDateFilter($mbcQuery);
 
         $totalMbc = (clone $mbcQuery)->sum('nominal');
@@ -154,8 +165,107 @@ class DashboardController extends Controller
                 $q->where('nama_kelas', 'like', '%Privat%')
                     ->orWhere('nama_kelas', 'like', '%Coaching%');
             });
+        $excludePartnerSales($privateQuery);
         $applySalesPlanDateFilter($privateQuery);
         $totalPrivate = $privateQuery->sum('nominal');
+
+        // calculate auto chapter and reseller sales
+        $chapters = \App\Models\User::where('role', 'chapter')->orderBy('name')->get();
+        $agens = \App\Models\User::where('role', 'reseller')->orderBy('name')->get();
+
+        $chapterAutoSales = [];
+        foreach ($chapters as $ch) {
+            $chapterAutoSales[$ch->id] = [
+                'personal' => 0,
+                'agents' => 0,
+                'total' => 0
+            ];
+        }
+
+        $agenAutoSales = [];
+        foreach ($agens as $ag) {
+            $agenAutoSales[$ag->id] = 0;
+        }
+
+        $allPartnerSales = \App\Models\SalesPlan::where('status', 'sudah_transfer')
+            ->where(function ($q) use ($buildDateFilter, $tahun, $bulan) {
+                $buildDateFilter($q, $tahun, $bulan);
+            })
+            ->whereHas('createdBy', function ($q) {
+                $q->whereIn('role', ['chapter', 'reseller', 'agen']);
+            })
+            ->with(['pesertaSmi', 'createdBy'])
+            ->get();
+
+        $calculateOmset = function ($plan) {
+            if ($plan->pesertaSmi) {
+                return (float) str_replace('.', '', $plan->pesertaSmi->total_pembayaran ?: ($plan->pesertaSmi->pembayaran_spp ?: $plan->pesertaSmi->spp_awal ?: 0));
+            }
+            return (float) str_replace('.', '', $plan->nominal ?: 0);
+        };
+
+        foreach ($allPartnerSales as $sale) {
+            $creator = $sale->createdBy;
+            if (!$creator) continue;
+
+            $amount = $calculateOmset($sale);
+
+            if ($creator->role === 'chapter') {
+                if (isset($chapterAutoSales[$creator->id])) {
+                    $chapterAutoSales[$creator->id]['personal'] += $amount;
+                }
+            } else {
+                $parentId = $creator->created_by;
+                $chapterName = $creator->chapter;
+                $matchedChId = null;
+
+                if (isset($chapterAutoSales[$parentId])) {
+                    $matchedChId = $parentId;
+                } elseif (!empty($chapterName)) {
+                    foreach ($chapters as $ch) {
+                        if (trim(strtolower($ch->chapter)) === trim(strtolower($chapterName))) {
+                            $matchedChId = $ch->id;
+                            break;
+                        }
+                    }
+                }
+
+                if ($matchedChId) {
+                    $chapterAutoSales[$matchedChId]['agents'] += $amount;
+                } else {
+                    if (isset($agenAutoSales[$creator->id])) {
+                        $agenAutoSales[$creator->id] += $amount;
+                    }
+                }
+            }
+        }
+
+        foreach ($chapterAutoSales as $chId => &$data) {
+            $data['total'] = $data['personal'] + $data['agents'];
+        }
+        unset($data);
+
+        $chapterTotal = 0;
+        foreach ($chapters as $ch) {
+            $chKeterangan = $ch->name;
+            $subRow = $pendapatan->filter(fn($r) => trim($r->keterangan ?? '') === $chKeterangan && trim($r->parent_keterangan ?? '') === 'Pendapatan Chapter')->first();
+            if ($subRow) {
+                $chapterTotal += $subRow->jumlah;
+            } else {
+                $chapterTotal += $chapterAutoSales[$ch->id]['total'] ?? 0;
+            }
+        }
+
+        $agenTotal = 0;
+        foreach ($agens as $ag) {
+            $agKeterangan = $ag->name;
+            $subRow = $pendapatan->filter(fn($r) => trim($r->keterangan ?? '') === $agKeterangan && trim($r->parent_keterangan ?? '') === 'Pendapatan Agen')->first();
+            if ($subRow) {
+                $agenTotal += $subRow->jumlah;
+            } else {
+                $agenTotal += $agenAutoSales[$ag->id] ?? 0;
+            }
+        }
 
         // 4. Approved Budget Proposals (Pengajuan Anggaran)
         $approvedAnggaran = \App\Models\PengajuanAnggaran::where('status', 'approved')
@@ -235,7 +345,7 @@ class DashboardController extends Controller
         // Fetch All Classes for "Biaya Iklan" expand/collapse
         $semuaKelas = \App\Models\Kelas::orderBy('nama_kelas')->get();
 
-        return view('admin.keuangan.laba-rugi', compact('pendapatan', 'biaya', 'bulan', 'tahun', 'totalSmi', 'totalSmiPendaftaran', 'totalSmiSpp', 'totalSmiTunggakan', 'smiBreakdown', 'totalMbc', 'mbcBreakdown', 'totalPrivate', 'kelasBulanIni', 'semuaKelas'));
+        return view('admin.keuangan.laba-rugi', compact('pendapatan', 'biaya', 'bulan', 'tahun', 'totalSmi', 'totalSmiPendaftaran', 'totalSmiSpp', 'totalSmiTunggakan', 'smiBreakdown', 'totalMbc', 'mbcBreakdown', 'totalPrivate', 'kelasBulanIni', 'semuaKelas', 'chapterAutoSales', 'agenAutoSales', 'chapterTotal', 'agenTotal'));
     }
 
     public function zakat(Request $request)
@@ -458,12 +568,22 @@ class DashboardController extends Controller
             $buildDateFilter($query, $tahun, $bulan);
         };
 
+        $excludePartnerSales = function ($query) {
+            $query->where(function ($q) {
+                $q->whereDoesntHave('createdBy')
+                  ->orWhereHas('createdBy', function ($sq) {
+                      $sq->whereNotIn('role', ['chapter', 'reseller', 'agen']);
+                  });
+            });
+        };
+
         // 1. SMI
         $smiQuery = \App\Models\SalesPlan::where('status', 'sudah_transfer')
             ->whereHas('kelas', function ($q) {
                 $q->where('nama_kelas', 'like', '%Muslim Indonesia%')
                     ->orWhere('nama_kelas', 'like', 'SMI - %');
             });
+        $excludePartnerSales($smiQuery);
         $applyDateFilter($smiQuery);
 
         $smiBreakdown = $smiQuery->with('kelas:id,nama_kelas')
@@ -474,7 +594,7 @@ class DashboardController extends Controller
         $totalSmiPendaftaran = (clone $smiQuery)->with('pesertaSmi')->get()->sum(function ($plan) {
             $nominalAwal = $plan->nominal;
             if ($plan->pesertaSmi) {
-                $calc = (float) $plan->pesertaSmi->biaya_pendaftaran + (float) $plan->pesertaSmi->pembayaran_spp;
+                $calc = (float) $plan->pesertaSmi->spp_awal + (float) $plan->pesertaSmi->pembayaran_spp;
                 if ($calc > 0) {
                     return $calc;
                 }
@@ -501,6 +621,7 @@ class DashboardController extends Controller
                     ->where('nama_kelas', 'not like', 'SMI - %')
                     ->where('nama_kelas', 'not like', '%Privat%');
             });
+        $excludePartnerSales($mbcQuery);
         $applyDateFilter($mbcQuery);
 
         $totalMbc = (clone $mbcQuery)->sum('nominal');
@@ -513,8 +634,107 @@ class DashboardController extends Controller
             ->whereHas('kelas', function ($q) {
                 $q->where('nama_kelas', 'like', '%Privat%');
             });
+        $excludePartnerSales($privateQuery);
         $applyDateFilter($privateQuery);
         $totalPrivate = $privateQuery->sum('nominal');
+
+        // calculate auto chapter and reseller sales for PDF
+        $chapters = \App\Models\User::where('role', 'chapter')->orderBy('name')->get();
+        $agens = \App\Models\User::where('role', 'reseller')->orderBy('name')->get();
+
+        $chapterAutoSales = [];
+        foreach ($chapters as $ch) {
+            $chapterAutoSales[$ch->id] = [
+                'personal' => 0,
+                'agents' => 0,
+                'total' => 0
+            ];
+        }
+
+        $agenAutoSales = [];
+        foreach ($agens as $ag) {
+            $agenAutoSales[$ag->id] = 0;
+        }
+
+        $allPartnerSales = \App\Models\SalesPlan::where('status', 'sudah_transfer')
+            ->where(function ($q) use ($buildDateFilter, $tahun, $bulan) {
+                $buildDateFilter($q, $tahun, $bulan);
+            })
+            ->whereHas('createdBy', function ($q) {
+                $q->whereIn('role', ['chapter', 'reseller', 'agen']);
+            })
+            ->with(['pesertaSmi', 'createdBy'])
+            ->get();
+
+        $calculateOmset = function ($plan) {
+            if ($plan->pesertaSmi) {
+                return (float) str_replace('.', '', $plan->pesertaSmi->total_pembayaran ?: ($plan->pesertaSmi->pembayaran_spp ?: $plan->pesertaSmi->spp_awal ?: 0));
+            }
+            return (float) str_replace('.', '', $plan->nominal ?: 0);
+        };
+
+        foreach ($allPartnerSales as $sale) {
+            $creator = $sale->createdBy;
+            if (!$creator) continue;
+
+            $amount = $calculateOmset($sale);
+
+            if ($creator->role === 'chapter') {
+                if (isset($chapterAutoSales[$creator->id])) {
+                    $chapterAutoSales[$creator->id]['personal'] += $amount;
+                }
+            } else {
+                $parentId = $creator->created_by;
+                $chapterName = $creator->chapter;
+                $matchedChId = null;
+
+                if (isset($chapterAutoSales[$parentId])) {
+                    $matchedChId = $parentId;
+                } elseif (!empty($chapterName)) {
+                    foreach ($chapters as $ch) {
+                        if (trim(strtolower($ch->chapter)) === trim(strtolower($chapterName))) {
+                            $matchedChId = $ch->id;
+                            break;
+                        }
+                    }
+                }
+
+                if ($matchedChId) {
+                    $chapterAutoSales[$matchedChId]['agents'] += $amount;
+                } else {
+                    if (isset($agenAutoSales[$creator->id])) {
+                        $agenAutoSales[$creator->id] += $amount;
+                    }
+                }
+            }
+        }
+
+        foreach ($chapterAutoSales as $chId => &$data) {
+            $data['total'] = $data['personal'] + $data['agents'];
+        }
+        unset($data);
+
+        $chapterTotal = 0;
+        foreach ($chapters as $ch) {
+            $chKeterangan = $ch->name;
+            $subRow = $pendapatan->filter(fn($r) => trim($r->keterangan ?? '') === $chKeterangan && trim($r->parent_keterangan ?? '') === 'Pendapatan Chapter')->first();
+            if ($subRow) {
+                $chapterTotal += $subRow->jumlah;
+            } else {
+                $chapterTotal += $chapterAutoSales[$ch->id]['total'] ?? 0;
+            }
+        }
+
+        $agenTotal = 0;
+        foreach ($agens as $ag) {
+            $agKeterangan = $ag->name;
+            $subRow = $pendapatan->filter(fn($r) => trim($r->keterangan ?? '') === $agKeterangan && trim($r->parent_keterangan ?? '') === 'Pendapatan Agen')->first();
+            if ($subRow) {
+                $agenTotal += $subRow->jumlah;
+            } else {
+                $agenTotal += $agenAutoSales[$ag->id] ?? 0;
+            }
+        }
 
         $months = [
             '01' => 'Januari',
@@ -625,7 +845,11 @@ class DashboardController extends Controller
             'namaBulan',
             'kelasBulanIni',
             'semuaKelas',
-            'tahunDisplay'
+            'tahunDisplay',
+            'chapterAutoSales',
+            'agenAutoSales',
+            'chapterTotal',
+            'agenTotal'
         ));
 
         $pdf->setPaper('a4', 'portrait');
@@ -835,7 +1059,14 @@ class DashboardController extends Controller
     {
         $totalSpp = 0;
         $totalTunggakan = 0;
-        $pesertas = \App\Models\PesertaSmi::with('salesPlan')->get();
+
+        $m1tClasses = \App\Models\Kelas::where('nama_kelas', 'like', '%Muslim Indonesia%')
+            ->orWhere('nama_kelas', 'like', 'SMI - %')
+            ->pluck('id')->toArray();
+
+        // Fetch all participants with relations
+        $pesertas = \App\Models\PesertaSmi::with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
+
         if ($bulan !== 'all') {
             $months = [(int) $bulan];
         } else {
@@ -847,111 +1078,109 @@ class DashboardController extends Controller
         $filterYear = ($tahun !== 'all') ? (int) $tahun : $currentYear;
 
         foreach ($pesertas as $p) {
-            // [USER_REQUEST] Exclude status 'Cuti' from all SPP & Tunggakan report stats
-            if ($p->status === 'Cuti') {
+            // 1. Class Filter Alignment
+            if (!$p->salesPlan || !in_array($p->salesPlan->kelas_id, $m1tClasses)) {
                 continue;
             }
 
-            // [USER_REQUEST] Exclude participants with 'LUNAS' badge from SPP revenue & arrears calculation
-            // Consistently calculate LUNAS badge status (manual or 6+ months paid)
-            $isManualLunas = ($p->is_lunas == 1);
-            $countPaidTotal = 0;
-            for ($m_check = 1; $m_check <= 12; $m_check++) {
-                if (($p->{"spp_$m_check"} ?? 0) >= 1000000)
-                    $countPaidTotal++;
+            // 2. Approval Status Filter Alignment
+            $creatorRole = strtolower($p->closingCs->role ?? $p->createdBy->role ?? $p->salesPlan->createdBy->role ?? '');
+            $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+            if ($needsApproval && $p->approval_status !== 'Approved') {
+                continue;
             }
-            $isLunasBadge = $isManualLunas || ($countPaidTotal >= 6);
+
+            // 3. Lunas Badge calculation (Same logic)
+            $paidMonthsCount = 0;
+            for ($i = 1; $i <= 12; $i++) {
+                if ((float) ($p->{"spp_$i"} ?? 0) >= 1000000) {
+                    $paidMonthsCount++;
+                }
+            }
+            $isLunasBadge = ($p->is_lunas == 1 || $paidMonthsCount >= 6);
 
             if ($isLunasBadge) {
-                continue; // Skip this participant entirely in the auto report
+                continue; // Skip this participant entirely
             }
 
-            $customSchedule = $p->spp_custom_schedule ?? [];
-
-            $selectedMonths = [];
-            if ($p->salesPlan && is_array($p->salesPlan->selected_months)) {
-                $selectedMonths = $p->salesPlan->selected_months;
-            } elseif ($p->salesPlan && is_string($p->salesPlan->selected_months)) {
-                $selectedMonths = json_decode($p->salesPlan->selected_months, true) ?? [];
-            }
+            // Determine level-based nominal
+            $pLevel = strtolower($p->level ?: ($p->salesPlan->level ?? ''));
+            $levelNominal = str_contains($pLevel, 'grow') ? 1500000 : 1000000;
 
             foreach ($months as $m) {
-                $val = (float) ($p->{"spp_$m"} ?? 0);
-                $paymentDate = $p->{"tanggal_spp_$m"} ?? null;
+                // 4. Active Period Filter Alignment
+                $dateStart = \Carbon\Carbon::createFromDate($filterYear, $m, 1)->startOfMonth()->format('Y-m-d');
+                $dateEnd = \Carbon\Carbon::createFromDate($filterYear, $m, 1)->endOfMonth()->format('Y-m-d');
 
-                // [USER_REQUEST] Verify year if year filter is applied
-                $itemIsForCurrentYear = true;
-                if ($val > 0 && $filterYearStr !== 'all' && $paymentDate) {
-                    $pYear = (int) \Carbon\Carbon::parse($paymentDate)->format('Y');
-                    if ($pYear !== $filterYear) {
-                        $itemIsForCurrentYear = false;
+                $isActive = ($p->tanggal_masuk <= $dateEnd) && ($p->tanggal_selesai >= $dateStart || is_null($p->tanggal_selesai));
+                if (!$isActive) {
+                    continue;
+                }
+
+                // 5. Payment check
+                $val = 0;
+                $tglSpp = $p->{"tanggal_spp_$m"};
+                $paymentYear = $tglSpp ? \Carbon\Carbon::parse($tglSpp)->format('Y') : null;
+                if (($p->{"spp_$m"} ?? 0) > 0 && (!$paymentYear || $paymentYear == $filterYear)) {
+                    $val = (float) $p->{"spp_$m"};
+                }
+
+                // 6. Blue Checklist Logic (Closing or Planned)
+                // Priority: tanggal_closing -> tanggal_masuk -> updated_at
+                $effectiveDate = null;
+                if ($p->salesPlan) {
+                    if ($p->salesPlan->tanggal_closing) {
+                        $effectiveDate = \Carbon\Carbon::parse($p->salesPlan->tanggal_closing);
+                    } else {
+                        $effectiveDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
+                    }
+                } else {
+                    $effectiveDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
+                }
+
+                $effM = (int)$effectiveDate->month;
+                $effY = (int)$effectiveDate->year;
+                $isClosing = ($effM == $m && $effY == $filterYear);
+
+                $customSch = $p->spp_custom_schedule ?? [];
+                $isPlanned = false;
+                foreach ($customSch as $sch) {
+                    if ((int)$sch['month'] === $m && (int)($sch['year'] ?? $filterYear) === (int)$filterYear) {
+                        $isPlanned = true;
+                        break;
                     }
                 }
 
-                $isPlanChecked = (isset($selectedMonths[$filterYear]) && in_array($m, $selectedMonths[$filterYear]));
+                if (!$isPlanned && $p->salesPlan) {
+                    $selectedMonths = $p->salesPlan->selected_months;
+                    if (is_string($selectedMonths)) {
+                        $selectedMonths = json_decode($selectedMonths, true) ?? [];
+                    }
+                    if (isset($selectedMonths[$filterYear]) && is_array($selectedMonths[$filterYear])) {
+                        if (in_array($m, $selectedMonths[$filterYear])) {
+                            $isPlanned = true;
+                        }
+                    }
+                }
 
-                // [USER_REQUEST] Pemasukan SPP specifically is for manual/monthly payments.
-                // Initial payments (Blue checkmarks / plan checked) are excluded to avoid double-counting 
-                // because they are already part of the upfront 'Pendapatan Closing SMI'.
-                if ($val > 0 && $itemIsForCurrentYear && !$isPlanChecked) {
+                $isBlue = $isClosing || $isPlanned;
+
+                // 7. SPP Revenue Calculation
+                // Exclude OFF status from SPP count just like dashboard card
+                if (!in_array($p->status, ['Cuti', 'OFF', 'off']) && !$isBlue && $val > 0) {
                     $totalSpp += $val;
                 }
 
-                // Tunggakan calculation
-                if ($tahun !== 'all' && $p->status !== 'Cuti' && $p->status !== 'Lulus') {
-                    // Check if they already joined by this month/year
-                    $entryDate = $p->tanggal_masuk;
-                    if ($entryDate) {
-                        $entry = \Carbon\Carbon::parse($entryDate);
-                        $target = \Carbon\Carbon::createFromDate($filterYear, $m, 1)->endOfMonth();
-                        if ($entry->gt($target)) {
-                            continue; // Haven't joined yet
-                        }
+                // 8. Tunggakan / Arrears Calculation
+                // Consistently use the same logic as "nominal_belum" card
+                if ($filterYearStr !== 'all') {
+                    if ($p->status === 'Aktif' && !$isBlue && $val <= 0) {
+                        $totalTunggakan += $levelNominal;
                     }
-
-                    // [USER_REQUEST] Tunggakan must match Card 'Blm Bayar (Potensi)'
-                    // Card behavior: if they paid ANY amount ($val > 0), they go to Green card (Paid), NOT Tunggakan.
-                    // Also exclude Badge Lunas, Planned Installments (isPlanChecked), and New Closings (isClosing).
-                    
-                    // isClosing logic (same as PesertaSmiController)
-                    $isClosing = false;
-                    $effectiveDate = null;
-                    if ($p->salesPlan) {
-                        if ($p->salesPlan->tanggal_closing) {
-                            $effectiveDate = \Carbon\Carbon::parse($p->salesPlan->tanggal_closing);
-                        } else {
-                            $effectiveDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
-                        }
-                    } else {
-                        $effectiveDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
-                    }
-                    if ($effectiveDate) {
-                        $effM = (int) $effectiveDate->format('m');
-                        $effY = (int) $effectiveDate->format('Y');
-                        $isClosing = ($effM == $m && $effY == $filterYear);
-                    }
-
-                    if ($val > 0 || $isLunasBadge || $isPlanChecked || $isClosing || $p->status !== 'Aktif') {
-                         continue;
-                    }
-
-                    // Determine expected nominal based on level
-                    $pLevel = strtolower($p->level ?: ($p->salesPlan->level ?? ''));
-                    $levelNominal = str_contains($pLevel, 'grow') ? 1500000 : 1000000;
-
-                    // 1. Check if it's in Custom Schedule
-                    $expected = $levelNominal;
-                    foreach ($customSchedule as $sch) {
-                        if ($sch['month'] == $m && ($sch['year'] ?? $filterYear) == $filterYear) {
-                            $expected = (float) $sch['nominal'];
-                            break;
-                        }
-                    }
-
-                    $totalTunggakan += $expected;
                 }
             }
         }
+
         return ['spp' => $totalSpp, 'tunggakan' => $totalTunggakan];
     }
 }

@@ -64,8 +64,9 @@ class AbsensiController extends Controller
             'tanggal' => 'required|date',
         ]);
 
-        $employeeId = $request->input('employee_id');
-        $employeeName = $request->input('employee_name');
+        $user = auth()->user();
+        $employeeId = $user->id_no ?: 'HC-' . sprintf('%04d', $user->id);
+        $employeeName = $user->name;
         $mode = $request->input('mode');
         $tanggal = $request->input('tanggal');
         $statusKehadiran = $request->input('status_kehadiran');
@@ -154,12 +155,9 @@ class AbsensiController extends Controller
      */
     public function history(Request $request)
     {
-        $employeeId = $request->get('employee_id');
+        $user = auth()->user();
+        $employeeId = $user->id_no ?: 'HC-' . sprintf('%04d', $user->id);
         $tanggal = $request->get('tanggal', Carbon::today()->toDateString());
-
-        if (!$employeeId) {
-            return response()->json(['success' => false, 'message' => 'Employee ID is required'], 400);
-        }
 
         $attendances = Absensi::where('employee_id', $employeeId)
             ->where('tanggal', $tanggal)

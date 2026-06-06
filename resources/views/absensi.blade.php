@@ -739,11 +739,11 @@
                 </div>
                 <div class="form-group">
                     <label>ID Karyawan</label>
-                    <input type="text" id="employee-id" class="form-control" placeholder="Contoh: HC-0024" value="HC-0428" onchange="loadHistory()">
+                    <input type="text" id="employee-id" class="form-control" placeholder="Contoh: HC-0024" value="{{ Auth::user()->id_no ?: 'HC-' . sprintf('%04d', Auth::user()->id) }}" readonly style="background: rgba(15, 23, 42, 0.8); cursor: not-allowed; color: #a1a1a1;">
                 </div>
                 <div class="form-group">
                     <label>Nama Karyawan</label>
-                    <input type="text" id="employee-name" class="form-control" placeholder="Masukkan nama lengkap" value="Ahmad Helas">
+                    <input type="text" id="employee-name" class="form-control" placeholder="Masukkan nama lengkap" value="{{ Auth::user()->name }}" readonly style="background: rgba(15, 23, 42, 0.8); cursor: not-allowed; color: #a1a1a1;">
                 </div>
             </div>
 

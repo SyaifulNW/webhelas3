@@ -43,15 +43,23 @@ use App\Http\Controllers\Admin\AdminWalletController;
 */
 
 Route::get('/', function () {
+    if (Auth::check() && Auth::user()->name === 'Fitra Jaya Saleh') {
+        $role = strtolower(Auth::user()->role);
+        if ($role === 'administrator') return redirect('/administrator');
+        if ($role === 'manager') return redirect('/manager');
+        return redirect('/home');
+    }
     return view('welcome');
 });
 
-Route::get('/absensi', function () {
-    return view('absensi');
-})->name('absensi');
+Route::middleware('auth')->group(function () {
+    Route::get('/absensi', function () {
+        return view('absensi');
+    })->name('absensi');
 
-Route::post('/api/absensi/store', [App\Http\Controllers\AbsensiController::class, 'store'])->name('api.absensi.store');
-Route::get('/api/absensi/history', [App\Http\Controllers\AbsensiController::class, 'history'])->name('api.absensi.history');
+    Route::post('/api/absensi/store', [App\Http\Controllers\AbsensiController::class, 'store'])->name('api.absensi.store');
+    Route::get('/api/absensi/history', [App\Http\Controllers\AbsensiController::class, 'history'])->name('api.absensi.history');
+});
 
 
 Route::get('/form-m1t/{identifier}', [DataController::class, 'formM1t'])->name('form.m1t');
@@ -384,6 +392,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/peserta-smi/{id}/upload-bukti', [PesertaSmiController::class, 'uploadBuktiTransfer'])->name('peserta-smi.upload-bukti');
     Route::post('/peserta-smi/{id}/approve-bukti', [PesertaSmiController::class, 'approveBuktiTransfer'])->name('peserta-smi.approve-bukti');
     Route::get('/peserta-smi/export-pdf', [PesertaSmiController::class, 'exportPdf'])->name('peserta-smi.export-pdf');
+    Route::get('/admin/peserta-smi/{id}/detail-transaksi', [PesertaSmiController::class, 'getDetailTransaksi'])->name('peserta-smi.detail-transaksi');
     Route::resource('peserta-smi', PesertaSmiController::class)->names('peserta-smi');
 
     // Ads Activity

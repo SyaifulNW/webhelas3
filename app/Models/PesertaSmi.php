@@ -25,7 +25,10 @@ class PesertaSmi extends Model
         'tanggal_selesai',
         'biaya_pendaftaran',
         'spp_awal',
+        'tanggal_spp_awal',
+        'bulan_spp_awal',
         'pembayaran_spp',
+        'detail_pembayaran_spp',
         'total_pembayaran',
         'closing_cs_id',
         'cs_name',
@@ -77,6 +80,8 @@ class PesertaSmi extends Model
 
     protected $casts = [
         'spp_custom_schedule' => 'array',
+        'bulan_spp_awal' => 'array',
+        'detail_pembayaran_spp' => 'array',
     ];
 
     protected static function booted()

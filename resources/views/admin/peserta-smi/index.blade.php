@@ -1760,4 +1760,256 @@
             }
         }
     </script>
+
+    {{-- ====== MODAL DETAIL TRANSAKSI (Linda) ====== --}}
+    @if(auth()->check() && auth()->user()->name === 'Linda')
+    <div class="modal fade" id="modalDetailTransaksi" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+                <div class="modal-header bg-gradient-info text-white border-0">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas fa-money-bill-wave mr-2"></i>Detail Transaksi Pembayaran
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Peserta: <strong id="dtNama"></strong></p>
+                    <form id="formDetailTransaksi">
+                        <input type="hidden" id="dtId">
+                        
+                        <div class="form-group mb-3 border p-3 rounded" style="background-color: #f8f9fc;">
+                            <label class="font-weight-bold text-dark" style="font-size: 0.8rem;">SPP Awal</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label style="font-size: 0.75rem;">Nominal</label>
+                                    <input type="text" class="form-control input-currency" id="dtSppAwal" onkeyup="calculateTotalDetail()">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label style="font-size: 0.75rem;">Tanggal Transaksi</label>
+                                    <input type="date" class="form-control" id="dtTanggalSppAwal">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3 border p-3 rounded" style="background-color: #f8f9fc;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="font-weight-bold text-dark mb-0" style="font-size: 0.8rem;">Pembayaran SPP (Cicilan)</label>
+                                <button type="button" class="btn btn-sm btn-primary py-0 px-2" onclick="addSppCicilanRow()" style="font-size: 0.7rem;"><i class="fas fa-plus"></i> Tambah Cicilan</button>
+                            </div>
+                            <div id="sppCicilanContainer">
+                                <!-- Dynamic rows -->
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold text-primary" style="font-size: 0.85rem;">Total Pembayaran Keseluruhan</label>
+                            <input type="text" class="form-control input-currency border-primary text-primary font-weight-bold" id="dtTotalPembayaran" readonly style="background-color: #eaecf4;">
+                            <small class="text-muted mt-1 d-block">Total biaya closing yang akan ditampilkan di tabel utama. (Otomatis Dihitung)</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-success btn-sm font-weight-bold" onclick="saveDetailTransaksi()">
+                        <i class="fas fa-save mr-1"></i>Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sppCicilanCount = 0;
+        let originalSppAwalBulan = [];
+        let originalSppCicilanData = [];
+
+        function addSppCicilanRow(data = null) {
+            sppCicilanCount++;
+            const id = sppCicilanCount;
+            const container = document.getElementById('sppCicilanContainer');
+            
+            const nominal = data ? data.nominal : '';
+            const tanggal = data ? data.tanggal : '';
+
+            const html = `
+            <div class="spp-cicilan-row border p-2 mb-2 bg-white rounded position-relative" id="sppCicilanRow_${id}">
+                <button type="button" class="btn btn-sm btn-danger position-absolute" style="top: 5px; right: 5px; padding: 0.1rem 0.3rem; font-size: 0.7rem;" onclick="removeSppCicilanRow(${id})"><i class="fas fa-times"></i></button>
+                <div class="row mt-2">
+                    <div class="col-md-6 mb-2">
+                        <label style="font-size: 0.75rem;">Nominal Cicilan</label>
+                        <input type="text" class="form-control input-currency nominal-cicilan" id="cicilanNominal_${id}" value="${nominal}" onkeyup="calculateTotalDetail()">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label style="font-size: 0.75rem;">Tanggal Transaksi</label>
+                        <input type="date" class="form-control" id="cicilanTanggal_${id}" value="${tanggal}">
+                    </div>
+                </div>
+            </div>`;
+            
+            container.insertAdjacentHTML('beforeend', html);
+            
+            // Re-bind currency inputs
+            initCurrencyInputs();
+        }
+
+        function removeSppCicilanRow(id) {
+            document.getElementById(`sppCicilanRow_${id}`).remove();
+            calculateTotalDetail();
+        }
+
+        function calculateTotalDetail() {
+            const parseVal = (str) => parseInt((str || '0').replace(/[^0-9]/g, '')) || 0;
+            const fmt = (val) => new Intl.NumberFormat('id-ID').format(val);
+            
+            let total = 0;
+            total += parseVal(document.getElementById('dtSppAwal').value);
+            
+            document.querySelectorAll('.nominal-cicilan').forEach(el => {
+                total += parseVal(el.value);
+            });
+            
+            document.getElementById('dtTotalPembayaran').value = total > 0 ? fmt(total) : '';
+        }
+
+        function openDetailTransaksi(id, nama, biayaPendaftaran, sppAwal, pembayaranSpp, totalPembayaran) {
+            document.getElementById('dtId').value = id;
+            document.getElementById('dtNama').textContent = nama;
+            
+            const fmt = (val) => {
+                if(!val || isNaN(val) || val == '0') return '';
+                return new Intl.NumberFormat('id-ID').format(val);
+            };
+            
+            document.getElementById('dtSppAwal').value = fmt(sppAwal);
+            
+            // Clear previous data
+            document.getElementById('dtTanggalSppAwal').value = '';
+            document.getElementById('sppCicilanContainer').innerHTML = '';
+            sppCicilanCount = 0;
+            
+            // Fetch the details from server to populate correctly
+            fetch(`{{ url('admin/peserta-smi') }}/${id}/detail-transaksi`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success && data.data) {
+                    const dt = data.data;
+                    document.getElementById('dtTanggalSppAwal').value = dt.tanggal_spp_awal || '';
+                    if(dt.detail_pembayaran_spp && Array.isArray(dt.detail_pembayaran_spp)) {
+                        dt.detail_pembayaran_spp.forEach(c => addSppCicilanRow(c));
+                    }
+                }
+                // Fallback: If no cicilan details but there's a legacy total pembayaran_spp, just add one row
+                if(sppCicilanCount === 0 && pembayaranSpp > 0) {
+                    addSppCicilanRow({ nominal: fmt(pembayaranSpp) });
+                }
+                
+                calculateTotalDetail();
+            })
+            .catch(e => {
+                console.error(e);
+                // Fallback: If no cicilan details but there's a legacy total pembayaran_spp, just add one row
+                if(sppCicilanCount === 0 && pembayaranSpp > 0) {
+                    addSppCicilanRow({ nominal: fmt(pembayaranSpp) });
+                }
+                calculateTotalDetail();
+            });
+
+            $('#modalDetailTransaksi').modal('show');
+        }
+
+        function saveDetailTransaksi() {
+            const id = document.getElementById('dtId').value;
+            const parseVal = (str) => parseInt((str || '0').replace(/[^0-9]/g, '')) || 0;
+            
+            const sppAwal = parseVal(document.getElementById('dtSppAwal').value);
+            const tanggalSppAwal = document.getElementById('dtTanggalSppAwal').value;
+            
+            const detailCicilan = [];
+            let totalCicilan = 0;
+            
+            document.querySelectorAll('.spp-cicilan-row').forEach(row => {
+                const rowId = row.id.split('_')[1];
+                const nom = parseVal(document.getElementById(`cicilanNominal_${rowId}`).value);
+                const tgl = document.getElementById(`cicilanTanggal_${rowId}`).value;
+                
+                if (nom > 0 || tgl) {
+                    detailCicilan.push({
+                        nominal: nom,
+                        tanggal: tgl
+                    });
+                    totalCicilan += nom;
+                }
+            });
+            
+            const totalPembayaran = sppAwal + totalCicilan;
+
+            const btn = document.querySelector('#modalDetailTransaksi .btn-success');
+            const originalBtnHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Menyimpan...';
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+            const formData = new FormData();
+            formData.append('_token', csrfToken);
+            formData.append('_method', 'PUT');
+            formData.append('is_ajax', '1');
+            formData.append('ajax_field', 'detail_transaksi');
+            
+            formData.append('spp_awal', sppAwal);
+            formData.append('tanggal_spp_awal', tanggalSppAwal);
+            formData.append('pembayaran_spp', totalCicilan);
+            formData.append('detail_pembayaran_spp', JSON.stringify(detailCicilan));
+            formData.append('total_pembayaran', totalPembayaran);
+
+            fetch(`{{ url('peserta-smi') }}/${id}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Update table UI immediately
+                    const trTotal = document.getElementById('biaya_closing_display_' + id);
+                    if (trTotal) {
+                        trTotal.innerText = new Intl.NumberFormat('id-ID').format(totalPembayaran);
+                    }
+                    
+                    // You might also need to update the onclick function arguments to keep them in sync
+                    const btnDetail = document.querySelector(`button[onclick^="openDetailTransaksi(${id}"]`);
+                    if(btnDetail) {
+                         const nama = document.getElementById('dtNama').textContent;
+                         btnDetail.setAttribute('onclick', `openDetailTransaksi(${id}, '${nama.replace(/'/g, "\\'")}', '0', '${sppAwal}', '${totalCicilan}', '${totalPembayaran}')`);
+                    }
+
+                    $('#modalDetailTransaksi').modal('hide');
+                    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Detail transaksi berhasil disimpan', timer: 1500, showConfirmButton: false });
+                    
+                    // Trigger filter update to refresh the table if needed
+                    setTimeout(() => updateSmiFilters(), 500);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Terjadi kesalahan' });
+                }
+            })
+            .catch(e => {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan sistem' });
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+            });
+        }
+    </script>
+    @endif
 @endsection

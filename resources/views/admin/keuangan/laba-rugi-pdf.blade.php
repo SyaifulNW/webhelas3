@@ -127,7 +127,16 @@
             </thead>
             <tbody>
                 @php 
-                    $calcTotalPendapatan = ($totalMbc ?? 0) + ($totalSmi ?? 0) + ($totalPrivate ?? 0) + ($pendapatan ? $pendapatan->sum('jumlah') : 0);
+                    // Pre-calculate total pendapatan for percentage column (excluding manual duplicates of chapter/agen to avoid double-counting)
+                    $manualPendapatanExcludingPartners = 0;
+                    if ($pendapatan) {
+                        $manualPendapatanExcludingPartners = $pendapatan->filter(function($r) {
+                            $parent = trim($r->parent_keterangan ?? '');
+                            $ket = trim($r->keterangan ?? '');
+                            return $parent !== 'Pendapatan Chapter' && $ket !== 'Pendapatan Chapter' && $parent !== 'Pendapatan Agen' && $ket !== 'Pendapatan Agen';
+                        })->sum('jumlah');
+                    }
+                    $calcTotalPendapatan = ($totalMbc ?? 0) + ($totalSmi ?? 0) + ($totalPrivate ?? 0) + ($chapterTotal ?? 0) + ($agenTotal ?? 0) + $manualPendapatanExcludingPartners;
                     $totalSmiPendaftaran = $totalSmiPendaftaran ?? 0;
                     $totalSmiSpp = $totalSmiSpp ?? 0;
                 @endphp
@@ -203,9 +212,6 @@
 
                 @php 
                     $chapters = \App\Models\User::where('role', 'chapter')->orderBy('name')->get();
-                    $chapterMainSum = $pendapatan->filter(fn($r) => trim($r->keterangan ?? '') === 'Pendapatan Chapter' && empty(trim($r->parent_keterangan ?? '')))->sum('jumlah');
-                    $chapterSubSum = $pendapatan->filter(fn($r) => trim($r->parent_keterangan ?? '') === 'Pendapatan Chapter')->sum('jumlah');
-                    $chapterTotal = $chapterMainSum + $chapterSubSum;
                     $totalPendapatan += $chapterTotal;
                 @endphp
                 <tr>
@@ -220,7 +226,7 @@
                     @php
                         $chKeterangan = $ch->name;
                         $subRow = $pendapatan->filter(fn($r) => trim($r->keterangan ?? '') === $chKeterangan && trim($r->parent_keterangan ?? '') === 'Pendapatan Chapter')->first();
-                        $subJumlah = $subRow ? $subRow->jumlah : 0;
+                        $subJumlah = $subRow ? $subRow->jumlah : ($chapterAutoSales[$ch->id]['total'] ?? 0);
                     @endphp
                     @if($subJumlah > 0)
                         <tr class="sub-item">
@@ -235,9 +241,6 @@
 
                 @php 
                     $agens = \App\Models\User::where('role', 'reseller')->orderBy('name')->get();
-                    $agenMainSum = $pendapatan->filter(fn($r) => trim($r->keterangan ?? '') === 'Pendapatan Agen' && empty(trim($r->parent_keterangan ?? '')))->sum('jumlah');
-                    $agenSubSum = $pendapatan->filter(fn($r) => trim($r->parent_keterangan ?? '') === 'Pendapatan Agen')->sum('jumlah');
-                    $agenTotal = $agenMainSum + $agenSubSum;
                     $totalPendapatan += $agenTotal;
                 @endphp
                 <tr>
@@ -252,7 +255,7 @@
                     @php
                         $agKeterangan = $ag->name;
                         $subRow = $pendapatan->filter(fn($r) => trim($r->keterangan ?? '') === $agKeterangan && trim($r->parent_keterangan ?? '') === 'Pendapatan Agen')->first();
-                        $subJumlah = $subRow ? $subRow->jumlah : 0;
+                        $subJumlah = $subRow ? $subRow->jumlah : ($agenAutoSales[$ag->id] ?? 0);
                     @endphp
                     @if($subJumlah > 0)
                         <tr class="sub-item">
