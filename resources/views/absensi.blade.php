@@ -3,10 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#020617">
     <title>Absensi Kehadiran - Helas Corporation</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --primary: #ff005e;
@@ -165,43 +167,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* Live Clock Banner */
-        .clock-banner {
-            background: linear-gradient(135deg, rgba(255, 0, 94, 0.2), rgba(163, 0, 53, 0.2));
-            border: 1px solid rgba(255, 0, 94, 0.2);
-            border-radius: 20px;
-            padding: 16px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 20px -5px rgba(255, 0, 94, 0.1);
-        }
-
-        .clock-banner::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 80%);
-            pointer-events: none;
-        }
-
-        .live-time {
-            font-size: 2.2rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: #fff;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .live-date {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-            font-weight: 500;
-        }
 
         /* Cards Layout */
         .card {
@@ -632,16 +597,18 @@
             }
             .phone-frame {
                 height: 100vh;
+                height: 100dvh; /* use dynamic viewport height for mobile */
                 max-width: 100%;
                 border-radius: 0;
                 border: none;
                 box-shadow: none;
             }
-            .phone-notch {
-                display: none;
+            .phone-notch, .status-bar, .phone-bottom-nav {
+                display: none !important;
             }
-            .status-bar {
-                padding-top: 8px;
+            .app-container {
+                padding: env(safe-area-inset-top, 16px) 20px env(safe-area-inset-bottom, 24px) 20px;
+                height: 100%;
             }
         }
 
@@ -722,11 +689,6 @@
                 <div style="width: 40px;"></div> <!-- Spacer to center title -->
             </div>
 
-            <!-- Digital Clock Banner -->
-            <div class="clock-banner">
-                <div class="live-time" id="live-clock">08:30:15</div>
-                <div class="live-date" id="live-date">Kamis, 04 Juni 2026</div>
-            </div>
 
             <!-- Profile Info Card -->
             <div class="card">
@@ -927,12 +889,11 @@
 
     <script>
         // Config & Coordinates of Helas Corp Head Office (For distance check)
-        // Hardcode a default Office coordinate (Center of Jakarta or typical office coordinates)
         const OFFICE_COORDS = {
-            latitude: -6.201200,
-            longitude: 106.816000
+            latitude: parseFloat("{{ $settings['absensi_latitude'] ?? -6.201200 }}"),
+            longitude: parseFloat("{{ $settings['absensi_longitude'] ?? 106.816000 }}")
         };
-        const MAX_RADIUS_METERS = 50; // Office radius limit in meters
+        const MAX_RADIUS_METERS = parseInt("{{ $settings['absensi_radius'] ?? 50 }}"); // Office radius limit in meters
 
         // App States
         let currentMode = 'masuk'; // 'masuk' or 'pulang'
@@ -941,9 +902,18 @@
         let timesData = { masuk: null, pulang: null };
         let stream = null;
 
-        // Auto Clock-in time boundary: 08:00 AM
-        const LATE_BOUNDARY_HOUR = 8;
-        const LATE_BOUNDARY_MINUTE = 0;
+        // Auto Clock-in time boundaries
+        @php
+            $jamWeekday = explode(':', $settings['absensi_jam_masuk_weekday'] ?? '08:00');
+            $jamSabtu = explode(':', $settings['absensi_jam_masuk_sabtu'] ?? '08:00');
+            $pulangWeekday = explode(':', $settings['absensi_jam_pulang_weekday'] ?? '16:00');
+            $pulangSabtu = explode(':', $settings['absensi_jam_pulang_sabtu'] ?? '14:00');
+        @endphp
+        const BOUNDARY_WEEKDAY = { hour: {{ isset($jamWeekday[0]) ? (int)$jamWeekday[0] : 8 }}, minute: {{ isset($jamWeekday[1]) ? (int)$jamWeekday[1] : 0 }} };
+        const BOUNDARY_SABTU = { hour: {{ isset($jamSabtu[0]) ? (int)$jamSabtu[0] : 8 }}, minute: {{ isset($jamSabtu[1]) ? (int)$jamSabtu[1] : 0 }} };
+        
+        const PULANG_WEEKDAY = { hour: {{ isset($pulangWeekday[0]) ? (int)$pulangWeekday[0] : 16 }}, minute: {{ isset($pulangWeekday[1]) ? (int)$pulangWeekday[1] : 0 }} };
+        const PULANG_SABTU = { hour: {{ isset($pulangSabtu[0]) ? (int)$pulangSabtu[0] : 14 }}, minute: {{ isset($pulangSabtu[1]) ? (int)$pulangSabtu[1] : 0 }} };
 
         // Digital Clock & Date Update
         function updateClock() {
@@ -952,7 +922,6 @@
             let minutes = String(now.getMinutes()).padStart(2, '0');
             let seconds = String(now.getSeconds()).padStart(2, '0');
             
-            document.getElementById('live-clock').textContent = `${hours}:${minutes}:${seconds}`;
             document.getElementById('system-time').textContent = `${hours}:${minutes}`;
 
             // Check if late automatically for visual preview (only if mode is 'masuk' and status is 'Hadir')
@@ -977,8 +946,25 @@
 
             const currentHour = nowDate.getHours();
             const currentMinute = nowDate.getMinutes();
+            const dayOfWeek = nowDate.getDay(); // 0 is Sunday, 6 is Saturday
 
-            if (currentHour > LATE_BOUNDARY_HOUR || (currentHour === LATE_BOUNDARY_HOUR && currentMinute > LATE_BOUNDARY_MINUTE)) {
+            if (dayOfWeek === 0) {
+                // Minggu Libur
+                lateBadge.textContent = 'Minggu (Libur)';
+                lateBadge.className = 'badge badge-success';
+                return;
+            }
+
+            let lateHour, lateMinute;
+            if (dayOfWeek === 6) {
+                lateHour = BOUNDARY_SABTU.hour;
+                lateMinute = BOUNDARY_SABTU.minute;
+            } else {
+                lateHour = BOUNDARY_WEEKDAY.hour;
+                lateMinute = BOUNDARY_WEEKDAY.minute;
+            }
+
+            if (currentHour > lateHour || (currentHour === lateHour && currentMinute > lateMinute)) {
                 lateBadge.textContent = 'Terlambat';
                 lateBadge.className = 'badge badge-danger';
             } else {
@@ -995,11 +981,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Set Date Banner
-        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        const now = new Date();
-        document.getElementById('live-date').textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 
         // Toggle Attendance Mode
         function setAttendanceMode(mode) {
@@ -1337,8 +1318,41 @@
             const lngVal = document.getElementById('lng-val').textContent;
 
             if (!employeeId || !employeeName) {
-                alert("Mohon masukkan ID Karyawan dan Nama Karyawan!");
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Belum Lengkap',
+                    text: 'Mohon masukkan ID Karyawan dan Nama Karyawan!'
+                });
                 return;
+            }
+
+            // Validasi Jam Pulang
+            if (currentMode === 'pulang') {
+                const now = new Date();
+                const dayOfWeek = now.getDay();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+
+                let minPulangHour, minPulangMinute;
+                if (dayOfWeek === 6) { // Sabtu
+                    minPulangHour = PULANG_SABTU.hour;
+                    minPulangMinute = PULANG_SABTU.minute;
+                } else if (dayOfWeek !== 0) { // Senin-Jumat
+                    minPulangHour = PULANG_WEEKDAY.hour;
+                    minPulangMinute = PULANG_WEEKDAY.minute;
+                }
+
+                if (dayOfWeek !== 0) { // Jika bukan hari Minggu
+                    if (currentHour < minPulangHour || (currentHour === minPulangHour && currentMinute < minPulangMinute)) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Belum Waktunya Pulang',
+                            text: 'Maaf belum bisa Absen Pulang, Silakan Tunggu jam pulang dulu.',
+                            confirmButtonColor: '#ff005e'
+                        });
+                        return; // Stop submission
+                    }
+                }
             }
 
             // Capture selfie if not already captured

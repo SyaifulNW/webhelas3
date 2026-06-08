@@ -619,6 +619,83 @@
                     </div>
                 </div>
             </div>
+        @elseif(request('section') == 'settings' && in_array(Auth::user()->role, ['administrator', 'admin']))
+            <!-- SECTION: PENGATURAN ABSENSI -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h4 class="font-weight-bold text-dark mb-1"><i class="fas fa-cogs text-secondary mr-2"></i> Pengaturan Absensi
+                    </h4>
+                    <p class="text-muted mb-0" style="font-size: 0.85rem;">Konfigurasi parameter absensi seperti radius lokasi, koordinat kantor, dan jam masuk.</p>
+                </div>
+            </div>
+
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 12px; border-left: 4px solid #1cc88a;">
+                    <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
+
+            <div class="card shadow border-0" style="border-radius: 16px; overflow: hidden; max-width: 800px;">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Konfigurasi Parameter Absensi Mobile</h6>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ route('hr.settings.update') }}" method="POST">
+                        @csrf
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark small">Latitude Kantor</label>
+                                <input type="text" name="absensi_latitude" class="form-control premium-input" value="{{ $settings['absensi_latitude'] ?? '-6.201200' }}" required>
+                                <small class="text-muted">Contoh: -6.201200</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark small">Longitude Kantor</label>
+                                <input type="text" name="absensi_longitude" class="form-control premium-input" value="{{ $settings['absensi_longitude'] ?? '106.816000' }}" required>
+                                <small class="text-muted">Contoh: 106.816000</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark small">Batas Jarak Radius (Meter)</label>
+                                <input type="number" name="absensi_radius" class="form-control premium-input" value="{{ $settings['absensi_radius'] ?? '50' }}" required>
+                                <small class="text-muted">Jarak maksimal karyawan dari koordinat kantor.</small>
+                            </div>
+                            <div class="col-md-12 mt-3 mb-2">
+                                <h6 class="font-weight-bold text-dark border-bottom pb-2">Pengaturan Waktu (Senin - Jum'at)</h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark small">Batas Jam Masuk (Terlambat)</label>
+                                <input type="time" name="absensi_jam_masuk_weekday" class="form-control premium-input" value="{{ \Carbon\Carbon::parse($settings['absensi_jam_masuk_weekday'] ?? '08:00')->format('H:i') }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark small">Jam Pulang Minimum</label>
+                                <input type="time" name="absensi_jam_pulang_weekday" class="form-control premium-input" value="{{ \Carbon\Carbon::parse($settings['absensi_jam_pulang_weekday'] ?? '16:00')->format('H:i') }}" required>
+                            </div>
+
+                            <div class="col-md-12 mt-3 mb-2">
+                                <h6 class="font-weight-bold text-dark border-bottom pb-2">Pengaturan Waktu (Sabtu)</h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark small">Batas Jam Masuk (Terlambat)</label>
+                                <input type="time" name="absensi_jam_masuk_sabtu" class="form-control premium-input" value="{{ \Carbon\Carbon::parse($settings['absensi_jam_masuk_sabtu'] ?? '08:00')->format('H:i') }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="font-weight-bold text-dark small">Jam Pulang Minimum</label>
+                                <input type="time" name="absensi_jam_pulang_sabtu" class="form-control premium-input" value="{{ \Carbon\Carbon::parse($settings['absensi_jam_pulang_sabtu'] ?? '14:00')->format('H:i') }}" required>
+                            </div>
+                            <div class="col-md-12 text-muted small mt-2">
+                                <i class="fas fa-info-circle"></i> Untuk hari Minggu, sistem otomatis meliburkan absensi (tidak ada status terlambat).
+                            </div>
+                        </div>
+                        <div class="text-right mt-3">
+                            <button type="submit" class="btn btn-primary font-weight-bold premium-btn py-2 px-4 shadow-sm border-0">
+                                <i class="fas fa-save mr-1"></i> Simpan Pengaturan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         @endif
 
     </div>

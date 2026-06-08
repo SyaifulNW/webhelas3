@@ -90,6 +90,9 @@
                 <button class="btn sub-tab-btn btn-kpi" onclick="switchSdmSub(this, '{{ route('admin.penilaian-cs.index') }}?embed=true')">
                     <i class="fas fa-star me-1"></i> Penilaian KPI
                 </button>
+                <button class="btn sub-tab-btn btn-settings" onclick="switchSdmSub(this, '{{ route('hr') }}?section=settings&embed=true')">
+                    <i class="fas fa-cogs me-1"></i> Pengaturan Absensi
+                </button>
             </div>
             <iframe id="iframe-sdm" data-src="{{ route('hr') }}?section=karyawan&embed=true" style="width:100%; height:950px; border:none; border-radius: 0 0 10px 10px;" onload="resizeIframe(this); hideLoading();"></iframe>
         </div>
@@ -282,6 +285,14 @@
         background: #4e73df !important;
         color: white !important;
         box-shadow: 0 4px 12px rgba(78, 115, 223, 0.3) !important;
+        transform: translateY(-2px);
+    }
+
+    .btn-settings { border-color: #6c757d !important; color: #6c757d !important; }
+    .btn-settings:hover, .btn-settings.active-sub {
+        background: #6c757d !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3) !important;
         transform: translateY(-2px);
     }
 

@@ -1683,7 +1683,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         $data->situasi_bisnis = implode("\n", $answers) . "\n\nTotal Skor Form: " . $totalScore . " / 51\nKategori: " . strtoupper($category);
         $data->potensi = $category;
         $data->status_peserta = 'peserta_baru';
-        $data->leads = 'Ads';
+        
+        $role = strtolower($user->role);
+        if (in_array($role, ['chapter', 'reseller', 'agen']) || str_starts_with($role, 'chapter_')) {
+            $data->leads = 'Open House';
+        } else {
+            $data->leads = 'Ads';
+        }
         
         // Find M1T (Start-Up Muslim Indonesia) class ID
         $m1tClass = Kelas::where('nama_kelas', 'like', '%Muslim Indonesia%')->first();

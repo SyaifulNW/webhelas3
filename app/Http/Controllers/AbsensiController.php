@@ -45,6 +45,16 @@ class AbsensiController extends Controller
             ->orderBy('name')
             ->get();
 
+        $settings = [
+            'absensi_latitude' => \App\Models\Setting::where('key', 'absensi_latitude')->value('value') ?? '-6.201200',
+            'absensi_longitude' => \App\Models\Setting::where('key', 'absensi_longitude')->value('value') ?? '106.816000',
+            'absensi_radius' => \App\Models\Setting::where('key', 'absensi_radius')->value('value') ?? '50',
+            'absensi_jam_masuk_weekday' => \App\Models\Setting::where('key', 'absensi_jam_masuk_weekday')->value('value') ?? '08:00',
+            'absensi_jam_pulang_weekday' => \App\Models\Setting::where('key', 'absensi_jam_pulang_weekday')->value('value') ?? '16:00',
+            'absensi_jam_masuk_sabtu' => \App\Models\Setting::where('key', 'absensi_jam_masuk_sabtu')->value('value') ?? '08:00',
+            'absensi_jam_pulang_sabtu' => \App\Models\Setting::where('key', 'absensi_jam_pulang_sabtu')->value('value') ?? '14:00',
+        ];
+
         return view('hr', compact(
             'attendances',
             'selectedDate',
@@ -57,7 +67,8 @@ class AbsensiController extends Controller
             'persenTerlambat',
             'persenIzin',
             'monthlyAttendances',
-            'employees'
+            'employees',
+            'settings'
         ));
     }
 
@@ -126,7 +137,23 @@ class AbsensiController extends Controller
         // Automatic late validation (after 08:00 AM is late for check-in)
         $isLate = 'Tepat Waktu';
         if ($mode === 'masuk' && $statusKehadiran === 'Hadir') {
-            $boundary = Carbon::createFromFormat('H:i:s', '08:00:00');
+            $dayOfWeek = $now->dayOfWeek; // 0 (Sunday) to 6 (Saturday)
+            
+            if ($dayOfWeek == 0) {
+                // Sunday
+                $jamMasukSetting = '08:00'; // Or just leave as is, usually sunday is off
+            } elseif ($dayOfWeek == 6) {
+                // Saturday
+                $jamMasukSetting = \App\Models\Setting::where('key', 'absensi_jam_masuk_sabtu')->value('value') ?? '08:00';
+            } else {
+                // Monday to Friday
+                $jamMasukSetting = \App\Models\Setting::where('key', 'absensi_jam_masuk_weekday')->value('value') ?? '08:00';
+            }
+
+            if (strlen($jamMasukSetting) == 5) {
+                $jamMasukSetting .= ':00';
+            }
+            $boundary = Carbon::createFromFormat('H:i:s', $jamMasukSetting);
             if ($now->greaterThan($boundary)) {
                 $isLate = 'Terlambat';
             }
@@ -206,5 +233,36 @@ class AbsensiController extends Controller
             'success' => true,
             'data' => $attendances
         ]);
+    }
+
+    /**
+     * Update Attendance Settings
+     */
+    public function updateSettings(Request $request)
+    {
+        $request->validate([
+            'absensi_latitude' => 'required|numeric',
+            'absensi_longitude' => 'required|numeric',
+            'absensi_radius' => 'required|numeric',
+            'absensi_jam_masuk_weekday' => 'required|string',
+            'absensi_jam_pulang_weekday' => 'required|string',
+            'absensi_jam_masuk_sabtu' => 'required|string',
+            'absensi_jam_pulang_sabtu' => 'required|string',
+        ]);
+
+        $keys = [
+            'absensi_latitude', 'absensi_longitude', 'absensi_radius', 
+            'absensi_jam_masuk_weekday', 'absensi_jam_pulang_weekday', 
+            'absensi_jam_masuk_sabtu', 'absensi_jam_pulang_sabtu'
+        ];
+
+        foreach ($keys as $key) {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $request->input($key)]
+            );
+        }
+
+        return redirect()->back()->with('success', 'Pengaturan Absensi berhasil diperbarui!');
     }
 }

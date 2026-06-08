@@ -43,18 +43,34 @@ use App\Http\Controllers\Admin\AdminWalletController;
 */
 
 Route::get('/', function () {
-    if (Auth::check() && Auth::user()->name === 'Fitra Jaya Saleh') {
-        $role = strtolower(Auth::user()->role);
-        if ($role === 'administrator') return redirect('/administrator');
-        if ($role === 'manager') return redirect('/manager');
-        return redirect('/home');
+    if (Auth::check()) {
+        $role = strtolower(Auth::user()->role ?? '');
+        
+        if (Auth::user()->name === 'Fitra Jaya Saleh') {
+            if ($role === 'administrator') return redirect('/administrator');
+            if ($role === 'manager') return redirect('/manager');
+            return redirect('/home');
+        }
+
+        if (in_array($role, ['chapter', 'reseller', 'agen']) || str_starts_with($role, 'chapter_')) {
+            return redirect('/home');
+        }
     }
     return view('welcome');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/absensi', function () {
-        return view('absensi');
+        $settings = [
+            'absensi_latitude' => \App\Models\Setting::where('key', 'absensi_latitude')->value('value') ?? '-6.201200',
+            'absensi_longitude' => \App\Models\Setting::where('key', 'absensi_longitude')->value('value') ?? '106.816000',
+            'absensi_radius' => \App\Models\Setting::where('key', 'absensi_radius')->value('value') ?? '50',
+            'absensi_jam_masuk_weekday' => \App\Models\Setting::where('key', 'absensi_jam_masuk_weekday')->value('value') ?? '08:00',
+            'absensi_jam_pulang_weekday' => \App\Models\Setting::where('key', 'absensi_jam_pulang_weekday')->value('value') ?? '16:00',
+            'absensi_jam_masuk_sabtu' => \App\Models\Setting::where('key', 'absensi_jam_masuk_sabtu')->value('value') ?? '08:00',
+            'absensi_jam_pulang_sabtu' => \App\Models\Setting::where('key', 'absensi_jam_pulang_sabtu')->value('value') ?? '14:00',
+        ];
+        return view('absensi', compact('settings'));
     })->name('absensi');
 
     Route::post('/api/absensi/store', [App\Http\Controllers\AbsensiController::class, 'store'])->name('api.absensi.store');
@@ -150,6 +166,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::post('/pendapatan-lainnya/store', [HomeController::class, 'storePendapatanLainnya'])->name('pendapatan.lainnya.store');
     Route::get('/hr', [App\Http\Controllers\AbsensiController::class, 'hr'])->name('hr');
+    Route::post('/hr/settings/update', [App\Http\Controllers\AbsensiController::class, 'updateSettings'])->name('hr.settings.update');
     Route::post('/hr/employee/update', [App\Http\Controllers\AbsensiController::class, 'updateEmployee'])->name('hr.employee.update');
     Route::post('/hr/employee/store', [App\Http\Controllers\AbsensiController::class, 'storeEmployee'])->name('hr.employee.store');
     Route::delete('/hr/employee/{id}', [App\Http\Controllers\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
