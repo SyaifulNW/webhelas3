@@ -12,38 +12,17 @@ class LoginController extends Controller
     use AuthenticatesUsers;
 
     /**
-     * Redirect user berdasarkan role setelah login sukses.
+     * Redirect user setelah login sukses ke halaman selamat datang / pemilihan menu.
      */
-protected function authenticated(Request $request, $user)
-{
-    // Jika login dari halaman SMI
-    if ($request->has('smi_login')) {
-        return redirect('/home');
-    }
-
-    // Login default berdasarkan role
-    switch (strtolower($user->role)) {
-
-        case 'administrator':
-            return redirect('/administrator');
-
-        case 'marketing':
-            return redirect('/marketing');
-
-        case 'manager':
-            return redirect('/manager');
-
-        case 'hr': // ✅ Tambahan role HR
-        case 'human_resource': // opsional jika nama role berbeda
-            return redirect('/hr'); // sesuaikan dengan route dashboard HR kamu
-        
-        case 'advertising':
-            return redirect('/advertising');
-        
-        default:
+    protected function authenticated(Request $request, $user)
+    {
+        // Jika login dari halaman SMI
+        if ($request->has('smi_login')) {
             return redirect('/home');
+        }
+
+        return redirect('/');
     }
-}
 
 
 

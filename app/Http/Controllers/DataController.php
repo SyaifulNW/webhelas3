@@ -162,7 +162,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         $sortOrderParam = $request->input('order', 'desc');
         
         // Whitelist columns
-        $allowedSorts = ['created_at', 'created_by', 'nama', 'status_peserta']; 
+        $allowedSorts = ['created_at', 'created_by', 'nama', 'status_peserta', 'follow_up', 'zoom_done', 'zoom_unscheduled', 'zoom_scheduled']; 
         if (!in_array($sortByParam, $allowedSorts)) {
             $sortByParam = 'created_at';
         }
@@ -230,8 +230,87 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             });
         }
 
-        $query->orderBy('is_no_potensi', 'asc')
-              ->orderBy($sortByParam, $sortOrderParam); // Order By must be after search conditions if any
+        if (in_array($sortByParam, ['follow_up', 'zoom_done', 'zoom_unscheduled', 'zoom_scheduled'])) {
+            $query->select('data.*');
+
+            $targetKelasId = !empty($request->input('prospek_kelas_id')) && $request->input('prospek_kelas_id') !== 'all' 
+                ? $request->input('prospek_kelas_id') 
+                : ($request->input('daftar_kelas') ?: $request->input('kelas_id'));
+
+            $kelasCond = '';
+            if (!empty($targetKelasId)) {
+                $kelasCond = "AND salesplans.kelas_id = " . intval($targetKelasId);
+            }
+
+            if ($sortByParam === 'follow_up') {
+                $followUpCountSql = "(SELECT (
+                    CASE WHEN fu1_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu2_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu3_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu4_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu5_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu6_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu7_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu8_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu9_at IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN fu10_at IS NOT NULL THEN 1 ELSE 0 END
+                ) FROM salesplans WHERE salesplans.data_id = data.id AND salesplans.deleted_at IS NULL {$kelasCond} ORDER BY salesplans.id DESC LIMIT 1)";
+                
+                $query->selectSub($followUpCountSql, 'fu_count_sort');
+                $query->orderBy('is_no_potensi', 'asc')
+                      ->orderBy('fu_count_sort', 'desc')
+                      ->orderBy('data.id', 'desc');
+            } elseif ($sortByParam === 'zoom_done') {
+                $zoomDoneSql = "(CASE WHEN data.ikut_zoom = 1 THEN 1 ELSE (
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM zoom_schedules 
+                        JOIN salesplans ON salesplans.id = zoom_schedules.salesplan_id
+                        WHERE zoom_schedules.data_id = data.id 
+                          AND zoom_schedules.status = 'done'
+                          AND salesplans.deleted_at IS NULL
+                          {$kelasCond}
+                    ) THEN 1 ELSE 0 END
+                ) END)";
+                
+                $query->selectSub($zoomDoneSql, 'zoom_done_sort');
+                $query->orderBy('is_no_potensi', 'asc')
+                      ->orderBy('zoom_done_sort', 'desc')
+                      ->orderBy('data.id', 'desc');
+            } elseif ($sortByParam === 'zoom_scheduled') {
+                $zoomScheduledSql = "(CASE WHEN EXISTS (
+                    SELECT 1 FROM zoom_schedules 
+                    JOIN salesplans ON salesplans.id = zoom_schedules.salesplan_id
+                    WHERE zoom_schedules.data_id = data.id 
+                      AND zoom_schedules.status = 'scheduled'
+                      AND salesplans.deleted_at IS NULL
+                      {$kelasCond}
+                ) THEN 1 ELSE 0 END)";
+                
+                $query->selectSub($zoomScheduledSql, 'zoom_scheduled_sort');
+                $query->orderBy('is_no_potensi', 'asc')
+                      ->orderBy('zoom_scheduled_sort', 'desc')
+                      ->orderBy('data.id', 'desc');
+            } elseif ($sortByParam === 'zoom_unscheduled') {
+                $zoomUnscheduledSql = "(CASE WHEN data.ikut_zoom = 1 THEN 0 ELSE (
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM zoom_schedules 
+                        JOIN salesplans ON salesplans.id = zoom_schedules.salesplan_id
+                        WHERE zoom_schedules.data_id = data.id 
+                          AND zoom_schedules.status IN ('done', 'scheduled')
+                          AND salesplans.deleted_at IS NULL
+                          {$kelasCond}
+                    ) THEN 0 ELSE 1 END
+                ) END)";
+                
+                $query->selectSub($zoomUnscheduledSql, 'zoom_unscheduled_sort');
+                $query->orderBy('is_no_potensi', 'asc')
+                      ->orderBy('zoom_unscheduled_sort', 'desc')
+                      ->orderBy('data.id', 'desc');
+            }
+        } else {
+            $query->orderBy('is_no_potensi', 'asc')
+                  ->orderBy($sortByParam, $sortOrderParam); // Order By must be after search conditions if any
+        }
 
         // Jika admin MBC → hanya 6 CS tertentu (DISABLED/ADJUSTED: User reported CS seeing shared data is undesirable)
         // if (in_array($userId, $adminMbcIds)) {
@@ -409,6 +488,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             // Reseller/Agen: See own data + downline data
             $downlineNames = \App\Models\User::where('created_by', $user->id)->pluck('name')->toArray();
             $viewNames = array_merge([$user->name], $downlineNames);
+            
+            if ($user->name === 'Tim Chapter Depok') {
+                $viewNames[] = 'AGUNG H. WIBOWO';
+            }
+            
             $query->whereIn('created_by', $viewNames);
         }
 
@@ -467,6 +551,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         } elseif (in_array($userRole, ['reseller', 'agen'])) {
             $downlineNames = \App\Models\User::where('created_by', $user->id)->pluck('name')->toArray();
             $viewNames = array_merge([$user->name], $downlineNames);
+            if ($user->name === 'Tim Chapter Depok') {
+                $viewNames[] = 'AGUNG H. WIBOWO';
+            }
             $kpiQuery->whereIn('created_by', $viewNames);
         }
         // Agus Setyo
@@ -1596,7 +1683,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         $data->situasi_bisnis = implode("\n", $answers) . "\n\nTotal Skor Form: " . $totalScore . " / 51\nKategori: " . strtoupper($category);
         $data->potensi = $category;
         $data->status_peserta = 'peserta_baru';
-        $data->leads = 'Ads';
+        
+        $role = strtolower($user->role);
+        if (in_array($role, ['chapter', 'reseller', 'agen']) || str_starts_with($role, 'chapter_')) {
+            $data->leads = 'Open House';
+        } else {
+            $data->leads = 'Ads';
+        }
         
         // Find M1T (Start-Up Muslim Indonesia) class ID
         $m1tClass = Kelas::where('nama_kelas', 'like', '%Muslim Indonesia%')->first();

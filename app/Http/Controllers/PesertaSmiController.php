@@ -326,13 +326,10 @@ class PesertaSmiController extends Controller
                     $countPaid++;
                 }
             }
-            $biayaClosing = $item->total_pembayaran ?? $item->spp_awal;
-            if (!$biayaClosing && ($item->biaya_pendaftaran || $item->pembayaran_spp)) {
-                $biayaClosing = (float) $item->biaya_pendaftaran + (float) $item->pembayaran_spp;
-            }
-            if (!$biayaClosing) {
-                $biayaClosing = $item->biaya_pendaftaran;
-            }
+                $biayaClosing = $item->total_pembayaran ?? ((float)$item->spp_awal + (float)$item->pembayaran_spp);
+                if (!$biayaClosing) {
+                    $biayaClosing = $item->spp_awal;
+                }
             $isLumpSumLunas = ($biayaClosing >= (6 * $levelNominal));
 
             if ($isManualLunas || $countPaid >= 6 || $isLumpSumLunas) {
@@ -619,7 +616,7 @@ class PesertaSmiController extends Controller
                     if ($isClosing) {
                         $stats['count_closing']++;
                         // Align with DashboardController@labaRugi calculation logic
-                        $closingNominal = (float)($p->biaya_pendaftaran ?? $p->salesPlan->nominal ?? 0);
+                        $closingNominal = (float)($p->spp_awal ?? $p->salesPlan->nominal ?? 0);
                         if (isset($p->pembayaran_spp) && (float)$p->pembayaran_spp > 0) {
                             $closingNominal += (float)$p->pembayaran_spp;
                         }
@@ -695,12 +692,9 @@ class PesertaSmiController extends Controller
                         $countPaid++;
                     }
                 }
-                $biayaClosing = $item->total_pembayaran ?? $item->spp_awal;
-                if (!$biayaClosing && ($item->biaya_pendaftaran || $item->pembayaran_spp)) {
-                    $biayaClosing = (float) $item->biaya_pendaftaran + (float) $item->pembayaran_spp;
-                }
+                $biayaClosing = $item->total_pembayaran ?? ((float)$item->spp_awal + (float)$item->pembayaran_spp);
                 if (!$biayaClosing) {
-                    $biayaClosing = $item->biaya_pendaftaran;
+                    $biayaClosing = $item->spp_awal;
                 }
                 $isLumpSumLunas = ($biayaClosing >= (6 * $levelNominal));
 
@@ -2051,7 +2045,23 @@ class PesertaSmiController extends Controller
         if ($request->ajax() || $request->is_ajax || $request->header('X-Requested-With') == 'XMLHttpRequest') {
             $field = $request->ajax_field;
 
-            // SPECIAL: Lunas All SPP logic
+            // SPECIAL: Detail Transaksi Update
+            if ($field === 'detail_transaksi') {
+                $peserta->biaya_pendaftaran = $request->biaya_pendaftaran;
+                $peserta->spp_awal = $request->spp_awal;
+                $peserta->tanggal_spp_awal = $request->tanggal_spp_awal;
+                $peserta->bulan_spp_awal = json_decode($request->bulan_spp_awal, true);
+                $peserta->pembayaran_spp = $request->pembayaran_spp;
+                $peserta->detail_pembayaran_spp = json_decode($request->detail_pembayaran_spp, true);
+                $peserta->total_pembayaran = $request->total_pembayaran;
+                $peserta->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Detail transaksi berhasil diperbarui'
+                ]);
+            }
+
             if ($field === 'spp_bulk') {
                 $updatedDates = [];
                 for ($i = 1; $i <= 12; $i++) {
@@ -2083,7 +2093,7 @@ class PesertaSmiController extends Controller
                 $value = $request->$field;
 
                 // Special handling for currency fields
-                if (in_array($field, ['biaya_pendaftaran']) || strpos($field, 'spp_') === 0) {
+                if (in_array($field, ['biaya_pendaftaran', 'pembayaran_spp', 'total_pembayaran']) || strpos($field, 'spp_') === 0) {
                     $value = str_replace('.', '', $value);
                 }
 
@@ -2266,6 +2276,19 @@ class PesertaSmiController extends Controller
         }
 
         return redirect()->back()->with('success', 'Peserta M1T berhasil dihapus.');
+    }
+
+    public function getDetailTransaksi($id)
+    {
+        $peserta = \App\Models\PesertaSmi::findOrFail($id);
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'tanggal_spp_awal' => $peserta->tanggal_spp_awal,
+                'bulan_spp_awal' => $peserta->bulan_spp_awal ?? [],
+                'detail_pembayaran_spp' => $peserta->detail_pembayaran_spp ?? []
+            ]
+        ]);
     }
 
     public function restore($id)

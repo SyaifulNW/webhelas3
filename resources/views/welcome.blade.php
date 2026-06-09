@@ -390,13 +390,53 @@
 
         <!-- Layout Sejajar Pusat: Cards - Owner - Cards -->
         <!-- Single Login Section -->
+        @guest
         <div class="login-row">
             <div class="feature-card common-card">
                 <div class="logo-wrapper">
                     <img src="{{ asset('backend/Helas.jpg') }}" alt="Logo Helas Corporation">
                 </div>
                 <h3>Login Ke Sistem</h3>
+                <p style="font-size: 0.85rem; color: #eee; margin: 10px 0; line-height: 1.4; opacity: 0.9;">Silakan login terlebih dahulu untuk mengakses sistem manajemen dan absensi.</p>
                 <a href="{{ route('login') }}" class="card-button">Masuk</a>
+            </div>
+        </div>
+        @else
+        @php
+            $dashboardUrl = url('/home');
+            switch (strtolower(Auth::user()->role)) {
+                case 'administrator':
+                    $dashboardUrl = url('/administrator');
+                    break;
+                case 'marketing':
+                    $dashboardUrl = url('/marketing');
+                    break;
+                case 'manager':
+                    $dashboardUrl = url('/manager');
+                    break;
+                case 'hr':
+                case 'human_resource':
+                    $dashboardUrl = url('/hr');
+                    break;
+                case 'advertising':
+                    $dashboardUrl = url('/advertising');
+                    break;
+            }
+        @endphp
+        
+        <div style="margin-bottom: 30px; text-align: center; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; max-width: 400px; margin-left: auto; margin-right: auto; backdrop-filter: blur(10px);">
+            <p style="font-size: 1.2rem; color: #fde047; font-weight: 800; text-transform: capitalize; letter-spacing: 0.5px;">Selamat Datang, {{ Auth::user()->name }}!</p>
+            <p style="font-size: 0.85rem; color: #eee; opacity: 0.8; margin-top: 5px;">Terautentikasi sebagai: <span style="text-transform: uppercase; font-weight: 700; color: #ff005e;">{{ Auth::user()->role }}</span></p>
+        </div>
+
+        <div class="login-row">
+            <div class="feature-card common-card">
+                <div class="logo-wrapper">
+                    <img src="{{ asset('backend/Helas.jpg') }}" alt="Logo Helas Corporation">
+                </div>
+                <h3>Dashboard Utama</h3>
+                <p style="font-size: 0.85rem; color: #eee; margin: 10px 0; line-height: 1.4; opacity: 0.9;">Masuk ke panel manajemen utama sesuai dengan role akun Anda.</p>
+                <a href="{{ $dashboardUrl }}" class="card-button">Buka Dashboard</a>
             </div>
 
             <div class="feature-card common-card">
@@ -404,9 +444,20 @@
                     <img src="{{ asset('backend/Helas.jpg') }}" alt="Logo Helas Corporation" style="filter: hue-rotate(140deg);">
                 </div>
                 <h3>Absensi Karyawan</h3>
-                <a href="{{ route('absensi') }}" class="card-button" style="background: linear-gradient(90deg, #10b981, #059669); color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);">Absen</a>
+                <p style="font-size: 0.85rem; color: #eee; margin: 10px 0; line-height: 1.4; opacity: 0.9;">Lakukan pencatatan kehadiran harian menggunakan verifikasi GPS & selfie.</p>
+                <a href="{{ route('absensi') }}" class="card-button" style="background: linear-gradient(90deg, #10b981, #059669); color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);">Mulai Absen</a>
             </div>
         </div>
+
+        <div style="margin-top: 35px;">
+            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="display: inline-block; padding: 10px 24px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 50px; color: #fca5a5; font-weight: 700; text-decoration: none; transition: all 0.3s; font-size: 0.9rem;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.borderColor='rgba(239, 68, 68, 0.4)';" onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'; this.style.borderColor='rgba(255, 255, 255, 0.15)';">
+                Keluar / Logout
+            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
+        </div>
+        @endguest
 
     </div>
 </body>

@@ -56,7 +56,7 @@
 
             {{-- Level Selection (Linda Only) --}}
             @if(auth()->user()->name === 'Linda')
-            <div class="mt-1 px-1">
+            <div class="mt-1 px-1 d-flex align-items-center" style="gap: 4px;">
                 <select class="form-control form-control-sm" 
                     style="font-size: 0.65rem; height: 18px; width: 80px; padding: 0 4px; border-radius: 4px; border: 1px solid #d1d3e2; background-color: #f8f9fc; color: #4e73df; font-weight: bold;" 
                     onchange="quickUpdateField(this, {{ $item->id }}, 'level')">
@@ -64,6 +64,9 @@
                     <option value="Grow Up" {{ $item->level == 'Grow Up' ? 'selected' : '' }}>Grow</option>
                     <option value="Start Up" {{ $item->level == 'Start Up' ? 'selected' : '' }}>Start</option>
                 </select>
+                <button type="button" class="btn btn-outline-info btn-sm" style="font-size: 0.55rem; padding: 1px 4px; height: 18px; line-height: 1;" onclick="openDetailTransaksi({{ $item->id }}, '{{ addslashes($item->nama) }}', '{{ $item->biaya_pendaftaran }}', '{{ $item->spp_awal }}', '{{ $item->pembayaran_spp }}', '{{ $item->total_pembayaran }}')">
+                    Detail Transaksi
+                </button>
             </div>
             @endif
             @if($isAllPaid)
@@ -148,14 +151,12 @@
         {{-- Biaya Closing Awal --}}
         <td class="p-1 align-middle text-center">
             @php
-                $biayaClosing = $item->total_pembayaran ?? $item->spp_awal;
-                if (!$biayaClosing && ($item->biaya_pendaftaran || $item->pembayaran_spp)) {
-                    $biayaClosing = (float) $item->biaya_pendaftaran + (float) $item->pembayaran_spp;
+                $biayaClosing = $item->total_pembayaran ?? ((float)$item->spp_awal + (float)$item->pembayaran_spp);
+                if (!$biayaClosing) {
+                    $biayaClosing = $item->spp_awal;
                 }
-                if (!$biayaClosing)
-                    $biayaClosing = $item->biaya_pendaftaran;
              @endphp
-            <div class="text-center h6 font-weight-bold text-dark mb-1">
+            <div class="text-center h6 font-weight-bold text-dark mb-1" id="biaya_closing_display_{{ $item->id }}">
                 {{ number_format((float) $biayaClosing, 0, ',', '.') }}
             </div>
             

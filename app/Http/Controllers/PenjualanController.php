@@ -690,48 +690,108 @@ class PenjualanController extends Controller
     {
         $totalSpp = 0;
         $byCS = [];
-        $pesertas = PesertaSmi::with('salesPlan')->get();
-        
+
+        $m1tClasses = Kelas::where('nama_kelas', 'like', '%Muslim Indonesia%')
+            ->orWhere('nama_kelas', 'like', 'SMI - %')
+            ->pluck('id')->toArray();
+
+        // Fetch all participants with relations
+        $pesertas = PesertaSmi::with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
+
         $monthsToCheck = ($bulan === 'all') ? range(1, 12) : [(int)$bulan];
         $filterYear = ($tahun !== 'all') ? (int)$tahun : (int)date('Y');
 
         foreach ($pesertas as $p) {
-            // Skip if not active or cuti
-            if ($p->status === 'Cuti') continue;
-
-            // Check if Lunas
-            $isManualLunas = ($p->is_lunas == 1);
-            $countPaidTotal = 0;
-            for ($m_check = 1; $m_check <= 12; $m_check++) {
-                if (($p->{"spp_$m_check"} ?? 0) >= 1000000) $countPaidTotal++;
+            // 1. Class Filter Alignment
+            if (!$p->salesPlan || !in_array($p->salesPlan->kelas_id, $m1tClasses)) {
+                continue;
             }
-            if ($isManualLunas || $countPaidTotal >= 6) continue;
 
-            $selectedMonths = [];
-            if ($p->salesPlan && is_array($p->salesPlan->selected_months)) {
-                $selectedMonths = $p->salesPlan->selected_months;
-            } elseif ($p->salesPlan && is_string($p->salesPlan->selected_months)) {
-                $selectedMonths = json_decode($p->salesPlan->selected_months, true) ?? [];
+            // 2. Approval Status Filter Alignment
+            $creatorRole = strtolower($p->closingCs->role ?? $p->createdBy->role ?? $p->salesPlan->createdBy->role ?? '');
+            $needsApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+            if ($needsApproval && $p->approval_status !== 'Approved') {
+                continue;
+            }
+
+            // 3. Lunas Badge calculation (Same logic)
+            $paidMonthsCount = 0;
+            for ($i = 1; $i <= 12; $i++) {
+                if ((float) ($p->{"spp_$i"} ?? 0) >= 1000000) {
+                    $paidMonthsCount++;
+                }
+            }
+            $isLunasBadge = ($p->is_lunas == 1 || $paidMonthsCount >= 6);
+
+            if ($isLunasBadge) {
+                continue; // Skip this participant entirely
             }
 
             foreach ($monthsToCheck as $m) {
-                $val = (float)($p->{"spp_$m"} ?? 0);
-                $paymentDate = $p->{"tanggal_spp_$m"} ?? null;
+                // 4. Active Period Filter Alignment
+                $dateStart = Carbon::createFromDate($filterYear, $m, 1)->startOfMonth()->format('Y-m-d');
+                $dateEnd = Carbon::createFromDate($filterYear, $m, 1)->endOfMonth()->format('Y-m-d');
 
-                if ($val > 0) {
-                    $pYear = $paymentDate ? (int)Carbon::parse($paymentDate)->format('Y') : null;
-                    if (($tahun === 'all' || $pYear === $filterYear)) {
-                        // Crucial: Exclude payments already part of the initial "Closing" package
-                        // (Blue checkmarks on the SMI dashboard)
-                        $isPlanChecked = (isset($selectedMonths[$filterYear]) && in_array($m, $selectedMonths[$filterYear]));
-                        
-                        if (!$isPlanChecked) {
-                            $totalSpp += $val;
-                            $csId = $p->salesPlan ? $p->salesPlan->created_by : null;
-                            if ($csId) {
-                                $byCS[$csId] = ($byCS[$csId] ?? 0) + $val;
-                            }
+                $isActive = ($p->tanggal_masuk <= $dateEnd) && ($p->tanggal_selesai >= $dateStart || is_null($p->tanggal_selesai));
+                if (!$isActive) {
+                    continue;
+                }
+
+                // 5. Payment check
+                $val = 0;
+                $tglSpp = $p->{"tanggal_spp_$m"};
+                $paymentYear = $tglSpp ? Carbon::parse($tglSpp)->format('Y') : null;
+                if (($p->{"spp_$m"} ?? 0) > 0 && (!$paymentYear || $paymentYear == $filterYear)) {
+                    $val = (float) $p->{"spp_$m"};
+                }
+
+                // 6. Blue Checklist Logic (Closing or Planned)
+                // Priority: tanggal_closing -> tanggal_masuk -> updated_at
+                $effectiveDate = null;
+                if ($p->salesPlan) {
+                    if ($p->salesPlan->tanggal_closing) {
+                        $effectiveDate = Carbon::parse($p->salesPlan->tanggal_closing);
+                    } else {
+                        $effectiveDate = $p->tanggal_masuk ? Carbon::parse($p->tanggal_masuk) : $p->salesPlan->updated_at;
+                    }
+                } else {
+                    $effectiveDate = $p->tanggal_masuk ? Carbon::parse($p->tanggal_masuk) : $p->created_at;
+                }
+
+                $effM = (int)$effectiveDate->month;
+                $effY = (int)$effectiveDate->year;
+                $isClosing = ($effM == $m && $effY == $filterYear);
+
+                $customSch = $p->spp_custom_schedule ?? [];
+                $isPlanned = false;
+                foreach ($customSch as $sch) {
+                    if ((int)$sch['month'] === $m && (int)($sch['year'] ?? $filterYear) === (int)$filterYear) {
+                        $isPlanned = true;
+                        break;
+                    }
+                }
+
+                if (!$isPlanned && $p->salesPlan) {
+                    $selectedMonths = $p->salesPlan->selected_months;
+                    if (is_string($selectedMonths)) {
+                        $selectedMonths = json_decode($selectedMonths, true) ?? [];
+                    }
+                    if (isset($selectedMonths[$filterYear]) && is_array($selectedMonths[$filterYear])) {
+                        if (in_array($m, $selectedMonths[$filterYear])) {
+                            $isPlanned = true;
                         }
+                    }
+                }
+
+                $isBlue = $isClosing || $isPlanned;
+
+                // 7. SPP Revenue Calculation
+                // Exclude OFF status from SPP count just like dashboard card
+                if (!in_array($p->status, ['Cuti', 'OFF', 'off']) && !$isBlue && $val > 0) {
+                    $totalSpp += $val;
+                    $csId = $p->salesPlan ? $p->salesPlan->created_by : null;
+                    if ($csId) {
+                        $byCS[$csId] = ($byCS[$csId] ?? 0) + $val;
                     }
                 }
             }

@@ -1738,7 +1738,14 @@
                     const filterChapter = document.getElementById('filterChapter');
                     if (filterChapter) params.chapter_id = filterChapter.value;
 
+                    const sortPotensi = document.getElementById('sortPotensi');
+                    if (sortPotensi) params.sort_by = sortPotensi.value;
+
                     updateFilters(params);
+                }
+
+                function applySortPotensi(val) {
+                    applyAllDatabaseFilters();
                 }
 
                 function toggleFilterKelas(val) {
@@ -2029,13 +2036,31 @@
                                     {{-- Header for Admin in CS Helas Tab --}}
                                 @elseif($isAdminCSView)
                                     <th style="width: 220px;">Situasi Bisnis</th>
-                                    <th style="width: 150px; text-align:center;">Potensi Ikut Kelas</th>
+                                    <th style="width: 170px; text-align:center; vertical-align: middle;">
+                                        Potensi Ikut Kelas <br>
+                                        <select id="sortPotensi" class="form-control form-control-sm mt-1 mx-auto" style="font-size: 0.75rem; width: 100%; max-width: 150px;" onchange="applySortPotensi(this.value)">
+                                            <option value="">-- Urutkan --</option>
+                                            <option value="follow_up" {{ request('sort_by') == 'follow_up' ? 'selected' : '' }}>Follow Up</option>
+                                            <option value="zoom_done" {{ request('sort_by') == 'zoom_done' ? 'selected' : '' }}>Zoom Selesai</option>
+                                            <option value="zoom_unscheduled" {{ request('sort_by') == 'zoom_unscheduled' ? 'selected' : '' }}>Belum Dijadwalkan</option>
+                                            <option value="zoom_scheduled" {{ request('sort_by') == 'zoom_scheduled' ? 'selected' : '' }}>Sudah Dijadwalkan</option>
+                                        </select>
+                                    </th>
                                     <th style="width: 120px; text-align:center;">CS PIC</th>
 
                                     {{-- Header for CS-MBC role --}}
                                 @elseif($isCSMBCView)
                                     <th style="width: 220px;">Situasi Bisnis</th>
-                                    <th style="width: 150px; text-align:center;">Potensi Ikut Kelas</th>
+                                    <th style="width: 170px; text-align:center; vertical-align: middle;">
+                                        Potensi Ikut Kelas <br>
+                                        <select id="sortPotensi" class="form-control form-control-sm mt-1 mx-auto" style="font-size: 0.75rem; width: 100%; max-width: 150px;" onchange="applySortPotensi(this.value)">
+                                            <option value="">-- Urutkan --</option>
+                                            <option value="follow_up" {{ request('sort_by') == 'follow_up' ? 'selected' : '' }}>Follow Up</option>
+                                            <option value="zoom_done" {{ request('sort_by') == 'zoom_done' ? 'selected' : '' }}>Zoom Selesai</option>
+                                            <option value="zoom_unscheduled" {{ request('sort_by') == 'zoom_unscheduled' ? 'selected' : '' }}>Belum Dijadwalkan</option>
+                                            <option value="zoom_scheduled" {{ request('sort_by') == 'zoom_scheduled' ? 'selected' : '' }}>Sudah Dijadwalkan</option>
+                                        </select>
+                                    </th>
                                     {{-- <th style="min-width: 140px; text-align:center;">✅ Kelas yang Sudah Diikuti</th> --}}
                                     {{-- <th style="min-width: 140px; text-align:center;">🔔 Kelas yang Belum Diikuti</th> --}}
                                     <th style="width: 80px; text-align:center;">Action</th>
