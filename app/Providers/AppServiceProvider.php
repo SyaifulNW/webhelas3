@@ -50,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        \Carbon\Carbon::setLocale('id');
+
          View::composer('*', function ($view) {
         $view->with('kelas', \App\Models\Kelas::all());
     });

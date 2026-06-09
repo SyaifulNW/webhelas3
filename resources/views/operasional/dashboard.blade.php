@@ -923,7 +923,8 @@
                 <div class="card border-0 shadow-sm mt-4" style="border-radius: 15px; overflow: hidden;">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="font-weight-bold mb-0 text-dark"><i class="fas fa-boxes mr-2 text-info"></i> Data Monitoring
+                            <h5 class="font-weight-bold mb-0 text-dark"><i class="fas fa-boxes mr-2 text-info"></i> Data
+                                Monitoring
                                 Inventaris</h5>
                             <div class="d-flex gap-2" style="gap: 8px;">
                                 <button class="btn btn-info btn-sm shadow-sm"
@@ -1097,196 +1098,198 @@
 
                 {{-- ── Riwayat Report Pengecekan (hidden - not used) ── --}}
                 <div style="display:none;">
-                @if (session('success_report'))
-                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                        <i class="fas fa-check-circle mr-2"></i>{{ session('success_report') }}
-                        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-                    </div>
-                @endif
+                    @if (session('success_report'))
+                        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>{{ session('success_report') }}
+                            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                        </div>
+                    @endif
 
-                <div class="card border-0 shadow-sm mt-4" style="border-radius: 15px; overflow: hidden;">
-                    <div class="card-header text-center font-weight-bold"
-                        style="background-color: #4e73df; color: #fff; border: none; text-transform: uppercase; letter-spacing: 1px;">
-                        <i class="fas fa-archive mr-2"></i> Riwayat Report Pengecekan Inventaris
-                    </div>
-                    <div class="card-body p-4">
-                        @if ($reportInventaris->isEmpty())
-                            <p class="text-muted text-center py-3">Belum ada report yang diunggah.</p>
-                        @else
-                            <div class="table-responsive">
-                                <table class="table table-monitoring mb-0" id="tbl-riwayat-report">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-center"
-                                                style="width:50px; background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
-                                                No</th>
-                                            <th
-                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
-                                                Periode</th>
-                                            <th
-                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
-                                                Tanggal Pemeriksaan</th>
-                                            <th
-                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
-                                                Nama File</th>
-                                            <th
-                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
-                                                Upload Oleh</th>
-                                            <th
-                                                style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
-                                                Tanggal Upload</th>
-                                            <th class="text-center"
-                                                style="width:160px; background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
-                                                Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($reportInventaris as $i => $rpt)
+                    <div class="card border-0 shadow-sm mt-4" style="border-radius: 15px; overflow: hidden;">
+                        <div class="card-header text-center font-weight-bold"
+                            style="background-color: #4e73df; color: #fff; border: none; text-transform: uppercase; letter-spacing: 1px;">
+                            <i class="fas fa-archive mr-2"></i> Riwayat Report Pengecekan Inventaris
+                        </div>
+                        <div class="card-body p-4">
+                            @if ($reportInventaris->isEmpty())
+                                <p class="text-muted text-center py-3">Belum ada report yang diunggah.</p>
+                            @else
+                                <div class="table-responsive">
+                                    <table class="table table-monitoring mb-0" id="tbl-riwayat-report">
+                                        <thead>
                                             <tr>
-                                                <td class="text-center">{{ $i + 1 }}</td>
-                                                <td>{{ $rpt->periode }}</td>
-                                                <td class="text-center">{{ $rpt->tanggal_pemeriksaan->format('d-m-Y') }}
-                                                </td>
-                                                <td>
-                                                    <i class="fas fa-file-pdf text-danger mr-1"></i>
-                                                    {{ $rpt->nama_file }}
-                                                    @if ($rpt->catatan)
-                                                        <br><small class="text-muted"><i
-                                                                class="fas fa-comment mr-1"></i>{{ $rpt->catatan }}</small>
-                                                    @endif
-                                                </td>
-                                                <td>{{ optional($rpt->uploader)->name ?? '-' }}</td>
-                                                <td class="text-center">{{ $rpt->created_at->format('d-m-Y H:i') }}</td>
-                                                <td class="text-center">
-                                                    <div class="d-flex justify-content-center" style="gap:4px;">
-                                                        {{-- Lihat --}}
-                                                        <a href="{{ asset('storage/' . $rpt->file_pdf) }}"
-                                                            target="_blank" class="btn btn-primary btn-xs"
-                                                            style="padding:3px 8px; font-size:0.75rem; border-radius:6px;"
-                                                            title="Lihat PDF">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        {{-- Download --}}
-                                                        <a href="{{ route('inventaris-kantor.report.download', $rpt->id) }}"
-                                                            class="btn btn-info btn-xs"
-                                                            style="padding:3px 8px; font-size:0.75rem; border-radius:6px; color:#fff;"
-                                                            title="Download PDF">
-                                                            <i class="fas fa-download"></i>
-                                                        </a>
-                                                        {{-- Hapus --}}
-                                                        <form method="POST"
-                                                            action="{{ route('inventaris-kantor.report.destroy', $rpt->id) }}"
-                                                            onsubmit="return confirm('Hapus report ini?')"
-                                                            style="display:inline;">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-danger btn-xs"
-                                                                style="padding:3px 8px; font-size:0.75rem; border-radius:6px;"
-                                                                title="Hapus">
-                                                                <i class="fas fa-trash-alt"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
+                                                <th class="text-center"
+                                                    style="width:50px; background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                    No</th>
+                                                <th
+                                                    style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                    Periode</th>
+                                                <th
+                                                    style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                    Tanggal Pemeriksaan</th>
+                                                <th
+                                                    style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                    Nama File</th>
+                                                <th
+                                                    style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                    Upload Oleh</th>
+                                                <th
+                                                    style="background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                    Tanggal Upload</th>
+                                                <th class="text-center"
+                                                    style="width:160px; background-color:#4e73df !important; color:#fff !important; border:1px solid #000 !important;">
+                                                    Aksi</th>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($reportInventaris as $i => $rpt)
+                                                <tr>
+                                                    <td class="text-center">{{ $i + 1 }}</td>
+                                                    <td>{{ $rpt->periode }}</td>
+                                                    <td class="text-center">
+                                                        {{ $rpt->tanggal_pemeriksaan->format('d-m-Y') }}
+                                                    </td>
+                                                    <td>
+                                                        <i class="fas fa-file-pdf text-danger mr-1"></i>
+                                                        {{ $rpt->nama_file }}
+                                                        @if ($rpt->catatan)
+                                                            <br><small class="text-muted"><i
+                                                                    class="fas fa-comment mr-1"></i>{{ $rpt->catatan }}</small>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ optional($rpt->uploader)->name ?? '-' }}</td>
+                                                    <td class="text-center">{{ $rpt->created_at->format('d-m-Y H:i') }}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="d-flex justify-content-center" style="gap:4px;">
+                                                            {{-- Lihat --}}
+                                                            <a href="{{ asset('storage/' . $rpt->file_pdf) }}"
+                                                                target="_blank" class="btn btn-primary btn-xs"
+                                                                style="padding:3px 8px; font-size:0.75rem; border-radius:6px;"
+                                                                title="Lihat PDF">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                            {{-- Download --}}
+                                                            <a href="{{ route('inventaris-kantor.report.download', $rpt->id) }}"
+                                                                class="btn btn-info btn-xs"
+                                                                style="padding:3px 8px; font-size:0.75rem; border-radius:6px; color:#fff;"
+                                                                title="Download PDF">
+                                                                <i class="fas fa-download"></i>
+                                                            </a>
+                                                            {{-- Hapus --}}
+                                                            <form method="POST"
+                                                                action="{{ route('inventaris-kantor.report.destroy', $rpt->id) }}"
+                                                                onsubmit="return confirm('Hapus report ini?')"
+                                                                style="display:inline;">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-danger btn-xs"
+                                                                    style="padding:3px 8px; font-size:0.75rem; border-radius:6px;"
+                                                                    title="Hapus">
+                                                                    <i class="fas fa-trash-alt"></i>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        </div>
                     </div>
-                </div>
                 </div>{{-- end hidden riwayat report --}}
 
                 {{-- ── Modal Upload Report (hidden - not used) ── --}}
                 <div style="display:none;">
-                <div class="modal fade" id="modalUploadReport" tabindex="-1" role="dialog"
-                    aria-labelledby="modalUploadReportLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-md" role="document">
-                        <div class="modal-content" style="border-radius:14px; overflow:hidden;">
-                            <div class="modal-header" style="background:#1cc88a; color:#fff;">
-                                <h5 class="modal-title font-weight-bold" id="modalUploadReportLabel">
-                                    <i class="fas fa-upload mr-2"></i> Upload Report Pengecekan Inventaris
-                                </h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
-                                    style="color:#fff; opacity:1;">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <form action="{{ route('inventaris-kantor.report.upload') }}" method="POST"
-                                enctype="multipart/form-data">
-                                @csrf
-                                <div class="modal-body">
-                                    @if ($errors->any())
-                                        <div class="alert alert-danger py-2">
-                                            <ul class="mb-0 pl-3">
-                                                @foreach ($errors->all() as $err)
-                                                    <li style="font-size:0.85rem;">{{ $err }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    @endif
-
-                                    <div class="form-row">
-                                        <div class="form-group col-6">
-                                            <label class="font-weight-bold" style="font-size:0.85rem;">Bulan Periode <span
-                                                    class="text-danger">*</span></label>
-                                            <select name="bulan" class="form-control form-control-sm" required>
-                                                <option value="">-- Pilih Bulan --</option>
-                                                @foreach ([1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'] as $num => $nama)
-                                                    <option value="{{ $num }}"
-                                                        {{ old('bulan', now()->month) == $num ? 'selected' : '' }}>
-                                                        {{ $nama }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-6">
-                                            <label class="font-weight-bold" style="font-size:0.85rem;">Tahun Periode <span
-                                                    class="text-danger">*</span></label>
-                                            <select name="tahun" class="form-control form-control-sm" required>
-                                                @for ($y = now()->year; $y >= now()->year - 3; $y--)
-                                                    <option value="{{ $y }}"
-                                                        {{ old('tahun', now()->year) == $y ? 'selected' : '' }}>
-                                                        {{ $y }}</option>
-                                                @endfor
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="font-weight-bold" style="font-size:0.85rem;">Tanggal Pemeriksaan
-                                            <span class="text-danger">*</span></label>
-                                        <input type="date" name="tanggal_pemeriksaan"
-                                            class="form-control form-control-sm"
-                                            value="{{ old('tanggal_pemeriksaan', now()->format('Y-m-d')) }}" required>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="font-weight-bold" style="font-size:0.85rem;">Upload File PDF <span
-                                                class="text-danger">*</span></label>
-                                        <input type="file" name="file_pdf" class="form-control form-control-sm"
-                                            accept=".pdf" required>
-                                        <small class="text-muted">Format: PDF. Maksimal 10 MB.</small>
-                                    </div>
-
-                                    <div class="form-group mb-0">
-                                        <label class="font-weight-bold" style="font-size:0.85rem;">Catatan <span
-                                                class="text-muted">(opsional)</span></label>
-                                        <textarea name="catatan" class="form-control form-control-sm" rows="2" placeholder="Catatan tambahan..."
-                                            maxlength="1000">{{ old('catatan') }}</textarea>
-                                    </div>
-                                </div>
-                                <div class="modal-footer py-2">
-                                    <button type="button" class="btn btn-secondary btn-sm"
-                                        data-dismiss="modal">Batal</button>
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        <i class="fas fa-cloud-upload-alt mr-1"></i> Upload
+                    <div class="modal fade" id="modalUploadReport" tabindex="-1" role="dialog"
+                        aria-labelledby="modalUploadReportLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-md" role="document">
+                            <div class="modal-content" style="border-radius:14px; overflow:hidden;">
+                                <div class="modal-header" style="background:#1cc88a; color:#fff;">
+                                    <h5 class="modal-title font-weight-bold" id="modalUploadReportLabel">
+                                        <i class="fas fa-upload mr-2"></i> Upload Report Pengecekan Inventaris
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                                        style="color:#fff; opacity:1;">
+                                        <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
-                            </form>
+                                <form action="{{ route('inventaris-kantor.report.upload') }}" method="POST"
+                                    enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="modal-body">
+                                        @if ($errors->any())
+                                            <div class="alert alert-danger py-2">
+                                                <ul class="mb-0 pl-3">
+                                                    @foreach ($errors->all() as $err)
+                                                        <li style="font-size:0.85rem;">{{ $err }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
+
+                                        <div class="form-row">
+                                            <div class="form-group col-6">
+                                                <label class="font-weight-bold" style="font-size:0.85rem;">Bulan Periode
+                                                    <span class="text-danger">*</span></label>
+                                                <select name="bulan" class="form-control form-control-sm" required>
+                                                    <option value="">-- Pilih Bulan --</option>
+                                                    @foreach ([1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'] as $num => $nama)
+                                                        <option value="{{ $num }}"
+                                                            {{ old('bulan', now()->month) == $num ? 'selected' : '' }}>
+                                                            {{ $nama }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-6">
+                                                <label class="font-weight-bold" style="font-size:0.85rem;">Tahun Periode
+                                                    <span class="text-danger">*</span></label>
+                                                <select name="tahun" class="form-control form-control-sm" required>
+                                                    @for ($y = now()->year; $y >= now()->year - 3; $y--)
+                                                        <option value="{{ $y }}"
+                                                            {{ old('tahun', now()->year) == $y ? 'selected' : '' }}>
+                                                            {{ $y }}</option>
+                                                    @endfor
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="font-weight-bold" style="font-size:0.85rem;">Tanggal Pemeriksaan
+                                                <span class="text-danger">*</span></label>
+                                            <input type="date" name="tanggal_pemeriksaan"
+                                                class="form-control form-control-sm"
+                                                value="{{ old('tanggal_pemeriksaan', now()->format('Y-m-d')) }}" required>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="font-weight-bold" style="font-size:0.85rem;">Upload File PDF
+                                                <span class="text-danger">*</span></label>
+                                            <input type="file" name="file_pdf" class="form-control form-control-sm"
+                                                accept=".pdf" required>
+                                            <small class="text-muted">Format: PDF. Maksimal 10 MB.</small>
+                                        </div>
+
+                                        <div class="form-group mb-0">
+                                            <label class="font-weight-bold" style="font-size:0.85rem;">Catatan <span
+                                                    class="text-muted">(opsional)</span></label>
+                                            <textarea name="catatan" class="form-control form-control-sm" rows="2" placeholder="Catatan tambahan..."
+                                                maxlength="1000">{{ old('catatan') }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer py-2">
+                                        <button type="button" class="btn btn-secondary btn-sm"
+                                            data-dismiss="modal">Batal</button>
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-cloud-upload-alt mr-1"></i> Upload
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
                 </div>{{-- end hidden modal upload report --}}
             </div>
 
@@ -1328,7 +1331,22 @@
                         </div>
 
                         <!-- Tombol Tambah Data di kanan atas tabel -->
-                        <div class="d-flex justify-content-end mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <!-- Legenda Icon Fasilitas -->
+                            <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                                <span class="font-weight-bold text-muted mr-1" style="font-size: 0.78rem;">Keterangan icon
+                                    kolom Fasilitas:</span>
+                                <span class="badge badge-light border shadow-sm d-inline-flex align-items-center"
+                                    style="font-size: 0.75rem; padding: 5px 10px; border-radius: 20px; gap: 5px;">
+                                    <i class="fas fa-keyboard text-secondary" style="font-size: 0.8rem;"></i>
+                                    <span class="text-dark">Ketik nama fasilitas manual</span>
+                                </span>
+                                <span class="badge badge-light border shadow-sm d-inline-flex align-items-center"
+                                    style="font-size: 0.75rem; padding: 5px 10px; border-radius: 20px; gap: 5px;">
+                                    <i class="fas fa-list text-secondary" style="font-size: 0.8rem;"></i>
+                                    <span class="text-dark">Pilih fasilitas dari list inventaris</span>
+                                </span>
+                            </div>
                             <button class="btn btn-primary btn-sm shadow-sm" style="border-radius: 8px;"
                                 id="btnTambahPerbaikanInline">
                                 <i class="fas fa-plus mr-1"></i> Perbaikan
@@ -1374,35 +1392,43 @@
                                             <td>
                                                 <div class="fasilitas-cell-wrapper">
                                                     {{-- SELECT2 container (shown when inventaris dipilih) --}}
-                                                    <div class="inventaris-select-container" style="{{ $item->inventaris_id ? '' : 'display:none;' }}">
+                                                    <div class="inventaris-select-container"
+                                                        style="{{ $item->inventaris_id ? '' : 'display:none;' }}">
                                                         <div class="input-group input-group-sm">
                                                             <div style="flex-grow: 1;">
-                                                                <select class="form-control form-control-sm select2-inventaris live-edit" data-field="inventaris_id" style="width:100%;">
-                                                                    @if($item->inventaris_id)
-                                                                        <option value="{{ $item->inventaris_id }}" selected>{{ optional($item->inventaris)->nama_peralatan }}{{ optional($item->inventaris)->lokasi ? ' (' . optional($item->inventaris)->lokasi . ')' : '' }}</option>
+                                                                <select
+                                                                    class="form-control form-control-sm select2-inventaris live-edit"
+                                                                    data-field="inventaris_id" style="width:100%;">
+                                                                    @if ($item->inventaris_id)
+                                                                        <option value="{{ $item->inventaris_id }}"
+                                                                            selected>
+                                                                            {{ optional($item->inventaris)->nama_peralatan }}{{ optional($item->inventaris)->lokasi ? ' (' . optional($item->inventaris)->lokasi . ')' : '' }}
+                                                                        </option>
                                                                     @else
                                                                         <option value=""></option>
                                                                     @endif
                                                                 </select>
                                                             </div>
                                                             <div class="input-group-append">
-                                                                <button class="btn btn-switch-to-manual" type="button" title="Ketik manual">
+                                                                <button class="btn btn-switch-to-manual" type="button"
+                                                                    title="Ketik manual">
                                                                     <i class="fas fa-keyboard"></i>
                                                                 </button>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     {{-- MANUAL INPUT container (shown when manual input / empty) --}}
-                                                    <div class="fasilitas-manual-container" style="{{ $item->inventaris_id ? 'display:none;' : '' }}">
+                                                    <div class="fasilitas-manual-container"
+                                                        style="{{ $item->inventaris_id ? 'display:none;' : '' }}">
                                                         <div class="input-group input-group-sm">
                                                             <input type="text"
-                                                                   class="form-control form-control-sm live-edit manual-input"
-                                                                   data-field="fasilitas_manual"
-                                                                   value="{{ $item->fasilitas_manual ?? $item->fasilitas }}"
-                                                                   placeholder="Tulis nama fasilitas..."
-                                                                   autocomplete="off">
+                                                                class="form-control form-control-sm live-edit manual-input"
+                                                                data-field="fasilitas_manual"
+                                                                value="{{ $item->fasilitas_manual ?? $item->fasilitas }}"
+                                                                placeholder="Tulis nama fasilitas..." autocomplete="off">
                                                             <div class="input-group-append">
-                                                                <button class="btn btn-switch-to-select" type="button" title="Pilih dari inventaris">
+                                                                <button class="btn btn-switch-to-select" type="button"
+                                                                    title="Pilih dari inventaris">
                                                                     <i class="fas fa-list"></i>
                                                                 </button>
                                                             </div>
@@ -1411,11 +1437,9 @@
                                                 </div>
                                                 {{-- Deadline --}}
                                                 <div class="deadline-label">Deadline</div>
-                                                <input type="date"
-                                                       class="form-control-inline text-center live-edit"
-                                                       data-field="tanggal_selesai"
-                                                       value="{{ $item->tanggal_selesai }}"
-                                                       style="width:110px; font-size:0.72rem;">
+                                                <input type="date" class="form-control-inline text-center live-edit"
+                                                    data-field="tanggal_selesai" value="{{ $item->tanggal_selesai }}"
+                                                    style="width:110px; font-size:0.72rem;">
                                             </td>
                                             <td class="text-truncate-cell">
                                                 <textarea class="form-control-inline live-edit auto-resize kerusakan-field" data-field="kerusakan" rows="1"
@@ -1498,12 +1522,12 @@
                                                         </a>
                                                         <div class="mt-1"><a href="javascript:void(0)"
                                                                 class="small text-primary font-weight-bold"
-                                                                onclick="openUploadModal({{ $item->id }}, '{{ addslashes($item->inventaris_id ? (optional($item->inventaris)->nama_peralatan) : ($item->fasilitas_manual ?? $item->fasilitas)) }}', 'monitoring')">Ganti</a>
+                                                                onclick="openUploadModal({{ $item->id }}, '{{ addslashes($item->inventaris_id ? optional($item->inventaris)->nama_peralatan : $item->fasilitas_manual ?? $item->fasilitas) }}', 'monitoring')">Ganti</a>
                                                         </div>
                                                 </div>@else<div class="d-flex flex-column align-items-center"><button
                                                             type="button"
                                                             class="btn btn-outline-primary btn-xs px-2 shadow-sm font-weight-bold"
-                                                            onclick="openUploadModal({{ $item->id }}, '{{ addslashes($item->inventaris_id ? (optional($item->inventaris)->nama_peralatan) : ($item->fasilitas_manual ?? $item->fasilitas)) }}', 'monitoring')"
+                                                            onclick="openUploadModal({{ $item->id }}, '{{ addslashes($item->inventaris_id ? optional($item->inventaris)->nama_peralatan : $item->fasilitas_manual ?? $item->fasilitas) }}', 'monitoring')"
                                                             style="font-size: 0.7rem; padding: 2px 5px;"><i
                                                                 class="fas fa-upload mr-1"></i> Upload</button></div>
                                                 @endif
@@ -2085,11 +2109,15 @@
                         url: "{{ route('inventaris-kantor.search') }}",
                         dataType: 'json',
                         delay: 250,
-                        data: function (params) {
-                            return { q: params.term || '' };
+                        data: function(params) {
+                            return {
+                                q: params.term || ''
+                            };
                         },
-                        processResults: function (data) {
-                            return { results: data.results };
+                        processResults: function(data) {
+                            return {
+                                results: data.results
+                            };
                         },
                         cache: true
                     }
@@ -2104,16 +2132,18 @@
                 const td = $(this).closest('td');
                 const selectContainer = td.find('.inventaris-select-container');
                 const manualContainer = td.find('.fasilitas-manual-container');
-                const manualInput     = td.find('.manual-input');
-                const selectEl        = td.find('.select2-inventaris');
+                const manualInput = td.find('.manual-input');
+                const selectEl = td.find('.select2-inventaris');
 
                 selectContainer.hide();
                 manualContainer.show();
-                
+
                 // Reset select2 value
                 selectEl.val(null).trigger('change.select2');
 
-                setTimeout(function() { manualInput.focus(); }, 50);
+                setTimeout(function() {
+                    manualInput.focus();
+                }, 50);
             });
 
             // Toggle to select2 search
@@ -2121,8 +2151,8 @@
                 const td = $(this).closest('td');
                 const selectContainer = td.find('.inventaris-select-container');
                 const manualContainer = td.find('.fasilitas-manual-container');
-                const manualInput     = td.find('.manual-input');
-                const selectEl        = td.find('.select2-inventaris');
+                const manualInput = td.find('.manual-input');
+                const selectEl = td.find('.select2-inventaris');
 
                 manualContainer.hide();
                 selectContainer.show();
@@ -2133,7 +2163,9 @@
 
                 // Re-initialize Select2 and open dropdown
                 initSelect2(selectEl);
-                setTimeout(function() { selectEl.select2('open'); }, 50);
+                setTimeout(function() {
+                    selectEl.select2('open');
+                }, 50);
             });
 
             // ====================== LIVE EDIT MONITORING ======================
@@ -2239,7 +2271,8 @@
                         $('#monitoring-table-body').prepend(newRow);
 
                         // Initialize Select2 on the new row
-                        initSelect2($('#monitoring-table-body tr').first().find('.select2-inventaris'));
+                        initSelect2($('#monitoring-table-body tr').first().find(
+                            '.select2-inventaris'));
 
                         // Re-index numbers
                         $('#monitoring-table-body tr').each(function(index) {
@@ -2390,7 +2423,7 @@
 
                     const rowProgress = tr.find('[data-field="progress"]').val();
                     const rowDeadline = tr.find('[data-field="tanggal_selesai"]').val();
-                    
+
                     let rowFasilitas = '';
                     const selectEl = tr.find('[data-field="inventaris_id"]');
                     const isManualVisible = tr.find('.fasilitas-manual-container').is(':visible');

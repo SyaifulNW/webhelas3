@@ -145,6 +145,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/employee/update', [App\Http\Controllers\AbsensiController::class, 'updateEmployee'])->name('hr.employee.update');
     Route::post('/hr/employee/store', [App\Http\Controllers\AbsensiController::class, 'storeEmployee'])->name('hr.employee.store');
     Route::delete('/hr/employee/{id}', [App\Http\Controllers\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
+
+    // Agenda (To-Do List) — semua role kecuali chapter, reseller, agen
+    Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,operasional,hrd,produksi'])->group(function () {
+        Route::get('/agenda', [App\Http\Controllers\AgendaController::class, 'index'])->name('agenda.index');
+        Route::post('/agenda/store', [App\Http\Controllers\AgendaController::class, 'store'])->name('agenda.store');
+        Route::post('/agenda/toggle/{logId}', [App\Http\Controllers\AgendaController::class, 'toggleCheck'])->name('agenda.toggle');
+        Route::delete('/agenda/{id}', [App\Http\Controllers\AgendaController::class, 'destroy'])->name('agenda.destroy');
+    });
     Route::get('/administrator', [AdminController::class, 'index'])->name('administrator');
     Route::get('/marketing', [MarketingController::class, 'index'])->name('marketing');
     Route::get('/advertising', [AdvertisingController::class, 'index'])->name('advertising');

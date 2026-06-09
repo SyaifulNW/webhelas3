@@ -333,28 +333,79 @@
             height: 40px !important;
             /* Ukuran lebih kecil saat minimize */
         }
+
         /* Pulse effect for notification */
         @keyframes pulse-red {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 74, 59, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(231, 74, 59, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 74, 59, 0); }
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(231, 74, 59, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(231, 74, 59, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(231, 74, 59, 0);
+            }
         }
+
         /* Pulse & Bounce effect for notification */
         @keyframes pulse-red {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 74, 59, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(231, 74, 59, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 74, 59, 0); }
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(231, 74, 59, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(231, 74, 59, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(231, 74, 59, 0);
+            }
         }
+
         @keyframes notify-bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-            40% {transform: translateY(-4px);}
-            60% {transform: translateY(-2px);}
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-4px);
+            }
+
+            60% {
+                transform: translateY(-2px);
+            }
         }
+
         @keyframes pulse-yellow {
-            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(246, 194, 62, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(246, 194, 62, 0); }
-            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(246, 194, 62, 0); }
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(246, 194, 62, 0.7);
+            }
+
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 12px rgba(246, 194, 62, 0);
+            }
+
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(246, 194, 62, 0);
+            }
         }
+
         .badge-pulse {
             animation: pulse-red 2s infinite, notify-bounce 4s infinite;
             border-radius: 50% !important;
@@ -376,12 +427,12 @@
     </style>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             const sidebar = document.getElementById("accordionSidebar");
             const toggleBtn = document.getElementById("sidebarToggleTop");
 
             if (toggleBtn) {
-                toggleBtn.addEventListener("click", function () {
+                toggleBtn.addEventListener("click", function() {
                     sidebar.classList.toggle("active");
                 });
             }
@@ -396,7 +447,7 @@
     <div id="wrapper">
 
         <!-- Sidebar -->
-        @if(!request()->has('embed'))
+        @if (!request()->has('embed'))
             <ul class="navbar-nav bg-gradient-info sidebar sidebar-dark accordion" id="accordionSidebar">
                 <br>
                 <!-- Sidebar - Brand -->
@@ -408,22 +459,29 @@
                             $userName = Auth::user()->name;
                             $nama = $userName ?? '';
                             $namaSMI = ['Latifah', 'Tursia', 'Agus Setyo'];
-                            
+
                             $pendingM1TCount = 0;
-                            if ($userRole === 'administrator' || stripos($userName, 'Linda') !== false || stripos($userName, 'Yasmin') !== false || stripos($userName, 'Shafa Zahra') !== false) {
-                                $pendingM1TCount = \App\Models\PesertaSmi::where(function($q) {
-                                    $q->where('approval_status', 'Pending')
-                                      ->orWhereNull('approval_status');
+                            if (
+                                $userRole === 'administrator' ||
+                                stripos($userName, 'Linda') !== false ||
+                                stripos($userName, 'Yasmin') !== false ||
+                                stripos($userName, 'Shafa Zahra') !== false
+                            ) {
+                                $pendingM1TCount = \App\Models\PesertaSmi::where(function ($q) {
+                                    $q->where('approval_status', 'Pending')->orWhereNull('approval_status');
                                 })
-                                ->where(function($q) {
-                                    $q->whereHas('closingCs', function($sq) {
-                                        $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
-                                    })->orWhereHas('createdBy', function($sq) {
-                                        $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
-                                    })->orWhereHas('salesPlan.createdBy', function($sq) {
-                                        $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
-                                    });
-                                })->count();
+                                    ->where(function ($q) {
+                                        $q->whereHas('closingCs', function ($sq) {
+                                            $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+                                        })
+                                            ->orWhereHas('createdBy', function ($sq) {
+                                                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+                                            })
+                                            ->orWhereHas('salesPlan.createdBy', function ($sq) {
+                                                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+                                            });
+                                    })
+                                    ->count();
                             }
                         @endphp
 
@@ -450,8 +508,7 @@
                             }
                         </style>
 
-                        @if(in_array($nama, $namaSMI))
-
+                        @if (in_array($nama, $namaSMI))
                             {{-- Logo SMI --}}
                             <img src="{{ asset('backend/logosmi1.jpg') }}" alt="SMI Logo"
                                 style="height: 70px; width: auto; object-fit: contain; display: block;">
@@ -469,9 +526,9 @@
                 <!-- Nav Item - Dashboard -->
                 {{-- Nav Item - Dashboard --}}
                 {{-- Nav Item - Dashboard --}}
-                @if(strtolower(Auth::user()->role) === 'administrator')
+                @if (strtolower(Auth::user()->role) === 'administrator')
                     {{-- 1. DASHBOARD CEO --}}
-                    @if(\App\Models\Menu::isActive('dashboard_admin'))
+                    @if (\App\Models\Menu::isActive('dashboard_admin'))
                         <li class="nav-item {{ request()->routeIs('administrator') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('administrator') }}" title="DASHBOARD CEO">
                                 <i class="fas fa-fw fa-tachometer-alt"></i>
@@ -481,7 +538,7 @@
                     @endif
 
                     {{-- 2. DATABASE (COMBINED) --}}
-                    @if(\App\Models\Menu::isActive('database_cs'))
+                    @if (\App\Models\Menu::isActive('database_cs'))
                         <li class="nav-item {{ request()->routeIs('admin.database.database') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.database.database') }}" title="DATABASE">
                                 <i class="fas fa-fw fa-database"></i>
@@ -493,13 +550,14 @@
 
 
                     {{-- 3. DATA PESERTA (Unified MBC & M1T) --}}
-                    @if(\App\Models\Menu::isActive('sales_plan'))
+                    @if (\App\Models\Menu::isActive('sales_plan'))
                         <li class="nav-item {{ request()->routeIs('admin.data-peserta.unified') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.data-peserta.unified') }}" title="DATA PESERTA">
                                 <i class="fas fa-fw fa-id-card"></i>
                                 <span><strong>DATA PESERTA</strong></span>
-                                @if(isset($pendingM1TCount) && $pendingM1TCount > 0)
-                                    <span class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
+                                @if (isset($pendingM1TCount) && $pendingM1TCount > 0)
+                                    <span
+                                        class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
                                 @endif
                             </a>
                         </li>
@@ -510,15 +568,17 @@
 
 
                     {{-- 7. MONITORING CHAPTER --}}
-                    <li class="nav-item {{ (request()->routeIs('gantt.index') && request('view_role') == 'chapter') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('gantt.index', ['view_role' => 'chapter']) }}" title="MONITORING CHAPTER">
+                    <li
+                        class="nav-item {{ request()->routeIs('gantt.index') && request('view_role') == 'chapter' ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('gantt.index', ['view_role' => 'chapter']) }}"
+                            title="MONITORING CHAPTER">
                             <i class="fas fa-fw fa-project-diagram"></i>
                             <span><strong>MONITORING CHAPTER</strong></span>
                         </a>
                     </li>
 
                     {{-- 8. SETTING --}}
-                    @if(\App\Models\Menu::isActive('settings'))
+                    @if (\App\Models\Menu::isActive('settings'))
                         <li class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.settings.index') }}" title="SETTING">
                                 <i class="fas fa-fw fa-cog"></i>
@@ -536,7 +596,7 @@
                     </li>
 
                     {{-- Extra Admin Menu --}}
-                    @if(\App\Models\Menu::isActive('activity_cs'))
+                    @if (\App\Models\Menu::isActive('activity_cs'))
                         <li class="nav-item {{ request()->routeIs('admin.activity-cs.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.activity-cs.index') }}" title="ACTIVITY CS">
                                 <i class="fas fa-fw fa-list-check"></i>
@@ -544,9 +604,8 @@
                             </a>
                         </li>
                     @endif
-
                 @elseif(strtolower(Auth::user()->role) === 'marketing')
-                    @if(\App\Models\Menu::isActive('dashboard_marketing'))
+                    @if (\App\Models\Menu::isActive('dashboard_marketing'))
                         <li class="nav-item {{ request()->routeIs('marketing') ? 'active' : '' }}">
                             {{-- Dashboard untuk Marketing --}}
                             <a class="nav-link" href="{{ route('marketing') }}" title="DASHBOARD">
@@ -556,7 +615,7 @@
                         </li>
                     @endif
                 @elseif(strtolower(Auth::user()->role) === 'manager')
-                    @if(\App\Models\Menu::isActive('dashboard_manager'))
+                    @if (\App\Models\Menu::isActive('dashboard_manager'))
                         <li class="nav-item {{ request()->routeIs('manager') ? 'active' : '' }}">
                             {{-- Dashboard untuk Manager --}}
                             <a class="nav-link" href="#">
@@ -566,7 +625,7 @@
                         </li>
                     @endif
                 @elseif(strtolower(Auth::user()->role) === 'hrd')
-                    @if(\App\Models\Menu::isActive('dashboard_hr'))
+                    @if (\App\Models\Menu::isActive('dashboard_hr'))
                         <li class="nav-item {{ request()->routeIs('hr') ? 'active' : '' }}">
                             {{-- Dashboard untuk HRD --}}
                             <a class="nav-link" href="{{ route('hr') }}">
@@ -576,7 +635,7 @@
                         </li>
                     @endif
                 @elseif(strtolower(trim(Auth::user()->role)) === 'advertising')
-                    @if(\App\Models\Menu::isActive('dashboard_advertising'))
+                    @if (\App\Models\Menu::isActive('dashboard_advertising'))
                         <li class="nav-item {{ request()->routeIs('advertising') ? 'active' : '' }}">
                             {{-- Dashboard untuk Advertising --}}
                             <a class="nav-link" href="{{ route('advertising') }}">
@@ -586,7 +645,7 @@
                         </li>
                     @endif
                 @elseif(!in_array(strtolower(trim(Auth::user()->role)), ['produksi', 'operasional']))
-                    @if(\App\Models\Menu::isActive('dashboard_general'))
+                    @if (\App\Models\Menu::isActive('dashboard_general'))
                         <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
                             {{-- Dashboard default --}}
                             <a class="nav-link" href="{{ route('home') }}">
@@ -599,25 +658,27 @@
 
 
                 {{-- Program Kerja & Ganchart untuk Produksi --}}
-                @if(strtolower(Auth::user()->role) === 'produksi')
+                @if (strtolower(Auth::user()->role) === 'produksi')
                     <hr class="sidebar-divider d-none d-md-block">
 
                     <div class="sidebar-premium-heading">
                         <i class="fas fa-layer-group me-1"></i> MANAJEMEN KERJA
                     </div>
 
-                    @if(\App\Models\Menu::isActive('program_kerja'))
+                    @if (\App\Models\Menu::isActive('program_kerja'))
                         <li class="nav-item">
-                            <a class="nav-link nav-link-premium premium-border-warning" href="{{ route('programkerja.index') }}">
+                            <a class="nav-link nav-link-premium premium-border-warning"
+                                href="{{ route('programkerja.index') }}">
                                 <i class="fas fa-tasks text-warning me-2"></i>
                                 <span>Program Kerja</span>
                             </a>
                         </li>
                     @endif
 
-                    @if(\App\Models\Menu::isActive('ganchart'))
+                    @if (\App\Models\Menu::isActive('ganchart'))
                         <li class="nav-item">
-                            <a class="nav-link nav-link-premium premium-border-warning" href="{{ route('gantt.index') }}">
+                            <a class="nav-link nav-link-premium premium-border-warning"
+                                href="{{ route('gantt.index') }}">
                                 <i class="fas fa-project-diagram text-warning me-2"></i>
                                 <span>Ganchart</span>
                             </a>
@@ -629,14 +690,15 @@
                     </div>
 
                     <li class="nav-item {{ request()->routeIs('produksi.performance') ? 'active' : '' }}">
-                        <a class="nav-link nav-link-premium premium-border-success" href="{{ route('produksi.performance') }}">
+                        <a class="nav-link nav-link-premium premium-border-success"
+                            href="{{ route('produksi.performance') }}">
                             <i class="fas fa-chart-line text-success me-2"></i>
                             <span>Performa Dashboard</span>
                         </a>
                     </li>
 
                     {{--
-                    @if(\App\Models\Menu::isActive('content_plan'))
+                    @if (\App\Models\Menu::isActive('content_plan'))
                     <li class="nav-item">
                         <a class="nav-link nav-link-premium premium-border-success"
                             href="{{ route('marketing.penilaian.kpi_sosmed') }}">
@@ -651,12 +713,12 @@
                 @endif
 
                 {{-- Program Kerja & Ganchart untuk Advertising --}}
-                @if(in_array(strtolower(Auth::user()->role), ['advertising']))
+                @if (in_array(strtolower(Auth::user()->role), ['advertising']))
                     @php
-                        $isEkoSulis = (trim(Auth::user()->name) === 'Eko Sulis');
+                        $isEkoSulis = trim(Auth::user()->name) === 'Eko Sulis';
                     @endphp
 
-                    @if(!$isEkoSulis && \App\Models\Menu::isActive('program_kerja'))
+                    @if (!$isEkoSulis && \App\Models\Menu::isActive('program_kerja'))
                         {{-- Program Kerja --}}
                         <li class="nav-item">
                             <a class="nav-link text-white" href="{{ route('programkerja.index') }}">
@@ -666,7 +728,7 @@
                         </li>
                     @endif
 
-                    @if(!$isEkoSulis && \App\Models\Menu::isActive('ganchart'))
+                    @if (!$isEkoSulis && \App\Models\Menu::isActive('ganchart'))
                         {{-- Ganchart --}}
                         <li class="nav-item">
                             <a class="nav-link text-white" href="{{ route('gantt.index') }}">
@@ -677,7 +739,7 @@
                     @endif
 
                     {{-- Ganti Program Kerja & Ganchart menjadi Daily Activity khusus Eko Sulis --}}
-                    @if($isEkoSulis)
+                    @if ($isEkoSulis)
                         <li class="nav-item">
                             <a class="nav-link text-white" href="{{ route('admin.ads-activity.index') }}">
                                 <i class="fas fa-fw fa-calendar-check me-2"></i>
@@ -701,722 +763,783 @@
 
                 {{-- Sidebar Marketing --}}
                 @auth
-                    @if(strtolower(Auth::user()->role) === 'marketing')
+                    @if (strtolower(Auth::user()->role) === 'marketing')
                         {{-- <ul class="navbar-nav sidebar sidebar-dark" style="background-color: #0b198f;"> --}}
-                            <!-- Removed nested ul that was in original code as it might break layout, kept items inline or check if separate section needed. 
-                                                                                                                                                                         Original code started a NEW ul inside the sidebar ul which is invalid HTML structure. 
-                                                                                                                                                                         I will flatten this out into the existing list. -->
+                        <!-- Removed nested ul that was in original code as it might break layout, kept items inline or check if separate section needed.
+                                                                                                                                                                                 Original code started a NEW ul inside the sidebar ul which is invalid HTML structure.
+                                                                                                                                                                                 I will flatten this out into the existing list. -->
 
-                            <hr class="sidebar-divider my-0">
+                        <hr class="sidebar-divider my-0">
 
-                            @if(\App\Models\Menu::isActive('data_lead'))
-                                {{-- Data Lead / Prospek --}}
-                                <li
-                                    class="nav-item {{ (request()->routeIs('admin.database.database') && !request()->has('view')) ? 'active' : '' }}">
-                                    <a class="nav-link text-white" href="{{ route('admin.database.database') }}">
-                                        <i class="fas fa-table me-2"></i>
-                                        <span>Data Lead / Prospek</span>
-                                    </a>
-                                </li>
-                            @endif
-
-
-                            {{-- Database Marketing (New) --}}
-                            @if(in_array(auth()->user()->name, ['Felmi', 'Nisa']) || strtolower(auth()->user()->role) === 'administrator')
-                                <li class="nav-item {{ request()->routeIs('marketing-participants.index') ? 'active' : '' }}">
-                                    <a class="nav-link text-white" href="{{ route('marketing-participants.index') }}">
-                                        <i class="fas fa-users-rectangle me-2"></i>
-                                        <span>Database Marketing</span>
-                                    </a>
-                                </li>
-                            @endif
+                        @if (\App\Models\Menu::isActive('data_lead'))
+                            {{-- Data Lead / Prospek --}}
+                            <li
+                                class="nav-item {{ request()->routeIs('admin.database.database') && !request()->has('view') ? 'active' : '' }}">
+                                <a class="nav-link text-white" href="{{ route('admin.database.database') }}">
+                                    <i class="fas fa-table me-2"></i>
+                                    <span>Data Lead / Prospek</span>
+                                </a>
+                            </li>
+                        @endif
 
 
-                            {{-- Manajemen Kerja for Felmi & Nisa --}}
-                            @if(in_array(auth()->user()->name, ['Felmi', 'Nisa']))
-                                <div class="sidebar-premium-heading">
-                                    <i class="fas fa-layer-group me-1"></i> MANAJEMEN KERJA
-                                </div>
-                                <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
-                                    <a class="nav-link nav-link-premium premium-border-warning"
-                                        href="{{ route('programkerja.index') }}">
-                                        <i class="fas fa-tasks text-warning me-2"></i>
-                                        <span>Program Kerja</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
-                                    <a class="nav-link nav-link-premium premium-border-warning" href="{{ route('gantt.index') }}">
-                                        <i class="fas fa-project-diagram text-warning me-2"></i>
-                                        <span>Ganchart</span>
-                                    </a>
-                                </li>
-                            @endif
+                        {{-- Database Marketing (New) --}}
+                        @if (in_array(auth()->user()->name, ['Felmi', 'Nisa']) || strtolower(auth()->user()->role) === 'administrator')
+                            <li class="nav-item {{ request()->routeIs('marketing-participants.index') ? 'active' : '' }}">
+                                <a class="nav-link text-white" href="{{ route('marketing-participants.index') }}">
+                                    <i class="fas fa-users-rectangle me-2"></i>
+                                    <span>Database Marketing</span>
+                                </a>
+                            </li>
+                        @endif
+
+
+                        {{-- Manajemen Kerja for Felmi & Nisa --}}
+                        @if (in_array(auth()->user()->name, ['Felmi', 'Nisa']))
+                            <div class="sidebar-premium-heading">
+                                <i class="fas fa-layer-group me-1"></i> MANAJEMEN KERJA
+                            </div>
+                            <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
+                                <a class="nav-link nav-link-premium premium-border-warning"
+                                    href="{{ route('programkerja.index') }}">
+                                    <i class="fas fa-tasks text-warning me-2"></i>
+                                    <span>Program Kerja</span>
+                                </a>
+                            </li>
+                            <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
+                                <a class="nav-link nav-link-premium premium-border-warning"
+                                    href="{{ route('gantt.index') }}">
+                                    <i class="fas fa-project-diagram text-warning me-2"></i>
+                                    <span>Ganchart</span>
+                                </a>
+                            </li>
+                        @endif
 
 
 
 
-                            {{-- Penilaian Kinerja (Sembunyikan jika Nisa) --}}
-                            @if(auth()->user()->name !== 'Nisa')
-                                <li class="nav-item {{ request()->routeIs('marketing.penilaian.index') ? 'active' : '' }}">
-                                    <a class="nav-link text-white" href="{{ route('marketing.penilaian.index') }}">
-                                        <i class="fas fa-fw fa-star me-2"></i>
-                                        <span>Penilaian Kinerja (KPI)</span>
-                                    </a>
-                                </li>
-                            @endif
+                        {{-- Penilaian Kinerja (Sembunyikan jika Nisa) --}}
+                        @if (auth()->user()->name !== 'Nisa')
+                            <li class="nav-item {{ request()->routeIs('marketing.penilaian.index') ? 'active' : '' }}">
+                                <a class="nav-link text-white" href="{{ route('marketing.penilaian.index') }}">
+                                    <i class="fas fa-fw fa-star me-2"></i>
+                                    <span>Penilaian Kinerja (KPI)</span>
+                                </a>
+                            </li>
+                        @endif
 
-                            {{-- KPI Sosmed (Hanya jika bukan Felmi) --}}
-                            @if(auth()->user()->name !== 'Felmi')
-                                <li class="nav-item {{ request()->routeIs('marketing.penilaian.kpi_sosmed') ? 'active' : '' }}">
-                                    <a class="nav-link text-white" href="{{ route('marketing.penilaian.kpi_sosmed') }}">
-                                        <i class="fas fa-fw fa-hashtag me-2"></i>
-                                        <span>KPI Sosmed Spesialis</span>
-                                    </a>
-                                </li>
-                            @endif
+                        {{-- KPI Sosmed (Hanya jika bukan Felmi) --}}
+                        @if (auth()->user()->name !== 'Felmi')
+                            <li
+                                class="nav-item {{ request()->routeIs('marketing.penilaian.kpi_sosmed') ? 'active' : '' }}">
+                                <a class="nav-link text-white" href="{{ route('marketing.penilaian.kpi_sosmed') }}">
+                                    <i class="fas fa-fw fa-hashtag me-2"></i>
+                                    <span>KPI Sosmed Spesialis</span>
+                                </a>
+                            </li>
+                        @endif
 
-                            {{-- Daily Activity (Marketing) --}}
-                            @if(stripos(auth()->user()->name ?? '', 'Felmi') === false)
-                                <li class="nav-item {{ request()->routeIs('admin.dailyactivity.index') ? 'active' : '' }}">
-                                    <a class="nav-link text-white" href="{{ route('admin.dailyactivity.index') }}">
-                                        <i class="fas fa-fw fa-calendar-check me-2"></i>
-                                        <span>Daily Activity</span>
-                                    </a>
-                                </li>
-                            @endif
+                        {{-- Daily Activity (Marketing) --}}
+                        @if (stripos(auth()->user()->name ?? '', 'Felmi') === false)
+                            <li class="nav-item {{ request()->routeIs('admin.dailyactivity.index') ? 'active' : '' }}">
+                                <a class="nav-link text-white" href="{{ route('admin.dailyactivity.index') }}">
+                                    <i class="fas fa-fw fa-calendar-check me-2"></i>
+                                    <span>Daily Activity</span>
+                                </a>
+                            </li>
+                        @endif
                     @endif
                 @endauth
 
 
 
-                    {{-- 🚀 SIDEBAR KHUSUS OPERASIONAL (RAFI) 🚀 --}}
-                    @if($userRole === 'operasional')
-                        <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('home') }}">
-                                <i class="fas fa-fw fa-tachometer-alt"></i>
-                                <span><strong>DASHBOARD OPERASIONAL</strong></span>
-                            </a>
-                        </li>
-                        
-                        <li class="nav-item {{ request()->routeIs('admin.database.database') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.database.database', ['view_type' => 'chapter']) }}">
-                                <i class="fas fa-fw fa-database"></i>
-                                <span><strong>DATABASE</strong></span>
-                            </a>
-                        </li>
+                {{-- 🚀 SIDEBAR KHUSUS OPERASIONAL (RAFI) 🚀 --}}
+                @if ($userRole === 'operasional')
+                    <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('home') }}">
+                            <i class="fas fa-fw fa-tachometer-alt"></i>
+                            <span><strong>DASHBOARD OPERASIONAL</strong></span>
+                        </a>
+                    </li>
 
-                        <!-- <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                    <li class="nav-item {{ request()->routeIs('admin.database.database') ? 'active' : '' }}">
+                        <a class="nav-link"
+                            href="{{ route('admin.database.database', ['view_type' => 'chapter']) }}">
+                            <i class="fas fa-fw fa-database"></i>
+                            <span><strong>DATABASE</strong></span>
+                        </a>
+                    </li>
+
+                    <!-- <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('peserta-smi.index') }}">
                                 <i class="fas fa-fw fa-user-graduate"></i>
                                 <span><strong>PESERTA M1T</strong></span>
                             </a>
                         </li> -->
 
-                        <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('programkerja.index') }}">
-                                <i class="fas fa-fw fa-tasks"></i>
-                                <span><strong>PROGRAM KERJA</strong></span>
-                            </a>
-                        </li>
+                    <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('programkerja.index') }}">
+                            <i class="fas fa-fw fa-tasks"></i>
+                            <span><strong>PROGRAM KERJA</strong></span>
+                        </a>
+                    </li>
 
-                        <!-- <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
+                    <!-- <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.kelas.index') }}">
                                 <i class="fas fa-fw fa-calendar-alt"></i>
                                 <span><strong>SETTING JADWAL KELAS</strong></span>
                             </a>
                         </li> -->
+                @endif
 
-
+                {{-- Sidebar ini hanya tampil jika BUKAN administrator, marketing, manager, hrd, advertising --}}
+                @if (!in_array($userRole, ['administrator', 'marketing', 'manager', 'hrd', 'advertising', 'produksi', 'operasional']))
+                    @if (\App\Models\Menu::isActive('data_calon_peserta'))
+                        <li
+                            class="nav-item {{ request()->routeIs('admin.database.database') && request('view') == 'me' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.database.database', ['view' => 'me']) }}">
+                                <span><strong>DATABASE CALON
+                                        PESERTA{{ $userRole === 'cs-mbc' ? '' : ' M1T' }}</strong></span>
+                            </a>
+                        </li>
                     @endif
 
-                    {{-- Sidebar ini hanya tampil jika BUKAN administrator, marketing, manager, hrd, advertising --}}
-                    @if(!in_array($userRole, ['administrator', 'marketing', 'manager', 'hrd', 'advertising', 'produksi', 'operasional']))
-                                @if(\App\Models\Menu::isActive('data_calon_peserta'))
-                                    <li
-                                        class="nav-item {{ (request()->routeIs('admin.database.database') && request('view') == 'me') ? 'active' : '' }}">
-                                        <a class="nav-link" href="{{ route('admin.database.database', ['view' => 'me']) }}">
-                                            <span><strong>DATABASE CALON PESERTA{{ $userRole === 'cs-mbc' ? '' : ' M1T' }}</strong></span>
-                                        </a>
-                                    </li>
-                                @endif
+                    @if (!in_array($userRole, ['chapter', 'agen', 'cs-mbc']))
+                        <li class="nav-item {{ request()->routeIs('zoom-schedule.calendar') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('zoom-schedule.calendar') }}">
+                                <i class="fas fa-fw fa-video"></i>
+                                <span><strong>ONE-ON-ONE ZOOM</strong></span>
+                            </a>
+                        </li>
+                    @endif
 
-                                @if(!in_array($userRole, ['chapter', 'agen', 'cs-mbc']))
-                                    <li class="nav-item {{ request()->routeIs('zoom-schedule.calendar') ? 'active' : '' }}">
-                                        <a class="nav-link" href="{{ route('zoom-schedule.calendar') }}">
-                                            <i class="fas fa-fw fa-video"></i>
-                                            <span><strong>ONE-ON-ONE ZOOM</strong></span>
-                                        </a>
-                                    </li>
-                                @endif
+                    @if (\App\Models\Menu::isActive('daily_activity') && !in_array($userRole, ['reseller', 'chapter']))
+                        <li
+                            class="nav-item {{ request()->routeIs('admin.dailyactivity.index') || request()->routeIs('manager.penilaian-cs.index') ? 'active' : '' }}">
+                            <a class="nav-link"
+                                href="{{ auth()->user()->name === 'Agus Setyo' ? route('manager.penilaian-cs.index') : route('admin.dailyactivity.index') }}">
+                                <i class="fas fa-fw fa-tachometer-alt"></i>
+                                <span>DAILY ACTIVITY</span>
+                            </a>
+                        </li>
+                    @endif
 
-                        @if(\App\Models\Menu::isActive('daily_activity') && !in_array($userRole, ['reseller', 'chapter']))
-
+                    @if ($userRole === 'cs-mbc')
+                        @if (\App\Models\Menu::isActive('sales_plan'))
                             <li
-                                class="nav-item {{ (request()->routeIs('admin.dailyactivity.index') || request()->routeIs('manager.penilaian-cs.index')) ? 'active' : '' }}">
-                                <a class="nav-link"
-                                    href="{{ auth()->user()->name === 'Agus Setyo' ? route('manager.penilaian-cs.index') : route('admin.dailyactivity.index') }}">
-                                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                                    <span>DAILY ACTIVITY</span>
-                                </a>
-                            </li>
-                        @endif
-
-                        @if($userRole === 'cs-mbc')
-                            @if(\App\Models\Menu::isActive('sales_plan'))
-                                <li class="nav-item {{ request()->routeIs('admin.data-peserta.unified') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('admin.data-peserta.unified') }}" title="DATA PESERTA">
-                                        <i class="fas fa-fw fa-id-card"></i>
-                                        <span><strong>DATA PESERTA</strong></span>
-                                    </a>
-                                </li>
-                            @endif
-                        @endif
-
-                        {{-- Menu Khusus Chapter & Reseller --}}
-                        @if($userRole === 'chapter' || $userRole === 'reseller')
-
-                            <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
-                                    <i class="fas fa-fw fa-user-graduate"></i>
-                                    <span style="text-transform: none;"><strong>Peserta M1T</strong></span>
-                                    @php
-                                        // For chapter/reseller, they might also want to see their pending count
-                                        // But the user specifically asked for Linda & Admin.
-                                        // However, if we show it here, it will be 0 for them unless they are Linda/Admin.
-                                    @endphp
-                                    @if($pendingM1TCount > 0)
-                                        <span class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
-                                    @endif
-                                </a>
-                            </li>
-
-                            @if($userRole === 'chapter')
-                                <li class="nav-item {{ request()->routeIs('chapter.reseller.index') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('chapter.reseller.index') }}">
-                                        <i class="fas fa-fw fa-users-cog"></i>
-                                        <span><strong>MANAJEMEN AGEN</strong></span>
-                                    </a>
-                                </li>
-
-                                <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('programkerja.index') }}">
-                                        <i class="fas fa-fw fa-tasks"></i>
-                                        <span><strong>PROGRAM KERJA</strong></span>
-                                    </a>
-                                </li>
-
-                                @if($userRole !== 'chapter')
-                                    <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
-                                        <a class="nav-link" href="{{ route('gantt.index') }}">
-                                            <i class="fas fa-fw fa-project-diagram"></i>
-                                            <span><strong>GANCHART</strong></span>
-                                        </a>
-                                    </li>
-                                @endif
-                            @endif
-                        @endif
-
-{{-- Dompet menu removed because integrated to dashboard --}}
-
-                    @endif
-
-
-                    @if(!in_array($userRole, ['marketing', 'hrd', 'advertising', 'produksi', 'operasional']))
-                        @if(\App\Models\Menu::isActive('sales_plan'))
-
-                            @if($userRole == 'administrator')
-                                {{-- Administrator handled above --}}
-                            @else
-
-                                {{-- SALES PLAN MBC (LAINNYA) --}}
-                                @if(!in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional', 'cs-mbc']) && !in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo']))
-                                    @if($userRole === 'cs-mbc')
-                                        {{-- Simple link for CS-MBC (same as administrator) --}}
-                                        <li class="nav-item {{ request('type') == 'mbc' ? 'active' : '' }}">
-                                            <a class="nav-link" href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}" title="DATA PESERTA MBC">
-                                                <i class="fas fa-fw fa-users"></i>
-                                                <span><strong>DATA PESERTA MBC</strong></span>
-                                            </a>
-                                        </li>
-                                    @else
-                                        {{-- Collapsible for others --}}
-                                        <li class="nav-item">
-                                            <a class="nav-link {{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? '' : 'collapsed' }}"
-                                                href="#" data-toggle="collapse" data-target="#collapseMBC"
-                                                aria-expanded="{{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? 'true' : 'false' }}"
-                                                aria-controls="collapseMBC">
-                                                <i class="fas fa-fw fa-users"></i>
-                                                <span><strong>DATA PESERTA MBC</strong></span>
-                                            </a>
-                                            <div id="collapseMBC"
-                                                class="collapse {{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? 'show' : '' }}"
-                                                aria-labelledby="headingMBC" data-parent="#accordionSidebar">
-                                                <div class="bg-white py-2 collapse-inner rounded">
-                                                    @if(stripos($userName, 'Linda') !== false)
-                                                        <a class="collapse-item {{ request('type') == 'mbc' && !request('kelas') ? 'active' : '' }}"
-                                                        href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}">DATA PESERTA ALL</a>
-                                                    @endif
-
-                                                    <h6 class="collapse-header">Daftar Kelas MBC:</h6>
-
-                                                    @if(in_array($userName, ['Muthia']))
-                                                        <a class="collapse-item {{ request('kelas') == 'Sekolah Kaya' ? 'active' : '' }}"
-                                                            href="{{ route('admin.salesplan.index', ['kelas' => 'Sekolah Kaya', 'type' => 'mbc']) }}">
-                                                            Sekolah Kaya
-                                                        </a>
-                                                    @else
-                                                        @foreach ($kelas as $item)
-                                                            @if($item->nama_kelas != 'Sekolah Kaya' && $item->nama_kelas != 'Start-Up Muslim Indonesia')
-                                                                <a class="collapse-item {{ request('kelas') == $item->nama_kelas ? 'active' : '' }}"
-                                                                    href="{{ route('admin.salesplan.index', ['kelas' => $item->nama_kelas, 'type' => 'mbc']) }}">
-                                                                    {{ $item->nama_kelas }}
-                                                                </a>
-                                                            @endif
-                                                        @endforeach
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </li>
-                                    @endif
-                                @endif
-
-                                {{-- SALES PLAN SMI / M1T (LAINNYA) --}}
-                                @if(in_array($userRole, ['cs-smi', 'cs-mbc']) || in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo', 'Linda', 'Fitra Jaya Saleh']))
-                                    {{-- Operasional handled in its own block --}}
-                                    @if($userRole === 'operasional')
-                                        {{-- Do nothing --}}
-                                    @elseif(in_array($userName, ['Yasmin', 'Linda']))
-                                        {{-- 1. DATA PESERTA M1T (Sales Plan) --}}
-                                        @if($userRole !== 'cs-mbc')
-                                            <li class="nav-item {{ (request('type') == 'smi' && request('kelas') == 'Start-Up Muslim Indonesia') ? 'active' : '' }}">
-                                                <a class="nav-link" href="{{ route('admin.salesplan.index', ['type' => 'smi', 'kelas' => 'Start-Up Muslim Indonesia']) }}" title="DATA PESERTA M1T">
-                                                    <i class="fas fa-fw fa-users"></i>
-                                                    <span style="text-transform: none;"><strong>DATA PESERTA M1T</strong></span>
-                                                </a>
-                                            </li>
-                                        @endif
-
-                                        {{-- 2. PESERTA M1T (Peserta SMI) --}}
-                                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
-                                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="PESERTA M1T">
-                                                <i class="fas fa-fw fa-user-graduate"></i>
-                                                <span style="text-transform: none;"><strong>PESERTA M1T</strong></span>
-                                                @if($pendingM1TCount > 0)
-                                                    <span class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
-                                                @endif
-                                            </a>
-                                        </li>
-
-                                         {{-- PENARIKAN DOMPET (KHUSUS LINDA) --}}
-                                         @if(stripos($userName, 'Linda') !== false)
-                                             @php
-                                                 $pendingWalletWD = \App\Models\WalletTransaction::where('type', 'withdrawal')->where('status', 'pending')->count();
-                                             @endphp
-                                             <li class="nav-item {{ request()->routeIs('admin.wallet.*') ? 'active' : '' }}">
-                                                 <a class="nav-link d-flex align-items-center" href="{{ route('admin.wallet.index') }}" title="PENARIKAN DOMPET">
-                                                     <i class="fas fa-fw fa-wallet mr-2"></i>
-                                                     <div class="d-flex align-items-center">
-                                                         <span><strong>PENARIKAN DOMPET</strong></span>
-                                                         @if($pendingWalletWD > 0)
-                                                             <span class="badge badge-danger badge-pulse ml-2">{{ $pendingWalletWD }}</span>
-                                                         @endif
-                                                     </div>
-                                                 </a>
-                                             </li>
-                                         @endif
-                                    @elseif(in_array($userName, ['Shafa Zahra']))
-                                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
-                                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
-                                                <i class="fas fa-fw fa-user-graduate"></i>
-                                                <span style="text-transform: none;"><strong>DATA PESERTA M1T</strong></span>
-                                                @if($pendingM1TCount > 0)
-                                                    <span class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
-                                                @endif
-                                            </a>
-                                        </li>
-                                    @else
-                                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
-                                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
-                                                <i class="fas fa-fw fa-user-graduate"></i>
-                                                <span style="text-transform: none;"><strong>DATA PESERTA M1T</strong></span>
-                                            </a>
-                                        </li>
-                                    @endif
-                                @endif
-                            @endif
-
-                            {{-- Setting for Reseller --}}
-                            @if($userRole === 'reseller')
-                                <li class="nav-item {{ request()->routeIs('reseller.setting.index') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('reseller.setting.index') }}" title="MANAJEMEN AGEN">
-                                        <i class="fas fa-fw fa-users-cog"></i>
-                                        <span><strong>MANAJEMEN AGEN</strong></span>
-                                    </a>
-                                </li>
-                            @endif
-
-                            {{-- Menu Keuangan Linda --}}
-                            @if(stripos($userName, 'Linda') !== false)
-                                <li
-                                    class="nav-item {{ request()->routeIs(['admin.keuangan.*', 'admin.keuangan.pengajuan-anggaran']) ? 'active' : '' }}">
-                                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseKeuangan"
-                                        aria-expanded="{{ request()->routeIs(['admin.keuangan.*', 'admin.keuangan.pengajuan-anggaran']) ? 'true' : 'false' }}"
-                                        aria-controls="collapseKeuangan">
-                                        <i class="fas fa-fw fa-wallet"></i>
-                                        <span><strong>KEUANGAN</strong></span>
-                                    </a>
-                                    <div id="collapseKeuangan"
-                                        class="collapse {{ request()->routeIs(['admin.keuangan.*', 'admin.keuangan.pengajuan-anggaran']) ? 'show' : '' }}"
-                                        aria-labelledby="headingKeuangan" data-parent="#accordionSidebar">
-                                        <div class="bg-white py-2 collapse-inner rounded">
-                                            <a class="collapse-item {{ request()->routeIs('admin.keuangan.laba-rugi') ? 'active' : '' }}"
-                                                href="{{ route('admin.keuangan.laba-rugi') }}">Laporan Laba Rugi</a>
-                                            <a class="collapse-item {{ request()->routeIs('admin.keuangan.kas') ? 'active' : '' }}"
-                                                href="{{ route('admin.keuangan.kas') }}">Kas</a>
-                                            <a class="collapse-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}"
-                                                href="{{ route('admin.keuangan.pengajuan-anggaran') }}">Pengajuan Anggaran</a>
-                                            <a class="collapse-item {{ request()->routeIs('admin.keuangan.zakat') ? 'active' : '' }}"
-                                                href="{{ route('admin.keuangan.zakat') }}">Zakat</a>
-                                        </div>
-                                    </div>
-                                </li>
-                            @endif
-
-                        @endif
-                    @endif
-
-
-
-                    {{-- Database SMI --}}
-                    @if(in_array($userRole, ['administrator']) || in_array($userName, ['Diah Putri']))
-                        @if(strtolower(auth()->user()->role) !== 'administrator')
-                            <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
-                                    <i class="fas fa-fw fa-user-graduate"></i>
-                                    <span style="text-transform: none;"><strong>Data Peserta M1T</strong></span>
-                                    @if($pendingM1TCount > 0)
-                                        <span class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
-                                    @endif
+                                class="nav-item {{ request()->routeIs('admin.data-peserta.unified') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.data-peserta.unified') }}"
+                                    title="DATA PESERTA">
+                                    <i class="fas fa-fw fa-id-card"></i>
+                                    <span><strong>DATA PESERTA</strong></span>
                                 </a>
                             </li>
                         @endif
                     @endif
 
+                    {{-- Menu Khusus Chapter & Reseller --}}
+                    @if ($userRole === 'chapter' || $userRole === 'reseller')
 
-                    {{-- Database CS --}}
-                    @if(strtolower(auth()->user()->role) === 'administrator')
-                        @if(\App\Models\Menu::isActive('database_cs'))
-                            @if(strtolower(auth()->user()->role) !== 'administrator')
-                                <li
-                                    class="nav-item {{ request()->routeIs('admin.database.database') && !request('view') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('admin.database.database') }}" title="DATABASE">
-                                        <i class="fas fa-fw fa-database"></i>
-                                        <span><strong>DATABASE</strong></span>
-                                    </a>
-                                </li>
-                            @endif
-                        @endif
-                    @endif
-
-                    @if(auth()->user()->name === 'Agus Setyo')
-                        {{-- Agus Setyo: Hanya bisa lihat Tursia dan Latifah --}}
-                        <li class="nav-item {{ request()->routeIs('pembelajaran.index') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('pembelajaran.index') }}">
-                                <i class="fas fa-fw fa-book"></i>
-                                <span><strong>PEMBELAJARAN SISWA</strong></span>
+                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
+                                <i class="fas fa-fw fa-user-graduate"></i>
+                                <span style="text-transform: none;"><strong>Peserta M1T</strong></span>
+                                @php
+                                    // For chapter/reseller, they might also want to see their pending count
+                                    // But the user specifically asked for Linda & Admin.
+                                    // However, if we show it here, it will be 0 for them unless they are Linda/Admin.
+                                @endphp
+                                @if ($pendingM1TCount > 0)
+                                    <span
+                                        class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
+                                @endif
                             </a>
                         </li>
 
+                        @if ($userRole === 'chapter')
+                            <li class="nav-item {{ request()->routeIs('chapter.reseller.index') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('chapter.reseller.index') }}">
+                                    <i class="fas fa-fw fa-users-cog"></i>
+                                    <span><strong>MANAJEMEN AGEN</strong></span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('programkerja.index') }}">
+                                    <i class="fas fa-fw fa-tasks"></i>
+                                    <span><strong>PROGRAM KERJA</strong></span>
+                                </a>
+                            </li>
+
+                            @if ($userRole !== 'chapter')
+                                <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('gantt.index') }}">
+                                        <i class="fas fa-fw fa-project-diagram"></i>
+                                        <span><strong>GANCHART</strong></span>
+                                    </a>
+                                </li>
+                            @endif
+                        @endif
+                    @endif
+
+                    {{-- Dompet menu removed because integrated to dashboard --}}
+
+                @endif
 
 
-                        @if(\App\Models\Menu::isActive('database_cs'))
-                            <li class="nav-item">
-                                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseKoordinasi"
-                                    aria-expanded="false" aria-controls="collapseKoordinasi">
-                                    <i class="fas fa-fw fa-users"></i>
+                @if (!in_array($userRole, ['marketing', 'hrd', 'advertising', 'produksi', 'operasional']))
+                    @if (\App\Models\Menu::isActive('sales_plan'))
+
+                        @if ($userRole == 'administrator')
+                            {{-- Administrator handled above --}}
+                        @else
+                            {{-- SALES PLAN MBC (LAINNYA) --}}
+                            @if (
+                                !in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional', 'cs-mbc']) &&
+                                    !in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo']))
+                                @if ($userRole === 'cs-mbc')
+                                    {{-- Simple link for CS-MBC (same as administrator) --}}
+                                    <li class="nav-item {{ request('type') == 'mbc' ? 'active' : '' }}">
+                                        <a class="nav-link"
+                                            href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}"
+                                            title="DATA PESERTA MBC">
+                                            <i class="fas fa-fw fa-users"></i>
+                                            <span><strong>DATA PESERTA MBC</strong></span>
+                                        </a>
+                                    </li>
+                                @else
+                                    {{-- Collapsible for others --}}
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia') ? '' : 'collapsed' }}"
+                                            href="#" data-toggle="collapse" data-target="#collapseMBC"
+                                            aria-expanded="{{ request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia') ? 'true' : 'false' }}"
+                                            aria-controls="collapseMBC">
+                                            <i class="fas fa-fw fa-users"></i>
+                                            <span><strong>DATA PESERTA MBC</strong></span>
+                                        </a>
+                                        <div id="collapseMBC"
+                                            class="collapse {{ request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia') ? 'show' : '' }}"
+                                            aria-labelledby="headingMBC" data-parent="#accordionSidebar">
+                                            <div class="bg-white py-2 collapse-inner rounded">
+                                                @if (stripos($userName, 'Linda') !== false)
+                                                    <a class="collapse-item {{ request('type') == 'mbc' && !request('kelas') ? 'active' : '' }}"
+                                                        href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}">DATA
+                                                        PESERTA ALL</a>
+                                                @endif
+
+                                                <h6 class="collapse-header">Daftar Kelas MBC:</h6>
+
+                                                @if (in_array($userName, ['Muthia']))
+                                                    <a class="collapse-item {{ request('kelas') == 'Sekolah Kaya' ? 'active' : '' }}"
+                                                        href="{{ route('admin.salesplan.index', ['kelas' => 'Sekolah Kaya', 'type' => 'mbc']) }}">
+                                                        Sekolah Kaya
+                                                    </a>
+                                                @else
+                                                    @foreach ($kelas as $item)
+                                                        @if ($item->nama_kelas != 'Sekolah Kaya' && $item->nama_kelas != 'Start-Up Muslim Indonesia')
+                                                            <a class="collapse-item {{ request('kelas') == $item->nama_kelas ? 'active' : '' }}"
+                                                                href="{{ route('admin.salesplan.index', ['kelas' => $item->nama_kelas, 'type' => 'mbc']) }}">
+                                                                {{ $item->nama_kelas }}
+                                                            </a>
+                                                        @endif
+                                                    @endforeach
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </li>
+                                @endif
+                            @endif
+
+                            {{-- SALES PLAN SMI / M1T (LAINNYA) --}}
+                            @if (in_array($userRole, ['cs-smi', 'cs-mbc']) ||
+                                    in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo', 'Linda', 'Fitra Jaya Saleh']))
+                                {{-- Operasional handled in its own block --}}
+                                @if ($userRole === 'operasional')
+                                    {{-- Do nothing --}}
+                                @elseif(in_array($userName, ['Yasmin', 'Linda']))
+                                    {{-- 1. DATA PESERTA M1T (Sales Plan) --}}
+                                    @if ($userRole !== 'cs-mbc')
+                                        <li
+                                            class="nav-item {{ request('type') == 'smi' && request('kelas') == 'Start-Up Muslim Indonesia' ? 'active' : '' }}">
+                                            <a class="nav-link"
+                                                href="{{ route('admin.salesplan.index', ['type' => 'smi', 'kelas' => 'Start-Up Muslim Indonesia']) }}"
+                                                title="DATA PESERTA M1T">
+                                                <i class="fas fa-fw fa-users"></i>
+                                                <span style="text-transform: none;"><strong>DATA PESERTA
+                                                        M1T</strong></span>
+                                            </a>
+                                        </li>
+                                    @endif
+
+                                    {{-- 2. PESERTA M1T (Peserta SMI) --}}
+                                    <li
+                                        class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('peserta-smi.index') }}"
+                                            title="PESERTA M1T">
+                                            <i class="fas fa-fw fa-user-graduate"></i>
+                                            <span style="text-transform: none;"><strong>PESERTA M1T</strong></span>
+                                            @if ($pendingM1TCount > 0)
+                                                <span
+                                                    class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
+                                            @endif
+                                        </a>
+                                    </li>
+
+                                    {{-- PENARIKAN DOMPET (KHUSUS LINDA) --}}
+                                    @if (stripos($userName, 'Linda') !== false)
+                                        @php
+                                            $pendingWalletWD = \App\Models\WalletTransaction::where(
+                                                'type',
+                                                'withdrawal',
+                                            )
+                                                ->where('status', 'pending')
+                                                ->count();
+                                        @endphp
+                                        <li
+                                            class="nav-item {{ request()->routeIs('admin.wallet.*') ? 'active' : '' }}">
+                                            <a class="nav-link d-flex align-items-center"
+                                                href="{{ route('admin.wallet.index') }}" title="PENARIKAN DOMPET">
+                                                <i class="fas fa-fw fa-wallet mr-2"></i>
+                                                <div class="d-flex align-items-center">
+                                                    <span><strong>PENARIKAN DOMPET</strong></span>
+                                                    @if ($pendingWalletWD > 0)
+                                                        <span
+                                                            class="badge badge-danger badge-pulse ml-2">{{ $pendingWalletWD }}</span>
+                                                    @endif
+                                                </div>
+                                            </a>
+                                        </li>
+                                    @endif
+                                @elseif(in_array($userName, ['Shafa Zahra']))
+                                    <li
+                                        class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('peserta-smi.index') }}"
+                                            title="Peserta M1T">
+                                            <i class="fas fa-fw fa-user-graduate"></i>
+                                            <span style="text-transform: none;"><strong>DATA PESERTA
+                                                    M1T</strong></span>
+                                            @if ($pendingM1TCount > 0)
+                                                <span
+                                                    class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
+                                            @endif
+                                        </a>
+                                    </li>
+                                @else
+                                    <li
+                                        class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('peserta-smi.index') }}"
+                                            title="Peserta M1T">
+                                            <i class="fas fa-fw fa-user-graduate"></i>
+                                            <span style="text-transform: none;"><strong>DATA PESERTA
+                                                    M1T</strong></span>
+                                        </a>
+                                    </li>
+                                @endif
+                            @endif
+                        @endif
+
+                        {{-- Setting for Reseller --}}
+                        @if ($userRole === 'reseller')
+                            <li class="nav-item {{ request()->routeIs('reseller.setting.index') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('reseller.setting.index') }}"
+                                    title="MANAJEMEN AGEN">
+                                    <i class="fas fa-fw fa-users-cog"></i>
+                                    <span><strong>MANAJEMEN AGEN</strong></span>
+                                </a>
+                            </li>
+                        @endif
+
+                        {{-- Menu Keuangan Linda --}}
+                        @if (stripos($userName, 'Linda') !== false)
+                            <li
+                                class="nav-item {{ request()->routeIs(['admin.keuangan.*', 'admin.keuangan.pengajuan-anggaran']) ? 'active' : '' }}">
+                                <a class="nav-link collapsed" href="#" data-toggle="collapse"
+                                    data-target="#collapseKeuangan"
+                                    aria-expanded="{{ request()->routeIs(['admin.keuangan.*', 'admin.keuangan.pengajuan-anggaran']) ? 'true' : 'false' }}"
+                                    aria-controls="collapseKeuangan">
+                                    <i class="fas fa-fw fa-wallet"></i>
+                                    <span><strong>KEUANGAN</strong></span>
+                                </a>
+                                <div id="collapseKeuangan"
+                                    class="collapse {{ request()->routeIs(['admin.keuangan.*', 'admin.keuangan.pengajuan-anggaran']) ? 'show' : '' }}"
+                                    aria-labelledby="headingKeuangan" data-parent="#accordionSidebar">
+                                    <div class="bg-white py-2 collapse-inner rounded">
+                                        <a class="collapse-item {{ request()->routeIs('admin.keuangan.laba-rugi') ? 'active' : '' }}"
+                                            href="{{ route('admin.keuangan.laba-rugi') }}">Laporan Laba Rugi</a>
+                                        <a class="collapse-item {{ request()->routeIs('admin.keuangan.kas') ? 'active' : '' }}"
+                                            href="{{ route('admin.keuangan.kas') }}">Kas</a>
+                                        <a class="collapse-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}"
+                                            href="{{ route('admin.keuangan.pengajuan-anggaran') }}">Pengajuan
+                                            Anggaran</a>
+                                        <a class="collapse-item {{ request()->routeIs('admin.keuangan.zakat') ? 'active' : '' }}"
+                                            href="{{ route('admin.keuangan.zakat') }}">Zakat</a>
+                                    </div>
+                                </div>
+                            </li>
+                        @endif
+
+                    @endif
+                @endif
+
+
+
+                {{-- Database SMI --}}
+                @if (in_array($userRole, ['administrator']) || in_array($userName, ['Diah Putri']))
+                    @if (strtolower(auth()->user()->role) !== 'administrator')
+                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
+                                <i class="fas fa-fw fa-user-graduate"></i>
+                                <span style="text-transform: none;"><strong>Data Peserta M1T</strong></span>
+                                @if ($pendingM1TCount > 0)
+                                    <span
+                                        class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
+                                @endif
+                            </a>
+                        </li>
+                    @endif
+                @endif
+
+
+                {{-- Database CS --}}
+                @if (strtolower(auth()->user()->role) === 'administrator')
+                    @if (\App\Models\Menu::isActive('database_cs'))
+                        @if (strtolower(auth()->user()->role) !== 'administrator')
+                            <li
+                                class="nav-item {{ request()->routeIs('admin.database.database') && !request('view') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('admin.database.database') }}" title="DATABASE">
+                                    <i class="fas fa-fw fa-database"></i>
                                     <span><strong>DATABASE</strong></span>
                                 </a>
+                            </li>
+                        @endif
+                    @endif
+                @endif
 
-                                <div id="collapseKoordinasi" class="collapse" aria-labelledby="headingKoordinasi"
-                                    data-parent="#accordionSidebar">
+                @if (auth()->user()->name === 'Agus Setyo')
+                    {{-- Agus Setyo: Hanya bisa lihat Tursia dan Latifah --}}
+                    <li class="nav-item {{ request()->routeIs('pembelajaran.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('pembelajaran.index') }}">
+                            <i class="fas fa-fw fa-book"></i>
+                            <span><strong>PEMBELAJARAN SISWA</strong></span>
+                        </a>
+                    </li>
+
+
+
+                    @if (\App\Models\Menu::isActive('database_cs'))
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-toggle="collapse"
+                                data-target="#collapseKoordinasi" aria-expanded="false"
+                                aria-controls="collapseKoordinasi">
+                                <i class="fas fa-fw fa-users"></i>
+                                <span><strong>DATABASE</strong></span>
+                            </a>
+
+                            <div id="collapseKoordinasi" class="collapse" aria-labelledby="headingKoordinasi"
+                                data-parent="#accordionSidebar">
+                                <div class="bg-white py-2 collapse-inner rounded">
+                                    <h6 class="collapse-header text-uppercase text-secondary">Daftar Pengguna:</h6>
+                                    @foreach (\App\Models\User::whereIn('name', ['Tursia', 'Latifah', 'Gunawan', 'Shafa Zahra'])->orderBy('name')->get() as $user)
+                                        <a class="collapse-item d-flex align-items-center justify-content-between"
+                                            href="{{ route('koordinasi.show', $user->id) }}">
+                                            <span>
+                                                <i class="fas fa-user-circle mr-2 text-primary"></i>
+                                                {{ $user->name }}
+                                            </span>
+                                            <small class="text-muted">({{ ucfirst($user->role) }})</small>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </li>
+                    @endif
+                @endif
+
+                {{-- Administrator Handle Ends --}}
+
+
+
+
+
+
+                @if ($userRole === 'administrator' || in_array($userName, ['Linda', 'Yasmin', 'Agus Setyo']))
+                    @if (in_array($userName, ['Linda', 'Yasmin']))
+                        {{-- Unified Program Kerja & Gantt Chart --}}
+                        @if (
+                            (\App\Models\Menu::isActive('program_kerja') || \App\Models\Menu::isActive('ganchart')) &&
+                                $userRole !== 'administrator')
+                            <li class="nav-item {{ request()->routeIs('programkerja.unified') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('programkerja.unified') }}"
+                                    title="PROGRAM KERJA">
+                                    <i class="fas fa-fw fa-tasks"></i>
+                                    <span><strong>PROGRAM KERJA</strong></span>
+                                </a>
+                            </li>
+                        @endif
+                    @else
+                        {{-- Standard separate menus --}}
+                        @if (\App\Models\Menu::isActive('program_kerja') && $userRole !== 'administrator')
+                            {{-- Program Kerja --}}
+                            <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('programkerja.index') }}" title="Program Kerja">
+                                    <i class="fas fa-fw fa-tasks"></i>
+                                    <span>Program Kerja</span>
+                                </a>
+                            </li>
+                        @endif
+                        @if (\App\Models\Menu::isActive('ganchart') && $userRole !== 'administrator')
+                            {{-- Ganchart --}}
+                            <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('gantt.index') }}" title="Ganchart">
+                                    <i class="fas fa-fw fa-project-diagram"></i>
+                                    <span>Ganchart</span>
+                                </a>
+                            </li>
+                        @endif
+                    @endif
+
+                    @if (
+                        \App\Models\Menu::isActive('jadwal_kelas') &&
+                            auth()->user()->name !== 'Agus Setyo' &&
+                            $userRole !== 'administrator')
+                        {{-- Jadwal Kelas --}}
+                        <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.kelas.index') }}" title="JADWAL KELAS">
+                                <i class="fas fa-fw fa-calendar-alt"></i>
+                                <span>JADWAL KELAS</span>
+                            </a>
+                        </li>
+                    @endif
+
+
+                    @if (auth()->user()->name === 'Yasmin')
+                        {{-- Menu Keuangan khusus Yasmin --}}
+                        @if (\App\Models\Menu::isActive('keuangan'))
+                            <li class="nav-item {{ request()->routeIs(['admin.keuangan.*']) ? 'active' : '' }}">
+                                <a class="nav-link collapsed" href="#" data-toggle="collapse"
+                                    data-target="#collapseKeuanganYasmin"
+                                    aria-expanded="{{ request()->routeIs(['admin.keuangan.*']) ? 'true' : 'false' }}"
+                                    aria-controls="collapseKeuanganYasmin" title="KEUANGAN">
+                                    <i class="fas fa-fw fa-wallet"></i>
+                                    <span><strong>KEUANGAN</strong></span>
+                                </a>
+                                <div id="collapseKeuanganYasmin"
+                                    class="collapse {{ request()->routeIs(['admin.keuangan.*']) ? 'show' : '' }}"
+                                    aria-labelledby="headingKeuangan" data-parent="#accordionSidebar">
                                     <div class="bg-white py-2 collapse-inner rounded">
-                                        <h6 class="collapse-header text-uppercase text-secondary">Daftar Pengguna:</h6>
-                                        @foreach(\App\Models\User::whereIn('name', ['Tursia', 'Latifah', 'Gunawan', 'Shafa Zahra'])->orderBy('name')->get() as $user)
-                                            <a class="collapse-item d-flex align-items-center justify-content-between"
-                                                href="{{ route('koordinasi.show', $user->id) }}">
-                                                <span>
-                                                    <i class="fas fa-user-circle mr-2 text-primary"></i>
-                                                    {{ $user->name }}
-                                                </span>
-                                                <small class="text-muted">({{ ucfirst($user->role) }})</small>
-                                            </a>
-                                        @endforeach
+                                        <a class="collapse-item {{ request()->routeIs('admin.keuangan.kas-kecil.index') ? 'active' : '' }}"
+                                            href="{{ route('admin.keuangan.kas-kecil.index') }}">Kas Kecil</a>
+                                        <a class="collapse-item {{ request()->routeIs('admin.keuangan.zakat') ? 'active' : '' }}"
+                                            href="{{ route('admin.keuangan.zakat') }}">Zakat</a>
                                     </div>
                                 </div>
                             </li>
                         @endif
-                    @endif
 
-                    {{-- Administrator Handle Ends --}}
-
-
-
-
-
-
-                    @if ($userRole === 'administrator' || in_array($userName, ['Linda', 'Yasmin', 'Agus Setyo']))
-                        @if(in_array($userName, ['Linda', 'Yasmin']))
-                            {{-- Unified Program Kerja & Gantt Chart --}}
-                            @if((\App\Models\Menu::isActive('program_kerja') || \App\Models\Menu::isActive('ganchart')) && $userRole !== 'administrator')
-                                <li class="nav-item {{ request()->routeIs('programkerja.unified') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('programkerja.unified') }}" title="PROGRAM KERJA">
-                                        <i class="fas fa-fw fa-tasks"></i>
-                                        <span><strong>PROGRAM KERJA</strong></span>
-                                    </a>
-                                </li>
-                            @endif
-                        @else
-                            {{-- Standard separate menus --}}
-                            @if(\App\Models\Menu::isActive('program_kerja') && $userRole !== 'administrator')
-                                {{-- Program Kerja --}}
-                                <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('programkerja.index') }}" title="Program Kerja">
-                                        <i class="fas fa-fw fa-tasks"></i>
-                                        <span>Program Kerja</span>
-                                    </a>
-                                </li>
-                            @endif
-                            @if(\App\Models\Menu::isActive('ganchart') && $userRole !== 'administrator')
-                                {{-- Ganchart --}}
-                                <li class="nav-item {{ request()->routeIs('gantt.index') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('gantt.index') }}" title="Ganchart">
-                                        <i class="fas fa-fw fa-project-diagram"></i>
-                                        <span>Ganchart</span>
-                                    </a>
-                                </li>
-                            @endif
-                        @endif
-
-                        @if(\App\Models\Menu::isActive('jadwal_kelas') && auth()->user()->name !== 'Agus Setyo' && $userRole !== 'administrator')
-                            {{-- Jadwal Kelas --}}
-                            <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.kelas.index') }}" title="JADWAL KELAS">
-                                    <i class="fas fa-fw fa-calendar-alt"></i>
-                                    <span>JADWAL KELAS</span>
-                                </a>
-                            </li>
-                        @endif
-
-
-                        @if(auth()->user()->name === 'Yasmin')
-                            {{-- Menu Keuangan khusus Yasmin --}}
-                            @if(\App\Models\Menu::isActive('keuangan'))
-                                <li class="nav-item {{ request()->routeIs(['admin.keuangan.*']) ? 'active' : '' }}">
-                                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseKeuanganYasmin"
-                                        aria-expanded="{{ request()->routeIs(['admin.keuangan.*']) ? 'true' : 'false' }}"
-                                        aria-controls="collapseKeuanganYasmin" title="KEUANGAN">
-                                        <i class="fas fa-fw fa-wallet"></i>
-                                        <span><strong>KEUANGAN</strong></span>
-                                    </a>
-                                    <div id="collapseKeuanganYasmin"
-                                        class="collapse {{ request()->routeIs(['admin.keuangan.*']) ? 'show' : '' }}"
-                                        aria-labelledby="headingKeuangan" data-parent="#accordionSidebar">
-                                        <div class="bg-white py-2 collapse-inner rounded">
-                                            <a class="collapse-item {{ request()->routeIs('admin.keuangan.kas-kecil.index') ? 'active' : '' }}"
-                                                href="{{ route('admin.keuangan.kas-kecil.index') }}">Kas Kecil</a>
-                                            <a class="collapse-item {{ request()->routeIs('admin.keuangan.zakat') ? 'active' : '' }}"
-                                                href="{{ route('admin.keuangan.zakat') }}">Zakat</a>
-                                        </div>
-                                    </div>
-                                </li>
-                            @endif
-
-                            {{-- Minutes of Meeting (MoM) untuk Yasmin --}}
-                            <li class="nav-item {{ request()->routeIs('admin.mom.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.mom.index') }}" title="Minutes of Meeting (MoM)">
-                                    <i class="fas fa-fw fa-clipboard-list"></i>
-                                    <span><strong>Minutes of Meeting (MoM)</strong></span>
-                                </a>
-                            </li>
-                        @endif
-
-
-
-
-
-                        {{-- Penilaian Karyawan --}}
-                        @if(\App\Models\Menu::isActive('penilaian_karyawan') && $userRole !== 'administrator')
-                            @if(auth()->user()->name !== 'Agus Setyo')
-                                <li class="nav-item">
-                                    <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
-                                        <i class="fa-solid fa-list-user me-2"></i>
-                                        <span>Penilaian Kinerja Tim</span>
-                                    </a>
-                                </li>
-                            @endif
-                        @endif
-                    @endif
-
-                    {{-- MENU HRD --}}
-                    @if(strtolower(auth()->user()->role) === 'hrd')
-                        @if(\App\Models\Menu::isActive('menu_hrd'))
-                            <li class="nav-item mt-3">
-                                <span class="nav-link text-uppercase fw-bold fs-5" style="color: #a8c6ff;">
-                                    MENU HRD
-                                </span>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-users me-2"></i> Data Karyawan</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-sitemap me-2"></i> Jabatan & Divisi</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-calendar-check me-2"></i> Absensi</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-person-walking-arrow-right me-2"></i> Izin / Sakit /
-                                        Lembur</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-star-half-stroke me-2"></i> Penilaian Kinerja</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-chart-line me-2"></i> KPI</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-money-bill-wave me-2"></i> Payroll / Slip Gaji</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-umbrella-beach me-2"></i> Cuti</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-user-plus me-2"></i> Rekrutmen</strong>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <strong><i class="fa-solid fa-file-lines me-2"></i> Laporan HRD</strong>
-                                </a>
-                            </li>
-                        @endif
-                    @endif
-
-                    @if(strtolower(auth()->user()->role) !== 'administrator' && strtolower(auth()->user()->role) !== 'produksi' && strtolower(auth()->user()->role) !== 'operasional' && !in_array($userRole, ['reseller', 'chapter']) && stripos(auth()->user()->name, 'Linda') === false)
-
-                        <li class="nav-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.keuangan.pengajuan-anggaran') }}">
-                                <i class="fas fa-fw fa-file-invoice-dollar"></i>
-                                <span><strong>PENGAJUAN ANGGARAN</strong></span>
+                        {{-- Minutes of Meeting (MoM) untuk Yasmin --}}
+                        <li class="nav-item {{ request()->routeIs('admin.mom.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.mom.index') }}"
+                                title="Minutes of Meeting (MoM)">
+                                <i class="fas fa-fw fa-clipboard-list"></i>
+                                <span><strong>Minutes of Meeting (MoM)</strong></span>
                             </a>
                         </li>
                     @endif
 
-                    @if(auth()->user()->name === 'Yasmin' && \App\Models\Menu::isActive('settings'))
-                        <li class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.settings.index') }}" title="SETTING">
-                                <i class="fas fa-fw fa-cog"></i>
-                                <span><strong>SETTING</strong></span>
+
+
+
+
+                    {{-- Penilaian Karyawan --}}
+                    @if (\App\Models\Menu::isActive('penilaian_karyawan') && $userRole !== 'administrator')
+                        @if (auth()->user()->name !== 'Agus Setyo')
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
+                                    <i class="fa-solid fa-list-user me-2"></i>
+                                    <span>Penilaian Kinerja Tim</span>
+                                </a>
+                            </li>
+                        @endif
+                    @endif
+                @endif
+
+                {{-- MENU HRD --}}
+                @if (strtolower(auth()->user()->role) === 'hrd')
+                    @if (\App\Models\Menu::isActive('menu_hrd'))
+                        <li class="nav-item mt-3">
+                            <span class="nav-link text-uppercase fw-bold fs-5" style="color: #a8c6ff;">
+                                MENU HRD
+                            </span>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-users me-2"></i> Data Karyawan</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-sitemap me-2"></i> Jabatan & Divisi</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-calendar-check me-2"></i> Absensi</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-person-walking-arrow-right me-2"></i> Izin / Sakit /
+                                    Lembur</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-star-half-stroke me-2"></i> Penilaian Kinerja</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-chart-line me-2"></i> KPI</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-money-bill-wave me-2"></i> Payroll / Slip Gaji</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-umbrella-beach me-2"></i> Cuti</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-user-plus me-2"></i> Rekrutmen</strong>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <strong><i class="fa-solid fa-file-lines me-2"></i> Laporan HRD</strong>
                             </a>
                         </li>
                     @endif
+                @endif
 
-                    <hr class="sidebar-divider d-none d-md-block" />
+                @if (strtolower(auth()->user()->role) !== 'administrator' &&
+                        strtolower(auth()->user()->role) !== 'produksi' &&
+                        strtolower(auth()->user()->role) !== 'operasional' &&
+                        !in_array($userRole, ['reseller', 'chapter']) &&
+                        stripos(auth()->user()->name, 'Linda') === false)
+                    <li
+                        class="nav-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.keuangan.pengajuan-anggaran') }}">
+                            <i class="fas fa-fw fa-file-invoice-dollar"></i>
+                            <span><strong>PENGAJUAN ANGGARAN</strong></span>
+                        </a>
+                    </li>
+                @endif
 
-                    <!-- Sidebar Toggler (Sidebar) -->
-                    <div class="text-center d-none d-md-inline">
-                        <button class="rounded-circle border-0" id="sidebarToggle"
-                            style="background: rgba(255,255,255,0.2); color: #fff;"></button>
-                    </div>
-                </ul>
+                @if (auth()->user()->name === 'Yasmin' && \App\Models\Menu::isActive('settings'))
+                    <li class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.settings.index') }}" title="SETTING">
+                            <i class="fas fa-fw fa-cog"></i>
+                            <span><strong>SETTING</strong></span>
+                        </a>
+                    </li>
+                @endif
+
+                <hr class="sidebar-divider d-none d-md-block" />
+
+                {{-- Menu Agenda (semua role kecuali chapter, reseller, agen) --}}
+                @if (!in_array(strtolower(Auth::user()->role), ['chapter', 'reseller', 'agen']))
+                    <li class="nav-item {{ request()->routeIs('agenda.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('agenda.index') }}" title="AGENDA">
+                            <i class="fas fa-fw fa-calendar-check"></i>
+                            <span><strong>AGENDA</strong></span>
+                        </a>
+                    </li>
+                @endif
+
+                <hr class="sidebar-divider d-none d-md-block" />
+
+                <!-- Sidebar Toggler (Sidebar) -->
+                <div class="text-center d-none d-md-inline">
+                    <button class="rounded-circle border-0" id="sidebarToggle"
+                        style="background: rgba(255,255,255,0.2); color: #fff;"></button>
+                </div>
+            </ul>
         @endif
-            <!-- End of Sidebar -->
+        <!-- End of Sidebar -->
 
-            <!-- Content Wrapper -->
-            <div id="content-wrapper" class="d-flex flex-column">
-                <!-- Main Content -->
-                <div id="content">
-                    @if(!request()->has('embed'))
-                        <!-- Topbar -->
-                        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow"
-                            style="position: sticky; top: 0; z-index: 1100;">
-                            <!-- Sidebar Toggle (Topbar) -->
-                            <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                                <i class="fa fa-bars"></i>
-                            </button>
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <!-- Main Content -->
+            <div id="content">
+                @if (!request()->has('embed'))
+                    <!-- Topbar -->
+                    <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow"
+                        style="position: sticky; top: 0; z-index: 1100;">
+                        <!-- Sidebar Toggle (Topbar) -->
+                        <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                            <i class="fa fa-bars"></i>
+                        </button>
 
-                            @if(!in_array($userRole, ['chapter', 'reseller']))
-                                <!-- Topbar Running Text -->
-                                <div class="topbar-marquee-container d-none d-md-flex">
-                                    <div class="topbar-marquee-text">
-                                        @if(request()->routeIs('admin.dailyactivity.*') || request()->is('admin/dailyactivity*'))
-                                            📝 JANGAN LUPA MENGISI DAILY ACTIVITY SETIAP JAM 15.00 , SEMANGAT... 💪
-                                        @else
-                                            ✨ SELAMAT DATANG DI HELAS CORP. SELAMAT BEKERJA, ✨
-                                        @endif
-                                    </div>
+                        @if (!in_array($userRole, ['chapter', 'reseller']))
+                            <!-- Topbar Running Text -->
+                            <div class="topbar-marquee-container d-none d-md-flex">
+                                <div class="topbar-marquee-text">
+                                    @if (request()->routeIs('admin.dailyactivity.*') || request()->is('admin/dailyactivity*'))
+                                        📝 JANGAN LUPA MENGISI DAILY ACTIVITY SETIAP JAM 15.00 , SEMANGAT... 💪
+                                    @else
+                                        ✨ SELAMAT DATANG DI HELAS CORP. SELAMAT BEKERJA, ✨
+                                    @endif
                                 </div>
-                            @endif
+                            </div>
+                        @endif
 
-                            <!-- Topbar Navbar -->
-                            <ul class="navbar-nav ml-auto">
-                                <!-- Nav Item - Search Dropdown (Visible Only XS) -->
-                                <li class="nav-item dropdown no-arrow d-sm-none">
-                                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
-                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <i class="fas fa-search fa-fw"></i>
-                                    </a>
-                                    <!-- Dropdown - Messages -->
-                                    <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
-                                        aria-labelledby="searchDropdown">
-                                        <form class="form-inline mr-auto w-100 navbar-search">
-                                            <div class="input-group">
-                                                <input type="text" class="form-control bg-light border-0 small"
-                                                    placeholder="Search for..." aria-label="Search"
-                                                    aria-describedby="basic-addon2" />
-                                                <div class="input-group-append">
-                                                    <button class="btn btn-primary" type="button">
-                                                        <i class="fas fa-search fa-sm"></i>
-                                                    </button>
-                                                </div>
+                        <!-- Topbar Navbar -->
+                        <ul class="navbar-nav ml-auto">
+                            <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+                            <li class="nav-item dropdown no-arrow d-sm-none">
+                                <a class="nav-link dropdown-toggle" href="#" id="searchDropdown"
+                                    role="button" data-toggle="dropdown" aria-haspopup="true"
+                                    aria-expanded="false">
+                                    <i class="fas fa-search fa-fw"></i>
+                                </a>
+                                <!-- Dropdown - Messages -->
+                                <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+                                    aria-labelledby="searchDropdown">
+                                    <form class="form-inline mr-auto w-100 navbar-search">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control bg-light border-0 small"
+                                                placeholder="Search for..." aria-label="Search"
+                                                aria-describedby="basic-addon2" />
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button">
+                                                    <i class="fas fa-search fa-sm"></i>
+                                                </button>
                                             </div>
-                                        </form>
-                                    </div>
-                                </li>
+                                        </div>
+                                    </form>
+                                </div>
+                            </li>
 
-                                <!-- ================== NAVBAR NOTIFIKASI (DIHAPUS SESUAI REQUEST) ================== -->
-                                {{-- @if(auth()->user()->role !== 'administrator')
+                            <!-- ================== NAVBAR NOTIFIKASI (DIHAPUS SESUAI REQUEST) ================== -->
+                            {{-- @if (auth()->user()->role !== 'administrator')
                                 <li class="nav-item mx-1">
                                     <a class="nav-link position-relative notif-bell" href="{{ route('notifikasi.index') }}">
                                         <i class="fas fa-bell fa-lg text-primary"></i>
-                                        @if(isset($notifCount) && $notifCount > 0)
+                                        @if (isset($notifCount) && $notifCount > 0)
                                         <span class="badge badge-pill badge-danger badge-counter pulse-badge">
                                             {{ $notifCount }}
                                         </span>
@@ -1425,146 +1548,149 @@
                                 </li>
                                 @endif --}}
 
-                                <!-- ================== NAVBAR PESAN MASUK (ADMIN) ================== -->
-                                @if(auth()->user()->role === 'administrator')
-                                    <li class="nav-item mx-1">
-                                        <a class="nav-link position-relative notif-message"
-                                            href="{{ route('admin.messages.index') }}">
-                                            <i class="fas fa-envelope fa-lg text-primary"></i>
-                                            @if(isset($messageCount) && $messageCount > 0)
-                                                <span class="badge badge-pill badge-danger badge-counter pulse-badge">
-                                                    {{ $messageCount }}
-                                                </span>
-                                            @endif
-                                        </a>
-                                    </li>
-                                @endif
-
-                                <!-- ================== STYLE BADGE ================== -->
-                                <style>
-                                    /* Lonceng & Pesan */
-                                    .notif-bell,
-                                    .notif-message {
-                                        display: flex;
-                                        align-items: center;
-                                    }
-
-                                    .badge-counter {
-                                        font-size: 0.65rem;
-                                        padding: 3px 6px;
-                                    }
-
-                                    .pulse-badge {
-                                        position: absolute;
-                                        top: 9px;
-                                        right: 6px;
-                                        min-width: 18px;
-                                        height: 18px;
-                                        font-size: 0.7rem;
-                                        padding: 0;
-                                        border-radius: 50%;
-                                        display: flex;
-                                        justify-content: center;
-                                        align-items: center;
-                                        animation: pulse 1.5s infinite;
-                                    }
-
-                                    @keyframes pulse {
-                                        0% {
-                                            box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
-                                        }
-
-                                        70% {
-                                            box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
-                                        }
-
-                                        100% {
-                                            box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
-                                        }
-                                    }
-
-                                    .notif-bell:hover i {
-                                        color: #f59e0b;
-                                        transform: scale(1.1);
-                                        transition: 0.3s;
-                                    }
-
-                                    .notif-message:hover i {
-                                        color: #2563eb;
-                                        transform: scale(1.1);
-                                        transition: 0.3s;
-                                    }
-                                </style>
-
-                                <div class="topbar-divider d-none d-sm-block"></div>
-
-                                <!-- Nav Item - User Information -->
-                                <li class="nav-item dropdown no-arrow">
-                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="mr-2 d-none d-lg-inline d-flex align-items-center">
-                                            <span class="badge badge-info px-2 py-1 shadow-sm mr-2"
-                                                style="font-size: 10px; font-weight: 800;">{{ Auth::user()->role === 'reseller' ? 'AGEN' : strtoupper(Auth::user()->role) }}</span>
-                                            @if(Auth::user()->chapter)
-                                                <span class="badge badge-light border shadow-sm px-2 py-1 mr-2"
-                                                    style="font-size: 10px; color: #5a5c69; font-weight: 700;">
-                                                    CHAPTER {{ strtoupper(Auth::user()->chapter) }}
-                                                </span>
-                                            @endif
-                                            <span
-                                                class="text-gray-700 font-weight-bold small">{{ Auth::user()->name }}</span>
-                                        </span>
-                                        @if(Auth::user()->photo)
-                                            <img class="img-profile rounded-circle" src="{{ asset(Auth::user()->photo) }}"
-                                                style="object-fit: cover; width:35px; height:35px;">
-                                        @else
-                                            <img class="img-profile rounded-circle"
-                                                src="{{ asset('backend/img/undraw_profile.svg') }}"
-                                                style="width:35px; height:35px;">
+                            <!-- ================== NAVBAR PESAN MASUK (ADMIN) ================== -->
+                            @if (auth()->user()->role === 'administrator')
+                                <li class="nav-item mx-1">
+                                    <a class="nav-link position-relative notif-message"
+                                        href="{{ route('admin.messages.index') }}">
+                                        <i class="fas fa-envelope fa-lg text-primary"></i>
+                                        @if (isset($messageCount) && $messageCount > 0)
+                                            <span class="badge badge-pill badge-danger badge-counter pulse-badge">
+                                                {{ $messageCount }}
+                                            </span>
                                         @endif
                                     </a>
-                                    <!-- Dropdown - User Information -->
-                                    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                        aria-labelledby="userDropdown" style="z-index: 9999 !important; min-width: 160px;">
-                                        <a class="dropdown-item" href="{{ route('profile.index') }}">
-                                            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                            Profile
-                                        </a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
-                                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                            Logout
-                                        </a>
-                                    </div>
                                 </li>
-                            </ul>
-                        </nav>
-                    @endif
-                    <!-- End of Topbar -->
+                            @endif
 
-                    <!-- Begin Page Content -->
-                    <div class="container-fluid" @if(request()->has('embed'))
-                    style="padding: 0; margin: 0; width: 100%; max-width: 100%;" @endif>
-                        <!-- Isi Konten -->
-                        @yield('content')
-                    </div>
-                    <!-- /.container-fluid -->
+                            <!-- ================== STYLE BADGE ================== -->
+                            <style>
+                                /* Lonceng & Pesan */
+                                .notif-bell,
+                                .notif-message {
+                                    display: flex;
+                                    align-items: center;
+                                }
+
+                                .badge-counter {
+                                    font-size: 0.65rem;
+                                    padding: 3px 6px;
+                                }
+
+                                .pulse-badge {
+                                    position: absolute;
+                                    top: 9px;
+                                    right: 6px;
+                                    min-width: 18px;
+                                    height: 18px;
+                                    font-size: 0.7rem;
+                                    padding: 0;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+                                    animation: pulse 1.5s infinite;
+                                }
+
+                                @keyframes pulse {
+                                    0% {
+                                        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+                                    }
+
+                                    70% {
+                                        box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+                                    }
+
+                                    100% {
+                                        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+                                    }
+                                }
+
+                                .notif-bell:hover i {
+                                    color: #f59e0b;
+                                    transform: scale(1.1);
+                                    transition: 0.3s;
+                                }
+
+                                .notif-message:hover i {
+                                    color: #2563eb;
+                                    transform: scale(1.1);
+                                    transition: 0.3s;
+                                }
+                            </style>
+
+                            <div class="topbar-divider d-none d-sm-block"></div>
+
+                            <!-- Nav Item - User Information -->
+                            <li class="nav-item dropdown no-arrow">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="mr-2 d-none d-lg-inline d-flex align-items-center">
+                                        <span class="badge badge-info px-2 py-1 shadow-sm mr-2"
+                                            style="font-size: 10px; font-weight: 800;">{{ Auth::user()->role === 'reseller' ? 'AGEN' : strtoupper(Auth::user()->role) }}</span>
+                                        @if (Auth::user()->chapter)
+                                            <span class="badge badge-light border shadow-sm px-2 py-1 mr-2"
+                                                style="font-size: 10px; color: #5a5c69; font-weight: 700;">
+                                                CHAPTER {{ strtoupper(Auth::user()->chapter) }}
+                                            </span>
+                                        @endif
+                                        <span
+                                            class="text-gray-700 font-weight-bold small">{{ Auth::user()->name }}</span>
+                                    </span>
+                                    @if (Auth::user()->photo)
+                                        <img class="img-profile rounded-circle"
+                                            src="{{ asset(Auth::user()->photo) }}"
+                                            style="object-fit: cover; width:35px; height:35px;">
+                                    @else
+                                        <img class="img-profile rounded-circle"
+                                            src="{{ asset('backend/img/undraw_profile.svg') }}"
+                                            style="width:35px; height:35px;">
+                                    @endif
+                                </a>
+                                <!-- Dropdown - User Information -->
+                                <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                                    aria-labelledby="userDropdown"
+                                    style="z-index: 9999 !important; min-width: 160px;">
+                                    <a class="dropdown-item" href="{{ route('profile.index') }}">
+                                        <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Profile
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#" data-toggle="modal"
+                                        data-target="#logoutModal">
+                                        <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Logout
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </nav>
+                @endif
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid"
+                    @if (request()->has('embed')) style="padding: 0; margin: 0; width: 100%; max-width: 100%;" @endif>
+                    <!-- Isi Konten -->
+                    @yield('content')
                 </div>
-                <!-- End of Main Content -->
+                <!-- /.container-fluid -->
+            </div>
+            <!-- End of Main Content -->
 
-                <!-- Footer -->
-                <!-- 
+            <!-- Footer -->
+            <!--
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
                         <span>Copyright &copy; Muslim Bisnis Coaching - 2025 </span>
                     </div>
                 </div>
-            </footer> 
+            </footer>
             -->
-                <!-- End of Footer -->
-            </div>
-            <!-- End of Content Wrapper -->
+            <!-- End of Footer -->
+        </div>
+        <!-- End of Content Wrapper -->
     </div>
     <!-- End of Page Wrapper -->
 
@@ -1633,8 +1759,8 @@
     @stack('scripts')
 
     <script>
-        $(document).ready(function () {
-            $("#close").click(function () {
+        $(document).ready(function() {
+            $("#close").click(function() {
                 $("#exampleModal").modal("hide");
             });
         });
@@ -1642,7 +1768,7 @@
 
     <!-- Database Realtime Notification script -->
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             // CSS styles for pulsing dot
             $('<style>')
                 .prop('type', 'text/css')
@@ -1692,7 +1818,7 @@
                 $.ajax({
                     url: "{{ route('admin.database.realtime-count') }}",
                     method: 'GET',
-                    success: function (response) {
+                    success: function(response) {
                         if (response && typeof response.count !== 'undefined') {
                             let currentCount = parseInt(response.count);
                             let lastCount = localStorage.getItem(lastCountKey);
@@ -1713,7 +1839,7 @@
                             }
 
                             // Always hide icons for database links to keep sidebar clean as requested
-                            $('a[href*="database"]').each(function () {
+                            $('a[href*="database"]').each(function() {
                                 $(this).find('i').hide();
                             });
 
@@ -1721,25 +1847,28 @@
 
                             if (currentCount > lastCount) {
                                 let diff = currentCount - lastCount;
-                                
+
                                 // CS is on another page or database page. Update tab title and sidebar pulsing badge!
                                 document.title = '(' + diff + ') ' + originalTitle;
 
-                                $('a[href*="database"]').each(function () {
+                                $('a[href*="database"]').each(function() {
                                     let $badge = $(this).find('.db-pulse-badge');
                                     if ($badge.length) {
                                         $badge.text(diff);
                                     } else {
-                                        $(this).prepend('<span class="db-pulse-badge">' + diff + '</span>');
+                                        $(this).prepend('<span class="db-pulse-badge">' + diff +
+                                            '</span>');
                                     }
                                 });
 
                                 if (isOnDatabasePage) {
                                     // CS is on the database page. Show a premium toast alert to notify them once!
-                                    let lastShownToastCount = sessionStorage.getItem('last_shown_toast_count');
-                                    if (lastShownToastCount === null || parseInt(lastShownToastCount) < currentCount) {
+                                    let lastShownToastCount = sessionStorage.getItem(
+                                        'last_shown_toast_count');
+                                    if (lastShownToastCount === null || parseInt(lastShownToastCount) <
+                                        currentCount) {
                                         sessionStorage.setItem('last_shown_toast_count', currentCount);
-                                        
+
                                         Swal.fire({
                                             toast: true,
                                             position: 'top-end',
@@ -1751,12 +1880,15 @@
                                             timerProgressBar: true,
                                             showCloseButton: true,
                                             didOpen: (toast) => {
-                                                toast.addEventListener('mouseenter', Swal.stopTimer)
-                                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                                toast.addEventListener('mouseenter', Swal
+                                                    .stopTimer)
+                                                toast.addEventListener('mouseleave', Swal
+                                                    .resumeTimer)
                                             }
                                         }).then((result) => {
                                             if (result.isConfirmed) {
-                                                localStorage.setItem(lastCountKey, currentCount);
+                                                localStorage.setItem(lastCountKey,
+                                                    currentCount);
                                                 window.location.reload();
                                             }
                                         });
@@ -1767,14 +1899,14 @@
                                 if (isOnDatabasePage) {
                                     localStorage.setItem(lastCountKey, currentCount);
                                 }
-                                
+
                                 // Reset title and remove badge when count is <= lastCount
                                 document.title = originalTitle;
                                 $('.db-pulse-badge').remove();
                             }
                         }
                     },
-                    error: function (xhr) {
+                    error: function(xhr) {
                         console.error('Realtime DB count check failed');
                     }
                 });
@@ -1787,7 +1919,7 @@
             setInterval(checkNewDatabase, 15000);
         });
     </script>
-    @if(request()->has('embed'))
+    @if (request()->has('embed'))
         <script>
             $(document).ready(function() {
                 function patchFormsAndLinks() {
@@ -1797,11 +1929,12 @@
                             $(this).append('<input type="hidden" name="embed" value="1">');
                         }
                     });
-                    
+
                     // 2. Append embed=1 to all normal links
                     $('a').each(function() {
                         var href = $(this).attr('href');
-                        if (href && href !== '#' && href !== '' && href.indexOf('javascript:') !== 0 && href.indexOf('tel:') !== 0 && href.indexOf('mailto:') !== 0) {
+                        if (href && href !== '#' && href !== '' && href.indexOf('javascript:') !== 0 && href
+                            .indexOf('tel:') !== 0 && href.indexOf('mailto:') !== 0) {
                             if (href.indexOf('?') === -1) {
                                 $(this).attr('href', href + '?embed=1');
                             } else if (href.indexOf('embed=1') === -1) {
@@ -1810,20 +1943,23 @@
                         }
                     });
                 }
-                
+
                 // Initial patch on page load
                 patchFormsAndLinks();
-                
+
                 // Keep patching when DOM changes via AJAX
                 $(document).ajaxComplete(function() {
                     patchFormsAndLinks();
                 });
-                
+
                 // Safe observer in case of dynamic modal / dropdown inserts
                 var observer = new MutationObserver(function() {
                     patchFormsAndLinks();
                 });
-                observer.observe(document.body, { childList: true, subtree: true });
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
             });
         </script>
     @endif

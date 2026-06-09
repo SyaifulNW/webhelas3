@@ -10,11 +10,23 @@ use Illuminate\Support\Facades\Auth;
 class MomController extends Controller
 {
     /**
+     * Valid unit values.
+     */
+    const UNITS = ['Helas Corp', 'Helas Aesthetic Clinic'];
+
+    /**
      * Display a listing of the MoM records.
      */
     public function index(Request $request)
     {
-        $query = Mom::query();
+        $unit = $request->get('unit', 'Helas Corp');
+
+        // Validate unit
+        if (!in_array($unit, self::UNITS)) {
+            $unit = 'Helas Corp';
+        }
+
+        $query = Mom::where('unit', $unit);
 
         // Filter based on status if requested and not 'all'
         if ($request->has('status') && $request->status !== 'all' && !empty($request->status)) {
@@ -33,7 +45,7 @@ class MomController extends Controller
             ]);
         }
 
-        return view('admin.mom.index', compact('moms'));
+        return view('admin.mom.index', compact('moms', 'unit'));
     }
 
     /**
@@ -41,20 +53,28 @@ class MomController extends Controller
      */
     public function store(Request $request)
     {
+        $unit = $request->get('unit', 'Helas Corp');
+
+        // Validate unit
+        if (!in_array($unit, self::UNITS)) {
+            $unit = 'Helas Corp';
+        }
+
         $mom = Mom::create([
-            'tanggal' => now()->toDateString(),
+            'tanggal'    => now()->toDateString(),
             'keterangan' => '',
-            'deadline' => null,
-            'pic' => '',
-            'target' => '',
-            'hasil' => '',
-            'status' => 'Progress',
+            'deadline'   => null,
+            'pic'        => '',
+            'target'     => '',
+            'hasil'      => '',
+            'status'     => 'Progress',
+            'unit'       => $unit,
             'created_by' => Auth::id(),
         ]);
 
         return response()->json([
             'success' => true,
-            'data' => $mom
+            'data'    => $mom
         ]);
     }
 
@@ -66,13 +86,13 @@ class MomController extends Controller
         $mom = Mom::findOrFail($id);
 
         $validated = $request->validate([
-            'tanggal' => 'nullable|date',
+            'tanggal'    => 'nullable|date',
             'keterangan' => 'nullable|string',
-            'deadline' => 'nullable|date',
-            'pic' => 'nullable|string|max:255',
-            'target' => 'nullable|string',
-            'hasil' => 'nullable|string',
-            'status' => 'nullable|in:Progress,Done,Overdue',
+            'deadline'   => 'nullable|date',
+            'pic'        => 'nullable|string|max:255',
+            'target'     => 'nullable|string',
+            'hasil'      => 'nullable|string',
+            'status'     => 'nullable|in:Progress,Done,Overdue',
         ]);
 
         // Dynamically update fields that are present in the request
@@ -86,7 +106,7 @@ class MomController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $mom
+            'data'    => $mom
         ]);
     }
 
@@ -99,8 +119,8 @@ class MomController extends Controller
         $mom->delete();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Data MoM berhasil dihapus.'
+            'success'  => true,
+            'message'  => 'Data MoM berhasil dihapus.'
         ]);
     }
 }

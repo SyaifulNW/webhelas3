@@ -1118,7 +1118,7 @@
                     <div class="d-flex align-items-center">
                         @if (
                             !in_array($userRole, ['administrator', 'manager', 'marketing']) &&
-                            !($userRole === 'operasional' && stripos(auth()->user()->name, 'Rafi') === false) &&
+                                !($userRole === 'operasional' && stripos(auth()->user()->name, 'Rafi') === false) &&
                                 !(auth()->user()->name === 'Linda' && request('view') !== 'me'))
                             @php
                                 $slugName =
@@ -1132,20 +1132,22 @@
                                 <i class="fa-solid fa-plus"></i> Tambah
                             </a>
                             <a href="{{ route('form.m1t', $slugName) }}" class="btn btn-success mr-2" target="_blank"
-                                style="background-color: #20c997; border-color: #20c997;">
+                                style="background-color: #20c997; border-color: #20c997; {{ $userRole === 'operasional' ? 'display:none!important;' : '' }}">
                                 <i class="fa-solid fa-link"></i> Tambah Via Link
                             </a>
                         @endif
-                        <button type="button" id="btnInteraksi"
-                            class="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-sm rounded-pill {{ request('bulan') && request('tahun') ? '' : 'd-none' }}"
-                            onclick="exportPdfInteraksi()"
-                            style="background: linear-gradient(45deg, #1d4ed8, #2563eb); border: none; font-weight: 600;">
-                            <i class="fas fa-file-pdf"></i> Follow Up
-                        </button>
+                        @if ($userRole !== 'operasional')
+                            <button type="button" id="btnInteraksi"
+                                class="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-sm rounded-pill {{ request('bulan') && request('tahun') ? '' : 'd-none' }}"
+                                onclick="exportPdfInteraksi()"
+                                style="background: linear-gradient(45deg, #1d4ed8, #2563eb); border: none; font-weight: 600;">
+                                <i class="fas fa-file-pdf"></i> Follow Up
+                            </button>
+                        @endif
 
                         @if (
                             !in_array($userRole, ['chapter', 'reseller', 'agen']) &&
-                            !(auth()->user()->role === 'operasional' && stripos(auth()->user()->name, 'Rafi') !== false) &&
+                                !(auth()->user()->role === 'operasional' && stripos(auth()->user()->name, 'Rafi') !== false) &&
                                 !($userRole === 'administrator' && request('view_type') == 'chapter'))
                             <button type="button" id="btnLihatJadwalZoomHariIni"
                                 class="btn btn-info d-flex align-items-center gap-2 px-3 shadow-sm rounded-pill ml-2"
@@ -1634,11 +1636,14 @@
                                     'statCountSudahTransfer').innerText = data.stats.countSudahTransfer;
                                 if (document.getElementById('statCountNo')) document.getElementById('statCountNo').innerText =
                                     data.stats.countNo;
-                                if (document.getElementById('zoomCountScheduled')) document.getElementById('zoomCountScheduled').innerText =
+                                if (document.getElementById('zoomCountScheduled')) document.getElementById('zoomCountScheduled')
+                                    .innerText =
                                     data.stats.countZoomScheduled ?? 0;
-                                if (document.getElementById('zoomCountDone')) document.getElementById('zoomCountDone').innerText =
+                                if (document.getElementById('zoomCountDone')) document.getElementById('zoomCountDone')
+                                    .innerText =
                                     data.stats.countZoomDone ?? 0;
-                                if (document.getElementById('zoomCountUnscheduled')) document.getElementById('zoomCountUnscheduled').innerText =
+                                if (document.getElementById('zoomCountUnscheduled')) document.getElementById(
+                                        'zoomCountUnscheduled').innerText =
                                     data.stats.countZoomUnscheduled ?? 0;
 
                                 // Update prospek summary card
@@ -1882,21 +1887,24 @@
                             <div
                                 style="width: 12px; height: 12px; background: #28a745; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">ADD OPS (Data Ditambah oleh Operasional)</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">ADD OPS (Data Ditambah oleh
+                                Operasional)</span>
                         </div>
                         <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
                             style="border-radius: 50px; border: 1px solid #000;">
                             <div
                                 style="width: 12px; height: 12px; background: #ffc107; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">EDIT OPS (Data Diedit oleh Operasional)</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">EDIT OPS (Data Diedit oleh
+                                Operasional)</span>
                         </div>
                         <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
                             style="border-radius: 50px; border: 1px solid #000;">
                             <div
                                 style="width: 12px; height: 12px; background: #6c757d; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">CHAPTER (Data Asli dari Chapter)</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">CHAPTER (Data Asli dari
+                                Chapter)</span>
                         </div>
                     </div>
                 @endif
@@ -1914,21 +1922,24 @@
                             <div
                                 style="width: 12px; height: 12px; background: #25799E; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Biru = Dijadwalkan (<span id="zoomCountScheduled">{{ $countZoomScheduled ?? 0 }}</span>)</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Biru = Dijadwalkan (<span
+                                    id="zoomCountScheduled">{{ $countZoomScheduled ?? 0 }}</span>)</span>
                         </div>
                         <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
                             style="border-radius: 50px; border: 1px solid #000;">
                             <div
                                 style="width: 12px; height: 12px; background: #3CDE1D; border: 1px solid #000; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Hijau = Selesai Zoom (<span id="zoomCountDone">{{ $countZoomDone ?? 0 }}</span>)</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Hijau = Selesai Zoom (<span
+                                    id="zoomCountDone">{{ $countZoomDone ?? 0 }}</span>)</span>
                         </div>
                         <div class="d-flex align-items-center bg-light px-3 py-1 shadow-sm"
                             style="border-radius: 50px; border: 1px solid #000;">
                             <div
                                 style="width: 12px; height: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 50%; margin-right: 8px;">
                             </div>
-                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Putih = Belum dijadwalkan (<span id="zoomCountUnscheduled">{{ $countZoomUnscheduled ?? 0 }}</span>)</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.75rem;">Putih = Belum dijadwalkan (<span
+                                    id="zoomCountUnscheduled">{{ $countZoomUnscheduled ?? 0 }}</span>)</span>
                         </div>
                     </div>
                 @endif
@@ -2004,7 +2015,9 @@
                                     <th style="width: 120px; text-align:center;">Rekap Penilaian</th>
                                     <th style="width: 110px; text-align:center;">Prospek</th>
                                     <th style="width: 160px; text-align:center;">Status Potensi</th>
-                                    @if(stripos(auth()->user()->chapter ?? '', 'depok') !== false || (in_array(strtolower(auth()->user()->role), ['administrator', 'operasional']) && request('view_type') === 'chapter'))
+                                    @if (stripos(auth()->user()->chapter ?? '', 'depok') !== false ||
+                                            (in_array(strtolower(auth()->user()->role), ['administrator', 'operasional']) &&
+                                                request('view_type') === 'chapter'))
                                         <th style="width: 120px; text-align:center;">Bukti Transfer</th>
                                     @endif
                                     @if (in_array($userRole, ['administrator', 'operasional']))
@@ -2677,7 +2690,8 @@
 
                                 Swal.fire({
                                     title: 'Hapus Data?',
-                                    text: "Apakah Anda yakin ingin menghapus data \"" + nama + "\" secara permanen?",
+                                    text: "Apakah Anda yakin ingin menghapus data \"" + nama +
+                                        "\" secara permanen?",
                                     icon: 'warning',
                                     showCancelButton: true,
                                     confirmButtonColor: '#e74a3b',
@@ -2711,7 +2725,8 @@
                                             success: function(res) {
                                                 Swal.fire({
                                                     title: 'Berhasil!',
-                                                    text: 'Data "' + nama + '" telah berhasil dihapus.',
+                                                    text: 'Data "' + nama +
+                                                        '" telah berhasil dihapus.',
                                                     icon: 'success',
                                                     timer: 1500,
                                                     showConfirmButton: false,
@@ -2720,13 +2735,16 @@
                                                     }
                                                 });
                                                 // Soft fade out and remove the row
-                                                $row.css('background-color', '#f8d7da').fadeOut(800, function() {
-                                                    $(this).remove();
-                                                    // Recalculate row numbers if needed
-                                                    $('#myTable tbody tr').each(function(index) {
-                                                        $(this).find('td:first').text(index + 1);
+                                                $row.css('background-color', '#f8d7da').fadeOut(800,
+                                                    function() {
+                                                        $(this).remove();
+                                                        // Recalculate row numbers if needed
+                                                        $('#myTable tbody tr').each(function(
+                                                            index) {
+                                                            $(this).find('td:first').text(
+                                                                index + 1);
+                                                        });
                                                     });
-                                                });
                                             },
                                             error: function(xhr) {
                                                 let errorMsg = 'Terjadi kesalahan saat menghapus data.';
@@ -3247,11 +3265,14 @@
                                                 style="font-size: 0.8rem; border-radius: 4px; resize: none; line-height: 1.2; font-weight: 700 !important; border-color: #dee2e6 !important;"
                                                 placeholder="Next..."></textarea>
                                         </div>
-                                        <div class="mt-2 bg-light p-2 rounded border shadow-sm" style="border-radius: 6px; border-color: #dee2e6 !important;">
-                                            <div class="text-secondary fw-bold mb-1" style="font-size: 0.65rem; font-weight: 800 !important;">
+                                        <div class="mt-2 bg-light p-2 rounded border shadow-sm"
+                                            style="border-radius: 6px; border-color: #dee2e6 !important;">
+                                            <div class="text-secondary fw-bold mb-1"
+                                                style="font-size: 0.65rem; font-weight: 800 !important;">
                                                 <i class="fas fa-clock mr-1"></i> Pilih waktu Tindak Lanjut:
                                             </div>
-                                            <input type="datetime-local" class="fu-at-display-input form-control form-control-sm border fw-bold text-dark bg-white w-100" 
+                                            <input type="datetime-local"
+                                                class="fu-at-display-input form-control form-control-sm border fw-bold text-dark bg-white w-100"
                                                 id="fu{{ $i }}_at_under"
                                                 {{ auth()->user()->role === 'administrator' ? 'readonly' : '' }}
                                                 style="font-size: 0.75rem; font-weight: 700 !important; height: 28px; padding: 2px 5px;">
@@ -3438,13 +3459,14 @@
                     $('#modalZoomBant').modal('hide');
 
                     // Dynamic sync to trigger button
-                    let $btnZoom = salesplanId ? $(`.btn-zoom-bant[data-salesplan-id="${salesplanId}"]`) : $(`.btn-zoom-bant[data-id="${dataId}"]`);
+                    let $btnZoom = salesplanId ? $(`.btn-zoom-bant[data-salesplan-id="${salesplanId}"]`) :
+                        $(`.btn-zoom-bant[data-id="${dataId}"]`);
                     if ($btnZoom.length) {
                         $btnZoom.attr('data-schedule-date', scheduledAt);
                         $btnZoom.attr('data-schedule-link', zoomLink);
                         $btnZoom.attr('data-schedule-status', status);
                         $btnZoom.attr('data-schedule-notes', notes);
-                        
+
                         let ikutZoomVal = $btnZoom.attr('data-ikut-zoom') || '0';
                         if (status === 'done') {
                             $btnZoom.attr('data-ikut-zoom', '1');
@@ -3519,7 +3541,7 @@
                             if (document.getElementById('zoomBantIkutZoomRight')) {
                                 document.getElementById('zoomBantIkutZoomRight').checked = (value == 1);
                             }
-                            
+
                             // Synchronize schedule status attribute and button color
                             let currentStatus = $btnZoom.attr('data-schedule-status') || '';
                             if (value == 1) {
@@ -3554,7 +3576,7 @@
                                     });
                                 }
                             }
-                            
+
                             // Refetch calendar events to display green instantly
                             if (window.modalCalendar) {
                                 window.modalCalendar.refetchEvents();
@@ -3569,6 +3591,7 @@
                 }
             });
         }
+
         function convertToDateTimeLocal(dateStr) {
             if (!dateStr) return '';
             // Match d/m/Y H:i format (e.g. 02/06/2026 11:25)
@@ -3689,7 +3712,7 @@
             let id = $('#riwayat_data_id').val();
             let salesplanId = $('#riwayat_salesplan_id').val();
             let updates = {};
-            
+
             for (let i = 1; i <= 10; i++) {
                 let hasil = $('#fu' + i + '_hasil').val();
                 let tindak = $('#fu' + i + '_tindak_lanjut').val();
@@ -3767,7 +3790,9 @@
                         if ($badge.length) {
                             $badge.text(newFuCount).show();
                         } else {
-                            $triggerBtn.append('<span class="badge badge-danger position-absolute fu-badge" style="top: -5px; right: -5px; font-size: 0.6rem; border-radius: 50%; padding: 2px 5px;">' + newFuCount + '</span>');
+                            $triggerBtn.append(
+                                '<span class="badge badge-danger position-absolute fu-badge" style="top: -5px; right: -5px; font-size: 0.6rem; border-radius: 50%; padding: 2px 5px;">' +
+                                newFuCount + '</span>');
                         }
                     } else {
                         $badge.remove();
@@ -4728,8 +4753,8 @@
                             onclick="refreshProspekData()">
                             <i class="fas fa-sync-alt mr-1"></i> REUSE / REFRESH
                         </button>
-                        <button type="button" class="close text-white p-0 m-0" data-dismiss="modal" aria-label="Tutup"
-                            style="opacity:1; font-size:1.4rem; line-height:1;">
+                        <button type="button" class="close text-white p-0 m-0" data-dismiss="modal"
+                            aria-label="Tutup" style="opacity:1; font-size:1.4rem; line-height:1;">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -4916,7 +4941,8 @@
                             <h5 class="modal-title font-weight-bold mb-1 d-flex align-items-center"
                                 id="modalJadwalZoomHariIniLabel" style="font-size: 1.25rem; letter-spacing: 0.5px;">
                                 <i class="fas fa-video mr-2"></i> Monitoring Jadwal Zoom One-on-One -
-                                <span id="modalJadwalTitleCsName" class="ml-1">{{ in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'operasional']) ? 'ALL TIM CS' : auth()->user()->name }}</span>
+                                <span id="modalJadwalTitleCsName"
+                                    class="ml-1">{{ in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'operasional']) ? 'ALL TIM CS' : auth()->user()->name }}</span>
                             </h5>
                             <p class="mb-0 text-white-50 small">Pantau pencapaian target harian dan sebaran jadwal Zoom
                                 seluruh tim CS secara real-time.</p>
@@ -4934,7 +4960,7 @@
                     <!-- Legend & Target Row -->
                     <div class="row align-items-center mb-4">
                         <input type="hidden" id="modalFilterCs" value="{{ auth()->id() }}">
-                        
+
                         <!-- Target Progress Tracker (60 Zoom per month) -->
                         <div class="col-md-6 d-flex align-items-center mb-3 mb-md-0">
                             @php
@@ -4962,23 +4988,32 @@
                                     ->whereYear('scheduled_at', date('Y'))
                                     ->count();
                             @endphp
-                            <div class="w-100 p-3 rounded-lg shadow-sm bg-white border d-flex align-items-center" style="gap: 12px; border-radius: 12px;">
-                                <div class="d-flex align-items-center justify-content-center bg-primary-light text-primary rounded-circle" style="width: 40px; height: 40px; min-width: 40px; background-color: #ebf5ff;">
+                            <div class="w-100 p-3 rounded-lg shadow-sm bg-white border d-flex align-items-center"
+                                style="gap: 12px; border-radius: 12px;">
+                                <div class="d-flex align-items-center justify-content-center bg-primary-light text-primary rounded-circle"
+                                    style="width: 40px; height: 40px; min-width: 40px; background-color: #ebf5ff;">
                                     <i class="fas fa-bullseye fa-lg text-primary"></i>
                                 </div>
                                 <div class="flex-grow-1">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="font-weight-bold text-dark text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Target Zoom Bulanan</span>
-                                        <span class="font-weight-bold text-primary" style="font-size: 0.8rem;"><span id="modalCountTotal">{{ $zoomCountThisMonth }}</span> / {{ $zoomTarget }} Zoom</span>
+                                        <span class="font-weight-bold text-dark text-uppercase"
+                                            style="font-size: 0.72rem; letter-spacing: 0.5px;">Target Zoom Bulanan</span>
+                                        <span class="font-weight-bold text-primary" style="font-size: 0.8rem;"><span
+                                                id="modalCountTotal">{{ $zoomCountThisMonth }}</span> /
+                                            {{ $zoomTarget }} Zoom</span>
                                     </div>
-                                    <div class="progress" style="height: 8px; border-radius: 5px; background-color: #f1f5f9;">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" 
-                                            id="modalProgressBar"
-                                            style="width: {{ $zoomProgressPercent }}%; border-radius: 5px;" 
-                                            aria-valuenow="{{ $zoomCountThisMonth }}" aria-valuemin="0" aria-valuemax="{{ $zoomTarget }}"></div>
+                                    <div class="progress"
+                                        style="height: 8px; border-radius: 5px; background-color: #f1f5f9;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                            role="progressbar" id="modalProgressBar"
+                                            style="width: {{ $zoomProgressPercent }}%; border-radius: 5px;"
+                                            aria-valuenow="{{ $zoomCountThisMonth }}" aria-valuemin="0"
+                                            aria-valuemax="{{ $zoomTarget }}"></div>
                                     </div>
-                                    <div class="d-flex justify-content-between align-items-center mt-1" style="font-size: 0.65rem; color: #64748b;">
-                                        <span id="modalProgressPercentText">Pencapaian: {{ $zoomProgressPercent }}%</span>
+                                    <div class="d-flex justify-content-between align-items-center mt-1"
+                                        style="font-size: 0.65rem; color: #64748b;">
+                                        <span id="modalProgressPercentText">Pencapaian:
+                                            {{ $zoomProgressPercent }}%</span>
                                         <span>Target: 60 Zoom (Bulan Ini)</span>
                                     </div>
                                 </div>
@@ -5304,7 +5339,8 @@
                                             <span class="font-weight-bold text-dark d-block"
                                                 style="font-size: 0.9rem; line-height: 1.2;">Selesai Zoom</span>
                                             <small class="text-muted d-block"
-                                                style="font-size: 0.72rem; line-height: 1.2;">Menandakan peserta sudah selesai zoom</small>
+                                                style="font-size: 0.72rem; line-height: 1.2;">Menandakan peserta sudah
+                                                selesai zoom</small>
                                         </div>
                                     </div>
                                     <div class="custom-control custom-switch">
@@ -6487,7 +6523,8 @@
                             end: info.endStr
                         };
 
-                        let isAdmin = {{ in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'operasional']) ? 'true' : 'false' }};
+                        let isAdmin =
+                            {{ in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'operasional']) ? 'true' : 'false' }};
                         if (isAdmin) {
                             let csFilterVal = '';
                             let csSelects = document.querySelectorAll('#filterCS');
@@ -6515,7 +6552,7 @@
                                 let countScheduled = 0;
                                 let countDone = 0;
                                 let countCancelled = 0;
-                                
+
                                 data.forEach(function(evt) {
                                     if (evt.extendedProps && evt.extendedProps.status) {
                                         let status = evt.extendedProps.status.toLowerCase();
@@ -6528,17 +6565,20 @@
                                         }
                                     }
                                 });
-                                
+
                                 let totalZoom = countScheduled + countDone + countCancelled;
                                 let zoomTarget = 60;
-                                let zoomProgressPercent = Math.min(100, Math.round((totalZoom / zoomTarget) * 100));
-                                
+                                let zoomProgressPercent = Math.min(100, Math.round((totalZoom /
+                                    zoomTarget) * 100));
+
                                 $('#modalCountScheduled').text(countScheduled);
                                 $('#modalCountDone').text(countDone);
                                 $('#modalCountCancelled').text(countCancelled);
                                 $('#modalCountTotal').text(totalZoom);
-                                $('#modalProgressPercentText').text('Pencapaian: ' + zoomProgressPercent + '%');
-                                $('#modalProgressBar').css('width', zoomProgressPercent + '%').attr('aria-valuenow', totalZoom);
+                                $('#modalProgressPercentText').text('Pencapaian: ' +
+                                    zoomProgressPercent + '%');
+                                $('#modalProgressBar').css('width', zoomProgressPercent + '%').attr(
+                                    'aria-valuenow', totalZoom);
 
                                 successCallback(data);
                             })
@@ -6665,7 +6705,7 @@
                             'color': '#ffffff',
                             'border': 'none'
                         });
-                        
+
                         let $tr = $btnZoom.closest('tr');
                         if ($tr.length) {
                             $tr.find('.checkbox-ikut-zoom').prop('checked', true);

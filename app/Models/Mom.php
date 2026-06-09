@@ -19,6 +19,7 @@ class Mom extends Model
         'target',
         'hasil',
         'status',
+        'unit',
         'created_by',
     ];
 
