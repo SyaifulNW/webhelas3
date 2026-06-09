@@ -53,11 +53,25 @@ class PesertaSmiController extends Controller
                         'approval_status' => in_array(strtolower($cs->role ?? ''), ['reseller', 'chapter', 'agen', 'chapter ']) ? 'Pending' : 'Approved',
                     ]);
                 } else {
-                    // Update level if missing
+                    // Update level and nama if missing
                     $pesertaSmi = \App\Models\PesertaSmi::where('sales_plan_id', $plan->id)->first();
-                    if ($pesertaSmi && !$pesertaSmi->level) {
-                        $pesertaSmi->level = $plan->level;
-                        $pesertaSmi->save();
+                    if ($pesertaSmi) {
+                        $dirty = false;
+                        if (!$pesertaSmi->level && $plan->level) {
+                            $pesertaSmi->level = $plan->level;
+                            $dirty = true;
+                        }
+                        if (!$pesertaSmi->nama) {
+                            $dataRel = $plan->data;
+                            $namaFallback = $dataRel ? $dataRel->nama : $plan->nama;
+                            if ($namaFallback) {
+                                $pesertaSmi->nama = $namaFallback;
+                                $dirty = true;
+                            }
+                        }
+                        if ($dirty) {
+                            $pesertaSmi->save();
+                        }
                     }
                 }
             }
@@ -105,42 +119,13 @@ class PesertaSmiController extends Controller
                 ->pluck('id');
             $allTeamIds = $resellerMembersIds->merge([$userId])->unique();
             
-            $query->where(function ($q) use ($chapterName, $userId, $allTeamIds) {
+            $query->where(function ($q) use ($allTeamIds) {
                 // 1. Personal / Team ownership (Always visible)
                 $q->whereIn('closing_cs_id', $allTeamIds)
                   ->orWhereIn('created_by', $allTeamIds)
                   ->orWhereHas('salesPlan', function($sq) use ($allTeamIds) {
                       $sq->whereIn('created_by', $allTeamIds);
                   });
-
-                // 2. Chapter Visibility (If assigned to a chapter)
-                // [USER_REQUEST] Chapter/Reseller/Agen within the same chapter should see consistent chapter data.
-                if ($chapterName) {
-                    $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
-                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
-
-                    $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
-                        // Match by Participant's City (Regional visibility)
-                        $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
-                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
-                                $ssq->where('kota_nama', 'LIKE', '%' . $chapterName . '%')
-                                    ->orWhere('kota_nama', 'LIKE', '%' . $cleanChapter . '%');
-                            })
-                            ->whereNotIn('created_by', $excludeNames)
-                            ->where('created_by_role', '!=', 'cs-mbc');
-                        });
-
-                        // Match by Closer's Chapter (Regional visibility)
-                        $sq->orWhereHas('closingCs', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
-                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
-                                $ssq->where('chapter', 'LIKE', '%' . $chapterName . '%')
-                                    ->orWhere('chapter', 'LIKE', '%' . $cleanChapter . '%');
-                            })
-                            ->whereNotIn('name', $excludeNames)
-                            ->where('role', '!=', 'cs-mbc');
-                        });
-                    });
-                }
             });
         }
 
@@ -366,37 +351,12 @@ class PesertaSmiController extends Controller
                 ->pluck('id');
             $allTeamIds = $resellerMembersIds->merge([$userId])->unique();
             
-            $pendingCountQuery->where(function ($q) use ($chapterName, $userId, $allTeamIds) {
+            $pendingCountQuery->where(function ($q) use ($allTeamIds) {
                 $q->whereIn('closing_cs_id', $allTeamIds)
                   ->orWhereIn('created_by', $allTeamIds)
                   ->orWhereHas('salesPlan', function($sq) use ($allTeamIds) {
                       $sq->whereIn('created_by', $allTeamIds);
                   });
-
-                if ($chapterName) {
-                    $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
-                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
-
-                    $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
-                        $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
-                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
-                                $ssq->where('kota_nama', 'LIKE', '%' . $chapterName . '%')
-                                    ->orWhere('kota_nama', 'LIKE', '%' . $cleanChapter . '%');
-                            })
-                            ->whereNotIn('created_by', $excludeNames)
-                            ->where('created_by_role', '!=', 'cs-mbc');
-                        });
-
-                        $sq->orWhereHas('closingCs', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
-                            $tsq->where(function ($ssq) use ($chapterName, $cleanChapter) {
-                                $ssq->where('chapter', 'LIKE', '%' . $chapterName . '%')
-                                    ->orWhere('chapter', 'LIKE', '%' . $cleanChapter . '%');
-                            })
-                            ->whereNotIn('name', $excludeNames)
-                            ->where('role', '!=', 'cs-mbc');
-                        });
-                    });
-                }
             });
         }
         

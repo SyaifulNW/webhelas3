@@ -16,6 +16,7 @@ class KasKecil extends Model
         'keluar',
         'sisa',
         'bukti_transfer',
-        'created_by'
+        'created_by',
+        'kategori'
     ];
 }

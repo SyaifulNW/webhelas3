@@ -473,9 +473,19 @@
                 </div>
             </div>
         </div>
+        @else
+        <!-- Hidden inputs to maintain filter state for chapter/reseller/agen -->
+        <input type="hidden" id="smi_filter_chapter" value="all">
+        <input type="hidden" id="smi_filter_cs_pusat" value="all">
+        <input type="hidden" id="smi_filter_status" value="all">
+        <input type="hidden" id="smi_filter_approval" value="all">
+        <input type="hidden" id="smi_filter_spp_month" value="{{ request('filter_spp_month', date('n')) }}">
+        <input type="hidden" id="smi_filter_spp_status" value="all">
+        <input type="hidden" id="smi_filter_year" value="{{ request('filter_year', date('Y')) }}">
+        <input type="hidden" id="smi_filter_level" value="all">
         @endif
 
-        @if(!in_array(strtolower(auth()->user()->role), ['chapter', 'reseller', 'agen']))
+
         <!-- Card Stats Section (Reorganized into 2 Tables) -->
         <div class="col-12 mb-3">
             <div class="row">
@@ -625,7 +635,7 @@
                 </div>
             </div>
         </div>
-        @endif
+
 
         @if(!in_array(strtolower(auth()->user()->role), ['chapter', 'reseller', 'agen']))
         <!-- Legend Section -->

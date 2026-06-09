@@ -73,7 +73,7 @@
     @endphp
 
     <div class="header">
-        <h2>LAPORAN KAS KECIL</h2>
+        <h2>LAPORAN KAS KECIL {{ strtoupper($kategori ?? 'Pusat') == 'AESTHETIC' ? 'HELAS AESTHETIC' : 'HELAS PUSAT' }}</h2>
         <p>Bulan: {{ $months[$bulan] }} {{ $tahun }}</p>
     </div>
 

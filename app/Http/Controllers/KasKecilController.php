@@ -30,6 +30,7 @@ class KasKecilController extends Controller
 
         $bulan = $request->get('bulan', date('m'));
         $tahun = $request->get('tahun', date('Y'));
+        $kategori = $request->get('kategori', 'Pusat');
 
         // Ensure column exists
         if (!\Illuminate\Support\Facades\Schema::hasColumn('kas_kecils', 'bukti_transfer')) {
@@ -37,18 +38,36 @@ class KasKecilController extends Controller
                 $table->string('bukti_transfer')->nullable();
             });
         }
+        
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('kas_kecils', 'kategori')) {
+            \Illuminate\Support\Facades\Schema::table('kas_kecils', function ($table) {
+                $table->string('kategori')->default('Pusat');
+            });
+        }
 
         $startDate = "$tahun-$bulan-01";
-        $saldoAwal = KasKecil::where('tanggal', '<', $startDate)->sum('masuk')
-            - KasKecil::where('tanggal', '<', $startDate)->sum('keluar');
+        
+        $saldoAwalPusat = KasKecil::where('kategori', 'Pusat')->where('tanggal', '<', $startDate)->sum('masuk')
+            - KasKecil::where('kategori', 'Pusat')->where('tanggal', '<', $startDate)->sum('keluar');
+            
+        $saldoAwalAesthetic = KasKecil::where('kategori', 'Aesthetic')->where('tanggal', '<', $startDate)->sum('masuk')
+            - KasKecil::where('kategori', 'Aesthetic')->where('tanggal', '<', $startDate)->sum('keluar');
 
-        $kas = KasKecil::whereMonth('tanggal', $bulan)
+        $kasPusat = KasKecil::where('kategori', 'Pusat')
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->orderBy('tanggal', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+            
+        $kasAesthetic = KasKecil::where('kategori', 'Aesthetic')
+            ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->orderBy('tanggal', 'asc')
             ->orderBy('id', 'asc')
             ->get();
 
-        return view('admin.keuangan.kas_kecil', compact('kas', 'bulan', 'tahun', 'saldoAwal'));
+        return view('admin.keuangan.kas_kecil', compact('kasPusat', 'kasAesthetic', 'bulan', 'tahun', 'saldoAwalPusat', 'saldoAwalAesthetic', 'kategori'));
     }
 
     public function uploadBukti(Request $request, $id)
@@ -96,6 +115,7 @@ class KasKecilController extends Controller
             'masuk' => 'nullable|numeric',
             'keluar' => 'nullable|numeric',
             'bukti_transfer' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:10240',
+            'kategori' => 'required|string',
         ]);
 
         $buktiPath = null;
@@ -121,6 +141,7 @@ class KasKecilController extends Controller
             'keluar' => $request->keluar ?? 0,
             'bukti_transfer' => $buktiPath,
             'created_by' => Auth::id(),
+            'kategori' => $request->kategori,
         ]);
 
         return response()->json(['success' => true]);
@@ -130,18 +151,20 @@ class KasKecilController extends Controller
     {
         $bulan = $request->get('bulan', date('m'));
         $tahun = $request->get('tahun', date('Y'));
+        $kategori = $request->get('kategori', 'Pusat');
 
         $startDate = "$tahun-$bulan-01";
-        $saldoAwal = KasKecil::where('tanggal', '<', $startDate)->sum('masuk')
-            - KasKecil::where('tanggal', '<', $startDate)->sum('keluar');
+        $saldoAwal = KasKecil::where('kategori', $kategori)->where('tanggal', '<', $startDate)->sum('masuk')
+            - KasKecil::where('kategori', $kategori)->where('tanggal', '<', $startDate)->sum('keluar');
 
-        $kas = KasKecil::whereMonth('tanggal', $bulan)
+        $kas = KasKecil::where('kategori', $kategori)
+            ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->orderBy('tanggal', 'asc')
             ->orderBy('id', 'asc')
             ->get();
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.keuangan.kas_kecil_pdf', compact('kas', 'bulan', 'tahun', 'saldoAwal'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.keuangan.kas_kecil_pdf', compact('kas', 'bulan', 'tahun', 'saldoAwal', 'kategori'));
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download("Kas_Kecil_{$bulan}_{$tahun}.pdf");

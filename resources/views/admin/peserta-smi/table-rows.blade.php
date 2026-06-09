@@ -50,7 +50,7 @@
              @endphp
             <div class="d-flex align-items-center">
                 <input form="form-update-{{ $item->id }}" type="text" name="nama"
-                    class="table-input font-weight-bold text-dark" value="{{ $item->nama }}" placeholder="Nama peserta..."
+                    class="table-input font-weight-bold text-dark" value="{{ $item->nama ?: ($item->salesPlan->data->nama ?? $item->salesPlan->nama ?? '') }}" placeholder="Nama peserta..."
                     onblur="quickUpdateField(this, {{ $item->id }}, 'nama')">
             </div>
 

@@ -18,16 +18,32 @@
         ];
         $selectedMonth = request('bulan', $bulan ?? date('m'));
         $selectedYear = request('tahun', $tahun ?? date('Y'));
-
-        $totalMasuk = $kas->sum('masuk');
-        $totalKeluar = $kas->sum('keluar');
-        $saldoAwal = $saldoAwal ?? 0;
-        $saldoAkhir = $saldoAwal + $totalMasuk - $totalKeluar;
+        $kategori = request('kategori', 'Pusat');
+        
+        $categories = [
+            'Pusat' => ['kas' => $kasPusat, 'saldoAwal' => $saldoAwalPusat],
+            'Aesthetic' => ['kas' => $kasAesthetic, 'saldoAwal' => $saldoAwalAesthetic]
+        ];
     @endphp
 
     <div class="container-fluid">
+        <ul class="nav nav-tabs mb-4" id="kasTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link {{ $kategori == 'Pusat' ? 'active font-weight-bold text-primary' : 'text-secondary' }}" 
+                   id="pusat-tab" data-toggle="tab" href="#pusat" role="tab" aria-controls="pusat" aria-selected="{{ $kategori == 'Pusat' ? 'true' : 'false' }}">
+                    Kas Kecil Helas Pusat
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $kategori == 'Aesthetic' ? 'active font-weight-bold text-primary' : 'text-secondary' }}" 
+                   id="aesthetic-tab" data-toggle="tab" href="#aesthetic" role="tab" aria-controls="aesthetic" aria-selected="{{ $kategori == 'Aesthetic' ? 'true' : 'false' }}">
+                    Kas Kecil Helas Aesthetic
+                </a>
+            </li>
+        </ul>
+
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Kas Kecil</h1>
+            <h1 class="h3 mb-0 text-gray-800" id="pageTitle">Kas Kecil {{ $kategori == 'Aesthetic' ? 'Helas Aesthetic' : 'Helas Pusat' }}</h1>
             <form action="{{ route('admin.keuangan.kas-kecil.index') }}" method="GET"
                 class="form-inline shadow-sm bg-white p-2 rounded border">
                 <div class="form-group mx-sm-2">
@@ -47,180 +63,193 @@
                         @endfor
                     </select>
                 </div>
-                <a href="{{ route('admin.keuangan.kas-kecil.export-pdf', ['bulan' => $selectedMonth, 'tahun' => $selectedYear]) }}"
-                    class="btn btn-danger btn-sm ml-2 shadow-sm">
+                <input type="hidden" name="kategori" id="formKategori" value="{{ $kategori }}">
+                <button type="submit" class="btn btn-danger btn-sm ml-2 shadow-sm" formaction="{{ route('admin.keuangan.kas-kecil.export-pdf') }}">
                     <i class="fas fa-file-pdf mr-1"></i> Cetak PDF
-                </a>
+                </button>
             </form>
         </div>
 
-        <!-- Summary Cards -->
-        <div class="row mb-4">
-            <div class="col-xl-3 col-md-6 mb-2">
-                <div class="card border-left-info shadow h-100 py-1">
-                    <div class="card-body py-2">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Saldo Bulan Sebelumnya
-                                </div>
-                                <div class="h6 mb-0 font-weight-bold text-gray-800">Rp
-                                    {{ number_format($saldoAwal, 0, ',', '.') }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-2">
-                <div class="card border-left-success shadow h-100 py-1">
-                    <div class="card-body py-2">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Pemasukan</div>
-                                <div class="h6 mb-0 font-weight-bold text-gray-800">Rp
-                                    {{ number_format($totalMasuk, 0, ',', '.') }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-2">
-                <div class="card border-left-danger shadow h-100 py-1">
-                    <div class="card-body py-2">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Total Pengeluaran
-                                </div>
-                                <div class="h6 mb-0 font-weight-bold text-gray-800">Rp
-                                    {{ number_format($totalKeluar, 0, ',', '.') }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-2">
-                <div class="card border-left-primary shadow h-100 py-1">
-                    <div class="card-body py-2">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Saldo Akhir</div>
-                                <div class="h6 mb-0 font-weight-bold text-gray-800">Rp
-                                    {{ number_format($saldoAkhir, 0, ',', '.') }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Table Card -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white">
-                <h6 class="m-0 font-weight-bold text-primary">Data Kas Kecil</h6>
-                <button type="button" class="btn btn-primary btn-sm shadow-sm" id="btnTambahBaris">
-                    <i class="fas fa-plus fa-sm text-white-50 mr-1"></i> Tambah data
-                </button>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-bordered mb-0" id="tableKasKecil">
-                        <thead>
-                            <tr class="text-center font-weight-bold text-dark header-yellow">
-                                <th width="5%">NO</th>
-                                <th width="12%">TGL</th>
-                                <th>KET</th>
-                                <th width="15%">SALDO MASUK</th>
-                                <th width="15%">SALDO KELUAR</th>
-                                <th width="15%">SISA</th>
-                                <th width="10%">BUKTI</th>
-                                <th width="5%">AKSI</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyKasKecil">
-                            @php $runningBalance = $saldoAwal; @endphp
-                            @if($saldoAwal != 0)
-                            <tr class="bg-light">
-                                <td class="text-center align-middle">-</td>
-                                <td class="text-center align-middle">-</td>
-                                <td class="align-middle px-3 font-italic text-muted">Saldo Bulan Sebelumnya</td>
-                                <td class="text-right align-middle px-3">-</td>
-                                <td class="text-right align-middle px-3">-</td>
-                                <td class="text-right align-middle px-3 font-weight-bold">
-                                    {{ number_format($saldoAwal, 0, ',', '.') }}
-                                </td>
-                                <td class="text-center align-middle">-</td>
-                                <td class="text-center align-middle">-</td>
-                            </tr>
-                            @endif
-                            @forelse($kas as $index => $item)
-                                @php $runningBalance += ($item->masuk - $item->keluar); @endphp
-                                <tr data-id="{{ $item->id }}">
-                                    <td class="text-center align-middle">{{ $index + 1 }}</td>
-                                    <td class="text-center align-middle">{{ date('d/m/Y', strtotime($item->tanggal)) }}</td>
-                                    <td class="align-middle px-3">{{ $item->keterangan }}</td>
-                                    <td class="text-right align-middle px-3">
-                                        {{ $item->masuk > 0 ? number_format($item->masuk, 0, ',', '.') : '-' }}
-                                    </td>
-                                    <td class="text-right align-middle px-3">
-                                        {{ $item->keluar > 0 ? number_format($item->keluar, 0, ',', '.') : '-' }}
-                                    </td>
-                                    <td class="text-right align-middle px-3 font-weight-bold">
-                                        {{ number_format($runningBalance, 0, ',', '.') }}
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <div class="d-flex flex-column align-items-center">
-                                            @if($item->bukti_transfer)
-                                                @php
-                                                    $isPdf = strtolower(pathinfo($item->bukti_transfer, PATHINFO_EXTENSION)) === 'pdf';
-                                                @endphp
-                                                @if($isPdf)
-                                                    <div class="position-relative mb-1">
-                                                        <a href="{{ asset($item->bukti_transfer) }}" target="_blank" class="text-danger" title="Lihat PDF" style="display:inline-block; border: 1px solid #ddd; border-radius: 4px; padding: 2px 4px; background: #fff;">
-                                                            <i class="far fa-file-pdf fa-2x"></i>
-                                                        </a>
-                                                    </div>
-                                                @else
-                                                    <div class="position-relative mb-1">
-                                                        <img src="{{ asset($item->bukti_transfer) }}" alt="Bukti"
-                                                            class="img-thumbnail shadow-sm preview-image"
-                                                            style="width: 45px; height: 45px; object-fit: cover; cursor: pointer;"
-                                                            onclick="previewImage('{{ asset($item->bukti_transfer) }}', 'Bukti Kas - {{ $item->keterangan }}')">
-                                                    </div>
-                                                @endif
-                                            @endif
-
-                                            {{-- Tombol Upload untuk Lama/Baru --}}
-                                            <label class="btn btn-sm btn-outline-primary p-0 px-2 m-0"
-                                                style="font-size: 10px; cursor: pointer;" title="Upload/Ganti Bukti">
-                                                <i class="fas fa-upload mr-1"></i>
-                                                {{ $item->bukti_transfer ? 'Ganti' : 'Upload' }}
-                                                <input type="file" class="d-none upload-bukti-existing"
-                                                    data-id="{{ $item->id }}" accept="image/*,.pdf">
-                                            </label>
+        <div class="tab-content" id="kasTabsContent">
+            @foreach($categories as $catName => $data)
+                @php
+                    $catKas = $data['kas'];
+                    $catSaldoAwal = $data['saldoAwal'];
+                    $totalMasuk = $catKas->sum('masuk');
+                    $totalKeluar = $catKas->sum('keluar');
+                    $saldoAkhir = $catSaldoAwal + $totalMasuk - $totalKeluar;
+                    $tabId = strtolower($catName);
+                @endphp
+                <div class="tab-pane fade {{ $kategori == $catName ? 'show active' : '' }}" id="{{ $tabId }}" role="tabpanel" aria-labelledby="{{ $tabId }}-tab">
+                    
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6 mb-2">
+                            <div class="card border-left-info shadow h-100 py-1">
+                                <div class="card-body py-2">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Saldo Bulan Sebelumnya
+                                            </div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800">Rp
+                                                {{ number_format($catSaldoAwal, 0, ',', '.') }}</div>
                                         </div>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <form action="{{ route('admin.keuangan.kas-kecil.destroy', $item->id) }}" method="POST"
-                                            class="d-inline delete-form">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-link text-danger p-0">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr id="emptyRow">
-                                    <td colspan="8" class="text-center py-4 text-muted small italic">Belum ada data.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-2">
+                            <div class="card border-left-success shadow h-100 py-1">
+                                <div class="card-body py-2">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Pemasukan</div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800">Rp
+                                                {{ number_format($totalMasuk, 0, ',', '.') }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-2">
+                            <div class="card border-left-danger shadow h-100 py-1">
+                                <div class="card-body py-2">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Total Pengeluaran
+                                            </div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800">Rp
+                                                {{ number_format($totalKeluar, 0, ',', '.') }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-2">
+                            <div class="card border-left-primary shadow h-100 py-1">
+                                <div class="card-body py-2">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Saldo Akhir</div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800">Rp
+                                                {{ number_format($saldoAkhir, 0, ',', '.') }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white">
+                            <h6 class="m-0 font-weight-bold text-primary">Data Kas Kecil Helas {{ $catName }}</h6>
+                            <button type="button" class="btn btn-primary btn-sm shadow-sm btnTambahBaris" data-kategori="{{ $catName }}">
+                                <i class="fas fa-plus fa-sm text-white-50 mr-1"></i> Tambah data
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0 tableKasKecil">
+                                    <thead>
+                                        <tr class="text-center font-weight-bold text-dark header-yellow">
+                                            <th width="5%">NO</th>
+                                            <th width="12%">TGL</th>
+                                            <th>KET</th>
+                                            <th width="15%">SALDO MASUK</th>
+                                            <th width="15%">SALDO KELUAR</th>
+                                            <th width="15%">SISA</th>
+                                            <th width="10%">BUKTI</th>
+                                            <th width="5%">AKSI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="tbodyKasKecil" data-kategori="{{ $catName }}">
+                                        @php $runningBalance = $catSaldoAwal; @endphp
+                                        @if($catSaldoAwal != 0)
+                                        <tr class="bg-light">
+                                            <td class="text-center align-middle">-</td>
+                                            <td class="text-center align-middle">-</td>
+                                            <td class="align-middle px-3 font-italic text-muted">Saldo Bulan Sebelumnya</td>
+                                            <td class="text-right align-middle px-3">-</td>
+                                            <td class="text-right align-middle px-3">-</td>
+                                            <td class="text-right align-middle px-3 font-weight-bold">
+                                                {{ number_format($catSaldoAwal, 0, ',', '.') }}
+                                            </td>
+                                            <td class="text-center align-middle">-</td>
+                                            <td class="text-center align-middle">-</td>
+                                        </tr>
+                                        @endif
+                                        @forelse($catKas as $index => $item)
+                                            @php $runningBalance += ($item->masuk - $item->keluar); @endphp
+                                            <tr data-id="{{ $item->id }}">
+                                                <td class="text-center align-middle">{{ $index + 1 }}</td>
+                                                <td class="text-center align-middle">{{ date('d/m/Y', strtotime($item->tanggal)) }}</td>
+                                                <td class="align-middle px-3">{{ $item->keterangan }}</td>
+                                                <td class="text-right align-middle px-3">
+                                                    {{ $item->masuk > 0 ? number_format($item->masuk, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td class="text-right align-middle px-3">
+                                                    {{ $item->keluar > 0 ? number_format($item->keluar, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td class="text-right align-middle px-3 font-weight-bold">
+                                                    {{ number_format($runningBalance, 0, ',', '.') }}
+                                                </td>
+                                                <td class="text-center align-middle">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        @if($item->bukti_transfer)
+                                                            @php
+                                                                $isPdf = strtolower(pathinfo($item->bukti_transfer, PATHINFO_EXTENSION)) === 'pdf';
+                                                            @endphp
+                                                            @if($isPdf)
+                                                                <div class="position-relative mb-1">
+                                                                    <a href="{{ asset($item->bukti_transfer) }}" target="_blank" class="text-danger" title="Lihat PDF" style="display:inline-block; border: 1px solid #ddd; border-radius: 4px; padding: 2px 4px; background: #fff;">
+                                                                        <i class="far fa-file-pdf fa-2x"></i>
+                                                                    </a>
+                                                                </div>
+                                                            @else
+                                                                <div class="position-relative mb-1">
+                                                                    <img src="{{ asset($item->bukti_transfer) }}" alt="Bukti"
+                                                                        class="img-thumbnail shadow-sm preview-image"
+                                                                        style="width: 45px; height: 45px; object-fit: cover; cursor: pointer;"
+                                                                        onclick="previewImage('{{ asset($item->bukti_transfer) }}', 'Bukti Kas - {{ $item->keterangan }}')">
+                                                                </div>
+                                                            @endif
+                                                        @endif
+            
+                                                        {{-- Tombol Upload untuk Lama/Baru --}}
+                                                        <label class="btn btn-sm btn-outline-primary p-0 px-2 m-0"
+                                                            style="font-size: 10px; cursor: pointer;" title="Upload/Ganti Bukti">
+                                                            <i class="fas fa-upload mr-1"></i>
+                                                            {{ $item->bukti_transfer ? 'Ganti' : 'Upload' }}
+                                                            <input type="file" class="d-none upload-bukti-existing"
+                                                                data-id="{{ $item->id }}" accept="image/*,.pdf">
+                                                        </label>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center align-middle">
+                                                    <form action="{{ route('admin.keuangan.kas-kecil.destroy', $item->id) }}" method="POST"
+                                                        class="d-inline delete-form">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr class="emptyRow">
+                                                <td colspan="8" class="text-center py-4 text-muted small italic">Belum ada data.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            @endforeach
         </div>
     </div>
-
     <script>
         $(document).ready(function () {
             function formatRupiah(number) {
@@ -232,36 +261,54 @@
                 return parseInt(formatted.replace(/[^0-9]/g, '')) || 0;
             }
 
-            $('#btnTambahBaris').click(function () {
-                $('#emptyRow').remove();
+            $('.nav-tabs a').on('shown.bs.tab', function(event) {
+                var targetId = $(event.target).attr("href"); // e.g. #pusat
+                var newKategori = targetId === "#aesthetic" ? "Aesthetic" : "Pusat";
+                
+                // Update hidden inputs for filter and PDF export
+                $('#formKategori').val(newKategori);
+                
+                // Update the title
+                $('#pageTitle').text('Kas Kecil Helas ' + newKategori);
 
-                let rowCount = $('#tbodyKasKecil tr').length + 1;
+                // Update visual active state
+                $('.nav-tabs a').removeClass('font-weight-bold text-primary').addClass('text-secondary');
+                $(event.target).removeClass('text-secondary').addClass('font-weight-bold text-primary');
+            });
+
+            $('.btnTambahBaris').click(function () {
+                let currentKategori = $(this).data('kategori');
+                let tbody = $('.tbodyKasKecil[data-kategori="' + currentKategori + '"]');
+                
+                tbody.find('.emptyRow').remove();
+
+                let rowCount = tbody.find('tr').length + 1;
                 let today = new Date().toISOString().split('T')[0];
 
                 let newRow = `
-                <tr class="bg-light shadow-sm" id="newRowInput">
+                <tr class="bg-light shadow-sm newRowInput">
                     <td class="text-center align-middle font-weight-bold">${rowCount}</td>
                     <td class="p-1">
-                        <input type="date" id="new_tanggal" class="form-control form-control-sm border-0 bg-white" value="${today}">
+                        <input type="date" class="form-control form-control-sm border-0 bg-white new_tanggal" value="${today}">
                     </td>
                     <td class="p-1">
-                        <input type="text" id="new_keterangan" class="form-control form-control-sm border-0 bg-white" placeholder="Keterangan...">
+                        <input type="text" class="form-control form-control-sm border-0 bg-white new_keterangan" placeholder="Keterangan...">
                     </td>
                     <td class="p-1">
-                        <input type="text" id="new_masuk" class="form-control form-control-sm border-0 bg-white text-right rupiah" placeholder="0">
+                        <input type="text" class="form-control form-control-sm border-0 bg-white text-right rupiah new_masuk" placeholder="0">
                     </td>
                     <td class="p-1">
-                        <input type="text" id="new_keluar" class="form-control form-control-sm border-0 bg-white text-right rupiah" placeholder="0">
+                        <input type="text" class="form-control form-control-sm border-0 bg-white text-right rupiah new_keluar" placeholder="0">
                     </td>
                     <td class="text-center align-middle font-weight-bold">-</td>
                     <td class="p-2 align-middle">
                         <div class="custom-file" style="font-size: 10px;">
-                            <input type="file" class="custom-file-input" id="new_bukti" accept="image/*,.pdf">
-                            <label class="custom-file-label" for="new_bukti" style="padding: 0.25rem 0.5rem; height: auto;">Pilih File</label>
+                            <input type="file" class="custom-file-input new_bukti" accept="image/*,.pdf">
+                            <label class="custom-file-label" style="padding: 0.25rem 0.5rem; height: auto;">Pilih File</label>
                         </div>
                     </td>
                     <td class="text-center align-middle">
-                        <button type="button" class="btn btn-success btn-sm btn-circle" id="btnSimpanBaris">
+                        <button type="button" class="btn btn-success btn-sm btn-circle btnSimpanBaris" data-kategori="${currentKategori}">
                             <i class="fas fa-check"></i>
                         </button>
                         <button type="button" class="btn btn-secondary btn-sm btn-circle" onclick="$(this).closest('tr').remove()">
@@ -271,8 +318,8 @@
                 </tr>
             `;
 
-                $('#tbodyKasKecil').append(newRow);
-                $('#new_keterangan').focus();
+                tbody.append(newRow);
+                tbody.find('.new_keterangan').last().focus();
             });
 
             $(document).on('input', '.rupiah', function () {
@@ -280,21 +327,25 @@
                 $(this).val(p > 0 ? formatRupiah(p) : '');
             });
 
-            $(document).on('click', '#btnSimpanBaris', function () {
+            $(document).on('click', '.btnSimpanBaris', function () {
                 let btn = $(this);
+                let tr = btn.closest('tr');
+                let kategori = btn.data('kategori');
+                
                 let formData = new FormData();
                 formData.append('_token', '{{ csrf_token() }}');
-                formData.append('tanggal', $('#new_tanggal').val());
-                formData.append('keterangan', $('#new_keterangan').val());
-                formData.append('masuk', parseRupiah($('#new_masuk').val()));
-                formData.append('keluar', parseRupiah($('#new_keluar').val()));
+                formData.append('tanggal', tr.find('.new_tanggal').val());
+                formData.append('keterangan', tr.find('.new_keterangan').val());
+                formData.append('masuk', parseRupiah(tr.find('.new_masuk').val()));
+                formData.append('keluar', parseRupiah(tr.find('.new_keluar').val()));
+                formData.append('kategori', kategori);
 
-                let fileInput = document.getElementById('new_bukti');
+                let fileInput = tr.find('.new_bukti')[0];
                 if (fileInput.files.length > 0) {
                     formData.append('bukti_transfer', fileInput.files[0]);
                 }
 
-                if (!$('#new_keterangan').val() || (parseRupiah($('#new_masuk').val()) === 0 && parseRupiah($('#new_keluar').val()) === 0)) {
+                if (!tr.find('.new_keterangan').val() || (parseRupiah(tr.find('.new_masuk').val()) === 0 && parseRupiah(tr.find('.new_keluar').val()) === 0)) {
                     alert('Keterangan dan Nominal (Masuk/Keluar) harus diisi!');
                     return;
                 }
