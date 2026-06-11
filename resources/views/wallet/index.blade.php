@@ -146,7 +146,7 @@
                                         @endif
                                     </div>
 
-                                    @if($tx->status == 'pending' || $tx->status == 'rejected')
+                                    @if($tx->status == 'pending')
                                     <form action="{{ route('wallet.transaction.destroy', $tx->id) }}" method="POST" class="mt-2">
                                         @csrf
                                         @method('DELETE')

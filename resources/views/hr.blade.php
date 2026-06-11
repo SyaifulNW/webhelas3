@@ -619,7 +619,7 @@
                     </div>
                 </div>
             </div>
-        @elseif(request('section') == 'settings' && in_array(Auth::user()->role, ['administrator', 'admin']))
+        @elseif(request('section') == 'settings' && (in_array(Auth::user()->role, ['administrator', 'admin', 'hrd']) || auth()->user()->name === 'Yasmin'))
             <!-- SECTION: PENGATURAN ABSENSI -->
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <div>

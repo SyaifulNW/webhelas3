@@ -904,7 +904,7 @@
                         </li>
                     @endif
 
-                    @if (!in_array($userRole, ['chapter', 'agen', 'cs-mbc']))
+                    @if (!in_array($userRole, ['chapter', 'agen', 'cs-mbc', 'reseller']))
                         <li class="nav-item {{ request()->routeIs('zoom-schedule.calendar') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('zoom-schedule.calendar') }}">
                                 <i class="fas fa-fw fa-video"></i>
@@ -941,9 +941,9 @@
                     @if ($userRole === 'chapter' || $userRole === 'reseller')
 
                         <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
+                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="SPP Peserta M1T">
                                 <i class="fas fa-fw fa-user-graduate"></i>
-                                <span style="text-transform: none;"><strong>Peserta M1T</strong></span>
+                                <span style="text-transform: none;"><strong>SPP Peserta M1T</strong></span>
                                 @php
                                     // For chapter/reseller, they might also want to see their pending count
                                     // But the user specifically asked for Linda & Admin.
@@ -1075,9 +1075,9 @@
                                     <li
                                         class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                                         <a class="nav-link" href="{{ route('peserta-smi.index') }}"
-                                            title="PESERTA M1T">
+                                            title="SPP Peserta M1T">
                                             <i class="fas fa-fw fa-user-graduate"></i>
-                                            <span style="text-transform: none;"><strong>PESERTA M1T</strong></span>
+                                            <span style="text-transform: none;"><strong>SPP Peserta M1T</strong></span>
                                             @if ($pendingM1TCount > 0)
                                                 <span
                                                     class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
@@ -1114,10 +1114,9 @@
                                     <li
                                         class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                                         <a class="nav-link" href="{{ route('peserta-smi.index') }}"
-                                            title="Peserta M1T">
+                                            title="SPP Peserta M1T">
                                             <i class="fas fa-fw fa-user-graduate"></i>
-                                            <span style="text-transform: none;"><strong>DATA PESERTA
-                                                    M1T</strong></span>
+                                            <span style="text-transform: none;"><strong>SPP Peserta M1T</strong></span>
                                             @if ($pendingM1TCount > 0)
                                                 <span
                                                     class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
@@ -1128,10 +1127,9 @@
                                     <li
                                         class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                                         <a class="nav-link" href="{{ route('peserta-smi.index') }}"
-                                            title="Peserta M1T">
+                                            title="SPP Peserta M1T">
                                             <i class="fas fa-fw fa-user-graduate"></i>
-                                            <span style="text-transform: none;"><strong>DATA PESERTA
-                                                    M1T</strong></span>
+                                            <span style="text-transform: none;"><strong>SPP Peserta M1T</strong></span>
                                         </a>
                                     </li>
                                 @endif
@@ -1187,9 +1185,9 @@
                 @if (in_array($userRole, ['administrator']) || in_array($userName, ['Diah Putri']))
                     @if (strtolower(auth()->user()->role) !== 'administrator')
                         <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
+                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="SPP Peserta M1T">
                                 <i class="fas fa-fw fa-user-graduate"></i>
-                                <span style="text-transform: none;"><strong>Data Peserta M1T</strong></span>
+                                <span style="text-transform: none;"><strong>SPP Peserta M1T</strong></span>
                                 @if ($pendingM1TCount > 0)
                                     <span
                                         class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
@@ -1350,13 +1348,13 @@
 
 
 
-                    {{-- Penilaian Karyawan --}}
-                    @if (\App\Models\Menu::isActive('penilaian_karyawan') && $userRole !== 'administrator')
+                    {{-- Penilaian Karyawan (HRD) --}}
+                    @if (\App\Models\Menu::isActive('penilaian_karyawan') && ($userRole !== 'administrator' || auth()->user()->name === 'Yasmin'))
                         @if (auth()->user()->name !== 'Agus Setyo')
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
+                            <li class="nav-item {{ request()->routeIs('hr.dashboard') || request()->routeIs('manager.penilaian-cs.index') ? 'active' : '' }}">
+                                <a class="nav-link text-white" href="{{ route('hr.dashboard') }}">
                                     <i class="fa-solid fa-list-user me-2"></i>
-                                    <span>Penilaian Kinerja Tim</span>
+                                    <span>HRD</span>
                                 </a>
                             </li>
                         @endif

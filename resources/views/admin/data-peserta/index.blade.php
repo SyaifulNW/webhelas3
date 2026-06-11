@@ -107,6 +107,13 @@
         try {
             if (iframe && iframe.contentWindow && iframe.contentWindow.document) {
                 const doc = iframe.contentWindow.document;
+                
+                // Pause resizing if a Bootstrap modal is open to prevent infinite height growth loops
+                // This fixes the bug where popups keep moving downwards.
+                if (doc.body && doc.body.classList.contains('modal-open')) {
+                    return;
+                }
+
                 const body = doc.body;
                 const html = doc.documentElement;
                 if (body && html) {
@@ -117,7 +124,7 @@
                         html.scrollHeight,
                         html.offsetHeight
                     );
-                    iframe.style.height = (height + 60) + "px";
+                    iframe.style.height = height + "px";
                 }
             }
         } catch (e) {

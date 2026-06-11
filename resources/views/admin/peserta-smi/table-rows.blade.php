@@ -359,12 +359,15 @@
                                 $accentColor = '#4e73df'; // Blue
                             }
                         @endphp
+                        @php
+                            $canCheckSpp = (auth()->user()->name === 'Linda' || strtolower(auth()->user()->role) === 'administrator');
+                        @endphp
                         <input type="checkbox" class="spp-checkbox" data-id="{{ $item->id }}" data-month="{{ $i }}"
                             data-planned-nominal="{{ $plannedNominal }}" data-level-nominal="{{ $levelNominal }}"
                             {{ ($isPaid || $isPlanChecked) ? 'checked' : '' }}
-                            style="accent-color: {{ $accentColor }};"
+                            style="accent-color: {{ $accentColor }}; {{ !$canCheckSpp ? 'cursor: not-allowed; opacity: 0.7;' : '' }}"
                             title="{{ $plannedNominal ? 'Rencana: Rp ' . number_format($plannedNominal, 0, ',', '.') : 'Centang jika Lunas (Rp ' . number_format($levelNominal, 0, ',', '.') . ')' }}"
-                            onclick="toggleSppLunasDirectly(this)">
+                            {!! $canCheckSpp ? 'onclick="toggleSppLunasDirectly(this)"' : 'onclick="return false;"' !!}>
 
                         <input form="form-update-{{ $item->id }}" type="text" name="spp_{{ $i }}" id="spp_{{ $i }}_{{ $item->id }}"
                             value="{{ $isPaid ? number_format($item->{"spp_$i"}, 0, ',', '.') : '0' }}"

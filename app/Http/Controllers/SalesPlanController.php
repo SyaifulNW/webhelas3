@@ -271,7 +271,7 @@ class SalesPlanController extends Controller
             })
             ->orderByRaw("FIELD(status, 'cold', 'tertarik', 'mau_transfer', 'sudah_transfer', 'no')")
             ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            ->paginate($request->get('per_page', 10));
 
 
         // ======================================

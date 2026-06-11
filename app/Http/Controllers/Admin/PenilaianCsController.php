@@ -39,6 +39,15 @@ class PenilaianCsController extends Controller
                              ->where('id', '!=', auth()->id())
                              ->where('is_active', 1)
                              ->get();
+        } elseif ($userName === 'Yasmin') {
+             $daftarCs = User::where(function($q) {
+                                $q->whereIn('name', ['Arifa', 'Puput', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
+                                  ->orWhere('id', 14);
+                             })
+                             ->where('id', '!=', 1)
+                             ->where('is_active', 1)
+                             ->orderBy('name')
+                             ->get();
         } else {
              // Revised List for Admin & Others
              $daftarCs = User::where(function($q) {
@@ -46,7 +55,6 @@ class PenilaianCsController extends Controller
                                   ->orWhere('id', 14);
                              })
                              ->where('id', '!=', 1)
-                             ->where('id', '!=', auth()->id())
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
@@ -63,25 +71,24 @@ class PenilaianCsController extends Controller
         $routeView = 'manager.penilaian-cs.index'; // Default view for manager
         
         if ($userName === 'Linda') {
-             // Linda melihat: (Felmi, Eko Sulis, Arifa, Nisa) + Semua CS-MBC + Semua CS-SMI
+             // Linda melihat: (Felmi, Eko Sulis, Arifa, Nisa) + Semua CS-MBC + Semua CS-SMI + Yasmin
              $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa', 'Rida', 'Shafa Zahra'])
+                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa', 'Rida', 'Shafa Zahra', 'Yasmin'])
                                   ->orWhereIn('role', ['cs-mbc', 'cs-smi', 'advertising', 'produksi']);
                              })
-                             ->whereNotIn('name', ['Linda', 'Yasmin'])
+                             ->whereNotIn('name', ['Linda'])
                              ->where('id', '!=', auth()->id())
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
              $routeView = 'admin.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
         } elseif ($userName === 'Yasmin') {
-            // Yasmin melihat 8 user spesifik
+            // Yasmin melihat user spesifik, tapi tidak melihat dirinya sendiri dan Linda
             $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
+                                $q->whereIn('name', ['Arifa', 'Puput', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
                                   ->orWhere('id', 14);
                              })
                              ->where('id', '!=', 1)
-                             ->where('id', '!=', auth()->id())
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
@@ -94,8 +101,11 @@ class PenilaianCsController extends Controller
                             ->get();
             $routeView = 'admin.penilaian-cs.index';
         } else {
-            // Administrator / Other Managers -> See all relevant roles
-            $daftarCs = User::whereIn('role', ['cs', 'cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
+            // Administrator / Other Managers -> See all relevant roles + Yasmin
+            $daftarCs = User::where(function($q) {
+                    $q->whereIn('role', ['cs', 'cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
+                      ->orWhere('name', 'Yasmin');
+                })
                 ->where('id', '!=', 1)
                 ->where('id', '!=', auth()->id())
                 ->where('is_active', 1)

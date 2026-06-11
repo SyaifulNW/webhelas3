@@ -105,7 +105,7 @@
                                             <div class="badge badge-danger px-3 py-1 shadow-sm">Rejected</div>
                                         @endif
 
-                                        @if($tx->status == 'pending' || $tx->status == 'rejected')
+                                        @if($tx->status == 'pending')
                                         <form action="{{ route('wallet.transaction.destroy', $tx->id) }}" method="POST" class="ml-2">
                                             @csrf
                                             @method('DELETE')

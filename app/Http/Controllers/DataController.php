@@ -725,12 +725,8 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         
         $countZoomUnscheduled = count($dataFilteredIds) - count(array_intersect($dataFilteredIds->toArray(), $scheduledOrDoneIds));
 
-        // If no ikut_kelas filter and no active class filter, force legend counts to 0 for UI clarity as requested
-        if (empty($ikutKelasFilter) && $ikutKelasFilter !== '0' && empty($activeKelasId) && (empty($prospekKelasId) || $prospekKelasId === 'all')) {
-            $countZoomScheduled = 0;
-            $countZoomDone = 0;
-            $countZoomUnscheduled = 0;
-        }
+        // Zoom legend counts are no longer forced to 0
+        // as requested by the user, they will now always show the actual numbers.
 
 
 

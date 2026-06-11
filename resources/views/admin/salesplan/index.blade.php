@@ -2165,7 +2165,9 @@ $(document).ready(function() {
     </table>
 </div>
 
-
+<div class="mt-4 mb-4 d-flex justify-content-center" id="paginationContainerSmi">
+    {{ $salesplans->appends(request()->query())->links('pagination::bootstrap-4') }}
+</div>
 
 <script>
     document.querySelectorAll('.status-select').forEach(select => {
@@ -3126,6 +3128,53 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<script>
+// AJAX Pagination implementation to avoid page refresh
+$(document).on('click', '.pagination a', function(e) {
+    e.preventDefault();
+    var url = $(this).attr('href');
+    
+    // Create visual loading feedback
+    var wrapper = $('#content');
+    wrapper.css({
+        'opacity': '0.5',
+        'pointer-events': 'none',
+        'transition': 'all 0.3s'
+    });
+    
+    fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Handle case where #content is present or if whole page
+        const contentNode = doc.querySelector('#content');
+        if (contentNode) {
+            document.querySelector('#content').innerHTML = contentNode.innerHTML;
+            window.history.pushState({}, '', url);
+            
+            if (typeof initSmiScripts === 'function') {
+                initSmiScripts();
+            }
+        } else {
+            // Fallback if parsing fails
+            window.location.href = url;
+        }
+        
+        wrapper.css({
+            'opacity': '1',
+            'pointer-events': 'auto'
+        });
+    })
+    .catch(err => {
+        console.error('Pagination error:', err);
+        window.location.href = url; // Fallback
+    });
+});
+</script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

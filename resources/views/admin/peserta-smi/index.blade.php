@@ -381,7 +381,7 @@
 
         @if(!in_array(strtolower(auth()->user()->role), ['chapter', 'reseller', 'agen']))
         <!-- Filter Card Section (At the Very Top) -->
-        <div class="col-12 mb-3 @if(auth()->check() && (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->name === 'Linda')) d-none @endif">
+        <div class="col-12 mb-3 @if(auth()->check() && (strtolower(auth()->user()->role) === 'administrator' || in_array(auth()->user()->name, ['Linda', 'Yasmin']))) d-none @endif">
             <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
                 <div class="card-header py-2 d-flex flex-row align-items-center justify-content-start bg-primary text-white" style="gap: 20px;">
                     <div class="d-flex align-items-center mr-2">
@@ -1422,34 +1422,40 @@
             const statusSelect = document.getElementById('smi_filter_status');
             const sppStatusSelect = document.getElementById('smi_filter_spp_status');
             const sppMonthSelect = document.getElementById('smi_filter_spp_month');
+            const yearSelect = document.getElementById('smi_filter_year');
             const approvalSelect = document.getElementById('smi_filter_approval');
             const defaultActiveMonth = "{{ request('filter_spp_month') && request('filter_spp_month') !== 'all' ? request('filter_spp_month') : date('n') }}";
 
-            if (type === 'all') {
-                if (statusSelect) statusSelect.value = 'all';
-                if (sppStatusSelect) sppStatusSelect.value = 'all';
+            // Table 1 (membership stats) filters: reset month and year to 'all' to show global data
+            if (['all', 'aktif', 'cuti', 'lunas', 'pending'].includes(type)) {
                 if (sppMonthSelect) sppMonthSelect.value = 'all';
-                if (approvalSelect) approvalSelect.value = 'all';
-            } else if (type === 'aktif') {
-                if (statusSelect) statusSelect.value = 'Aktif';
+                if (yearSelect) yearSelect.value = 'all';
                 if (sppStatusSelect) sppStatusSelect.value = 'all';
-                if (approvalSelect) approvalSelect.value = 'all';
-            } else if (type === 'cuti') {
-                if (statusSelect) statusSelect.value = 'Cuti';
-                if (sppStatusSelect) sppStatusSelect.value = 'all';
-                if (approvalSelect) approvalSelect.value = 'all';
-            } else if (type === 'lunas') {
-                if (statusSelect) statusSelect.value = 'Lunas';
-                if (sppStatusSelect) sppStatusSelect.value = 'all';
-                if (approvalSelect) approvalSelect.value = 'all';
-            } else if (type === 'pending') {
-                if (statusSelect) statusSelect.value = 'all';
-                if (sppStatusSelect) sppStatusSelect.value = 'all';
-                if (approvalSelect) approvalSelect.value = 'Pending';
+
+                if (type === 'all') {
+                    if (statusSelect) statusSelect.value = 'all';
+                    if (approvalSelect) approvalSelect.value = 'all';
+                } else if (type === 'aktif') {
+                    if (statusSelect) statusSelect.value = 'Aktif';
+                    if (approvalSelect) approvalSelect.value = 'all';
+                } else if (type === 'cuti') {
+                    if (statusSelect) statusSelect.value = 'Cuti';
+                    if (approvalSelect) approvalSelect.value = 'all';
+                } else if (type === 'lunas') {
+                    if (statusSelect) statusSelect.value = 'Lunas';
+                    if (approvalSelect) approvalSelect.value = 'all';
+                } else if (type === 'pending') {
+                    if (statusSelect) statusSelect.value = 'all';
+                    if (approvalSelect) approvalSelect.value = 'Pending';
+                }
             } else {
                 // Table 2 (financial stats) filters: set month from ALL to default active month
                 if (sppMonthSelect && sppMonthSelect.value === 'all') {
                     sppMonthSelect.value = defaultActiveMonth;
+                }
+                // Also default year to current year if it's set to 'all'
+                if (yearSelect && yearSelect.value === 'all') {
+                    yearSelect.value = "{{ date('Y') }}";
                 }
 
                 if (type === 'closing') {

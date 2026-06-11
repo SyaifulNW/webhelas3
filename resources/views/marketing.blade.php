@@ -19,12 +19,12 @@
     <div class="mb-4">
         <ul class="nav nav-pills shadow-sm p-1 bg-white rounded-pill border" style="width: fit-content;" id="performanceTabs" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active rounded-pill px-4 fw-bold" id="performance-tab" data-toggle="pill" href="#performance-panel" role="tab" aria-controls="performance-panel" aria-selected="true">
+                <a class="nav-link active rounded-pill px-4 fw-bold" id="performance-tab" data-toggle="tab" data-bs-toggle="tab" href="#performance-panel" role="tab" aria-controls="performance-panel" aria-selected="true">
                     <i class="fas fa-chart-line mr-2"></i> Marketing Performance Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link rounded-pill px-4 fw-bold" id="kpi-tab" data-toggle="pill" href="#kpi-panel" role="tab" aria-controls="kpi-panel" aria-selected="false">
+                <a class="nav-link rounded-pill px-4 fw-bold" id="kpi-tab" data-toggle="tab" data-bs-toggle="tab" href="#kpi-panel" role="tab" aria-controls="kpi-panel" aria-selected="false">
                     <i class="fas fa-key mr-2"></i> Key Performance Index
                 </a>
             </li>
