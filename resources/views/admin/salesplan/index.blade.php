@@ -748,7 +748,7 @@
     $countTertarik = $salesplans->where('status', 'tertarik')->count();
     $countMauTransfer = $salesplans->where('status', 'mau_transfer')->count();
     $countNo = $salesplans->where('status', 'no')->count();
-    $countSudahTransfer = (strtolower(auth()->user()->role) === 'administrator') ? $pesertaTransfer->count() : $salesplans->where('status', 'sudah_transfer')->count();
+    $countSudahTransfer = (strtolower(auth()->user()->role) === 'administrator') ? (method_exists($pesertaTransfer, 'total') ? $pesertaTransfer->total() : $pesertaTransfer->count()) : $salesplans->where('status', 'sudah_transfer')->count();
     $countCold = $salesplans->where('status', 'cold')->count();
 
     $totalSalesplan = $countTertarik + $countMauTransfer + $countNo + $countSudahTransfer + $countCold;
@@ -2024,7 +2024,9 @@ $(document).ready(function() {
         @endphp
 
         <tr style="background-color: #e3f2fd;">
-            <td style="padding: 8px; border: 1px solid #ccc;">{{ $loop->iteration }}</td>
+            <td style="padding: 8px; border: 1px solid #ccc;">
+                {{ $loop->iteration + (method_exists($pesertaTransfer, 'currentPage') ? ($pesertaTransfer->currentPage() - 1) * $pesertaTransfer->perPage() : 0) }}
+            </td>
             <td style="padding: 8px; border: 1px solid #ccc;">
                 <span contenteditable="{{ $canEditThisParticipant ? 'true' : 'false' }}"
                       class="{{ $canEditThisParticipant ? 'editable' : '' }} fw-bold text-dark"
@@ -2165,9 +2167,11 @@ $(document).ready(function() {
     </table>
 </div>
 
-<div class="mt-4 mb-4 d-flex justify-content-center" id="paginationContainerSmi">
-    {{ $salesplans->appends(request()->query())->links('pagination::bootstrap-4') }}
+@if(method_exists($pesertaTransfer, 'links'))
+<div class="mt-4 mb-4 d-flex justify-content-center" id="paginationContainerPeserta">
+    {{ $pesertaTransfer->appends(request()->query())->links('pagination::bootstrap-4') }}
 </div>
+@endif
 
 <script>
     document.querySelectorAll('.status-select').forEach(select => {

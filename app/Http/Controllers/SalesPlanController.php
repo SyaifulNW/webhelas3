@@ -371,6 +371,21 @@ class SalesPlanController extends Controller
                     : $plan->updated_at;
             })->values();
 
+        // Paginate $pesertaTransfer (Daftar Peserta) to 10 items per page
+        $totalPesertaTransfer = $pesertaTransfer->count();
+        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage('page_peserta');
+        $perPage = 10;
+        $currentPageItems = $pesertaTransfer->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $pesertaTransfer = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentPageItems,
+            $totalPesertaTransfer,
+            $perPage,
+            $currentPage,
+            [
+                'path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath(),
+                'pageName' => 'page_peserta'
+            ]
+        );
 
         $salesplansByCS = $salesplans->groupBy('created_by');
 
@@ -423,7 +438,7 @@ class SalesPlanController extends Controller
         // Build $stats for cards if needed
         $stats = [
             'total' => $salesplans->count(),
-            'aktif' => $pesertaTransfer->count(), // Using pesertaTransfer for active/sudah_transfer
+            'aktif' => $totalPesertaTransfer, // Using total count of pesertaTransfer for active/sudah_transfer
             'cuti' => 0,
             'lulus' => 0,
             'pending' => 0,
