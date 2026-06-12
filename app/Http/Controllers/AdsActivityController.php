@@ -35,14 +35,16 @@ class AdsActivityController extends Controller
             foreach ($targetClasses as $kelas) {
                 // ... (existing logic for counting leads/sales) ...
                 $leadsCount = \App\Models\Data::where('kelas_id', $kelas->id)
-                    ->where('leads', 'Iklan')
+                    ->whereIn('leads', ['Ads', 'Iklan'])
+                    ->where('created_by_role', 'cs-mbc')
                     ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
                     ->count();
 
                 $salesData = \App\Models\SalesPlan::where('kelas_id', $kelas->id)
                     ->where('status', 'sudah_transfer')
                     ->whereHas('data', function($q) {
-                        $q->where('leads', 'Iklan');
+                        $q->whereIn('leads', ['Ads', 'Iklan'])
+                          ->where('created_by_role', 'cs-mbc');
                     })
                     ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
                     ->selectRaw('COUNT(*) as total_closing, SUM(nominal) as total_omset')

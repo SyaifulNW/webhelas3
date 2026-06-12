@@ -738,14 +738,14 @@
                         </li>
                     @endif
 
-                    {{-- Ganti Program Kerja & Ganchart menjadi Daily Activity khusus Eko Sulis --}}
+                    <li class="nav-item {{ request()->routeIs('admin.ads-activity.*') ? 'active' : '' }}">
+                        <a class="nav-link text-white" href="{{ route('admin.ads-activity.index') }}">
+                            <i class="fas fa-fw fa-calendar-check me-2"></i>
+                            <span>ACTIVITY ADS</span>
+                        </a>
+                    </li>
+
                     @if ($isEkoSulis)
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{{ route('admin.ads-activity.index') }}">
-                                <i class="fas fa-fw fa-calendar-check me-2"></i>
-                                <span>ACTIVITY ADS</span>
-                            </a>
-                        </li>
                         <li class="nav-item">
                             <a class="nav-link text-white" href="{{ route('marketing') }}">
                                 <i class="fas fa-fw fa-chart-line me-2"></i>
@@ -818,8 +818,8 @@
 
 
 
-                        {{-- Penilaian Kinerja (Sembunyikan jika Nisa) --}}
-                        @if (auth()->user()->name !== 'Nisa')
+                        {{-- Penilaian Kinerja (Sembunyikan jika Nisa & Felmi) --}}
+                        @if (auth()->user()->name !== 'Nisa' && auth()->user()->name !== 'Felmi')
                             <li class="nav-item {{ request()->routeIs('marketing.penilaian.index') ? 'active' : '' }}">
                                 <a class="nav-link text-white" href="{{ route('marketing.penilaian.index') }}">
                                     <i class="fas fa-fw fa-star me-2"></i>

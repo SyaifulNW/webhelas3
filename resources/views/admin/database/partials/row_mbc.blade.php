@@ -118,7 +118,7 @@
                         
                         // Zoom status color configuration
                         $zoomStatus = $schedule ? strtolower($schedule->status) : '';
-                        if ($zoomStatus === 'done' || $item->ikut_zoom == 1) {
+                        if ($zoomStatus === 'done' || ($item->ikut_zoom == 1 && !$schedule)) {
                             $zoomColorBg = '#3CDE1D'; // Hijau
                             $zoomColorText = '#ffffff';
                             $zoomBorder = 'none';
@@ -153,7 +153,7 @@
                                 data-bant-budget="{{ $item->bant_budget }}"
                                 data-bant-authority="{{ $item->bant_authority }}"
                                 data-bant-time="{{ $item->bant_time }}"
-                                data-ikut-zoom="{{ $item->ikut_zoom }}"
+                                data-ikut-zoom="{{ ($schedule && strtolower($schedule->status) === 'done') ? '1' : ($item->ikut_zoom && !$schedule ? '1' : '0') }}"
                                 title="Zoom & BANT ({{ $shortKls }})">
                             <i class="fas fa-video" style="font-size: 0.7rem;"></i>
                         </button>

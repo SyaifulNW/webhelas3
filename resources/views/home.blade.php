@@ -40,6 +40,22 @@
             }
         }
 
+        /* 🔴 Efek berdenyut merah untuk notifikasi */
+        @keyframes pulseRed {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(231, 74, 59, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 6px rgba(231, 74, 59, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(231, 74, 59, 0);
+            }
+        }
+
         /* 🎨 Tampilan cell reminder */
         .reminder-cell {
             background: linear-gradient(90deg, #e3f2fd, #bbdefb);
@@ -408,6 +424,14 @@
                         data-target="#dompet-tab" type="button" role="tab" aria-controls="dompet-tab"
                         aria-selected="false">
                         <i class="fas fa-wallet"></i> Dompet Digital
+                        @php
+                            $newIncomesCount = isset($walletTransactions) ? $walletTransactions->where('type', 'income')->count() : 0;
+                        @endphp
+                        @if($newIncomesCount > 0)
+                            <span class="badge badge-danger ml-1" style="background-color: #e74a3b; font-size: 0.7rem; border-radius: 10px; padding: 3px 6px; animation: pulseRed 1.5s infinite; color: white;">
+                                {{ $newIncomesCount }} Baru
+                            </span>
+                        @endif
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -431,7 +455,14 @@
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Komisi (10%)</div>
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1 d-flex align-items-center justify-content-between">
+                                            <span>Komisi (10%)</span>
+                                            @if($komisi > 0)
+                                                <span class="badge badge-success px-2 py-1 ml-1" style="font-size: 0.65rem; border-radius: 10px; background-color: #1cc88a; color: white; animation: pulseGlow 2s infinite;">
+                                                    <i class="fas fa-arrow-up"></i> Baru
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ number_format($komisi, 0, ',', '.') }}</div>
                                         <div class="text-xs text-muted">Closing Pribadi</div>
                                     </div>
@@ -439,7 +470,7 @@
                             </div>
                         </div>
                     </div>
-
+ 
                     @if($role === 'chapter')
                         <!-- Direct Fee -->
                         <div class="col-xl-3 col-md-6 mb-4">
@@ -447,7 +478,14 @@
                                 <div class="card-body">
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Direct Fee</div>
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1 d-flex align-items-center justify-content-between">
+                                                <span>Direct Fee</span>
+                                                @if($directFee > 0)
+                                                    <span class="badge badge-success px-2 py-1 ml-1" style="font-size: 0.65rem; border-radius: 10px; background-color: #1cc88a; color: white; animation: pulseGlow 2s infinite;">
+                                                        <i class="fas fa-arrow-up"></i> Baru
+                                                    </span>
+                                                @endif
+                                            </div>
                                             <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ number_format($directFee, 0, ',', '.') }}</div>
                                             <div class="text-xs text-muted">Closing Peserta</div>
                                         </div>
@@ -456,14 +494,21 @@
                             </div>
                         </div>
                     @endif
-
+ 
                     <!-- Royalti -->
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card border-left-info shadow h-100 py-2 border-0 bg-white" style="border-radius: 12px; border-left: 4px solid #36b9cc !important;">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Royalti (5%)</div>
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1 d-flex align-items-center justify-content-between">
+                                            <span>Royalti (5%)</span>
+                                            @if($royalti > 0)
+                                                <span class="badge badge-success px-2 py-1 ml-1" style="font-size: 0.65rem; border-radius: 10px; background-color: #36b9cc; color: white; animation: pulseGlow 2s infinite;">
+                                                    <i class="fas fa-arrow-up"></i> Baru
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ number_format($royalti, 0, ',', '.') }}</div>
                                         <div class="text-xs text-muted">Closing Tim Reseller</div>
                                     </div>
@@ -471,14 +516,21 @@
                             </div>
                         </div>
                     </div>
-
+ 
                     <!-- Bonus Pribadi -->
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card border-left-success shadow h-100 py-2 border-0 bg-white" style="border-radius: 12px; border-left: 4px solid #1cc88a !important;">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Bonus Pribadi</div>
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1 d-flex align-items-center justify-content-between">
+                                            <span>Bonus Pribadi</span>
+                                            @if($bonusPribadi > 0)
+                                                <span class="badge badge-success px-2 py-1 ml-1" style="font-size: 0.65rem; border-radius: 10px; background-color: #1cc88a; color: white; animation: pulseGlow 2s infinite;">
+                                                    <i class="fas fa-arrow-up"></i> Baru
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ number_format($bonusPribadi, 0, ',', '.') }}</div>
                                         <div class="text-xs text-muted">Target Individu</div>
                                     </div>
@@ -486,14 +538,21 @@
                             </div>
                         </div>
                     </div>
-
+ 
                     <!-- Bonus Tim -->
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card border-left-warning shadow h-100 py-2 border-0 bg-white" style="border-radius: 12px; border-left: 4px solid #fd7e14 !important;">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-orange text-uppercase mb-1" style="color: #fd7e14;">Bonus Tim (10%)</div>
+                                        <div class="text-xs font-weight-bold text-orange text-uppercase mb-1 d-flex align-items-center justify-content-between" style="color: #fd7e14;">
+                                            <span>Bonus Tim (10%)</span>
+                                            @if($bonusTim > 0)
+                                                <span class="badge badge-success px-2 py-1 ml-1" style="font-size: 0.65rem; border-radius: 10px; background-color: #fd7e14; color: white; animation: pulseGlow 2s infinite;">
+                                                    <i class="fas fa-arrow-up"></i> Baru
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ number_format($bonusTim, 0, ',', '.') }}</div>
                                         <div class="text-xs text-muted">Target Team</div>
                                     </div>
@@ -620,7 +679,7 @@
                                                     <span class="badge badge-danger px-3 py-1 shadow-sm">Ditolak</span>
                                                 @endif
 
-                                                @if(($tx->status == 'pending' || $tx->status == 'rejected') && $tx->type == 'withdrawal')
+                                                @if($tx->status == 'pending' && $tx->type == 'withdrawal')
                                                 <form action="{{ route('wallet.transaction.destroy', $tx->id) }}" method="POST" class="ml-2">
                                                     @csrf
                                                     @method('DELETE')

@@ -377,6 +377,14 @@
                 box-shadow: none;
                 color: white;
             }
+            #dataTable thead th.active-spp-month {
+                background-color: #f6c23e !important;
+                box-shadow: inset 0 0 0 2px #f6c23e;
+            }
+            #dataTable thead th.active-spp-month a {
+                color: #111111 !important;
+                font-weight: 800 !important;
+            }
         </style>
 
         @if(!in_array(strtolower(auth()->user()->role), ['chapter', 'reseller', 'agen']))
@@ -764,11 +772,17 @@
                                         ];
                                     @endphp
                                     @for($i = 1; $i <= 12; $i++)
-                                        <th class="text-center spp-col {{ $i > 1 ? 'spp-extra' : '' }}"
-                                            style="min-width: 45px; width: 45px; font-size: 11px;">
-                                            <a href="{{ route('admin.keuangan.laba-rugi', ['bulan' => str_pad($i, 2, '0', STR_PAD_LEFT), 'tahun' => request('filter_year', date('Y'))]) }}"
-                                                class="text-white text-decoration-none col-spp-label-{{ $i }}"
-                                                title="Lihat Laba Rugi {{ $bulan[$i] }} {{ request('filter_year', date('Y')) }}">
+                                        @php
+                                            $activeMonth = request('filter_spp_month', date('n'));
+                                            $isActive = ($activeMonth !== 'all' && (int)$activeMonth === $i);
+                                        @endphp
+                                        <th id="th-month-{{ $i }}" class="text-center spp-col {{ $i > 1 ? 'spp-extra' : '' }} {{ $isActive ? 'active-spp-month' : '' }}"
+                                            style="min-width: 45px; width: 45px; font-size: 11px; cursor: pointer;"
+                                            onclick="clickSppMonth({{ $i }})">
+                                            <a href="javascript:void(0)"
+                                                class="{{ $isActive ? 'text-primary' : 'text-white' }} text-decoration-none col-spp-label-{{ $i }}"
+                                                title="Tampilkan Pembayaran {{ $bulan[$i] }} {{ request('filter_year', date('Y')) }}"
+                                                style="display: block; width: 100%; height: 100%;">
                                                 {{ $bulan[$i] }}
                                             </a>
                                         </th>
@@ -866,6 +880,13 @@
             } else {
                 row.style.display = 'none';
             }
+        }
+
+        function clickSppMonth(monthNum) {
+            const monthSelect = document.getElementById('smi_filter_spp_month');
+            if (!monthSelect) return;
+            monthSelect.value = monthNum.toString();
+            updateSmiFilters();
         }
 
         function navigateSppMonth(direction) {
@@ -1383,6 +1404,28 @@
                         const sppHeaderTitle = document.getElementById('sppHeaderTitle');
                         if (sppHeaderTitle && data.spp_header) {
                             sppHeaderTitle.innerText = data.spp_header;
+                        }
+
+                        // Update active month header styling dynamically
+                        const activeMonthVal = getVal('smi_filter_spp_month');
+                        for (let i = 1; i <= 12; i++) {
+                            const thEl = document.getElementById('th-month-' + i);
+                            if (thEl) {
+                                const aEl = thEl.querySelector('a');
+                                if (activeMonthVal !== 'all' && parseInt(activeMonthVal) === i) {
+                                    thEl.classList.add('active-spp-month');
+                                    if (aEl) {
+                                        aEl.classList.remove('text-white');
+                                        aEl.classList.add('text-primary');
+                                    }
+                                } else {
+                                    thEl.classList.remove('active-spp-month');
+                                    if (aEl) {
+                                        aEl.classList.remove('text-primary');
+                                        aEl.classList.add('text-white');
+                                    }
+                                }
+                            }
                         }
                     } else {
                         console.error('Server returned success:false', data);

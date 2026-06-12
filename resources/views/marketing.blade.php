@@ -354,7 +354,7 @@
                                     <td rowspan="3" class="font-weight-bold align-middle py-3 px-4" style="border: 2px solid #000 !important; background-color: #f8f9fa;">
                                         Sosial Media
                                     </td>
-                                    <td class="align-middle py-3 px-4" style="border: 2px solid #000 !important; font-weight: 500;">
+                                    <td id="wa_target_label" class="align-middle py-3 px-4" style="border: 2px solid #000 !important; font-weight: 500;">
                                         Lead masuk ke Cs baik via DM / WA Target 50/bulan untuk lead baru
                                     </td>
                                     <td class="text-center align-middle py-3 px-4" style="border: 2px solid #000 !important;">
@@ -1007,16 +1007,42 @@
                 const savedData = localStorage.getItem(key);
                 const rows = document.querySelectorAll('#kpi-table-body tr');
 
+                const month = parseInt(document.getElementById('kpiMonth').value);
+                const year = parseInt(document.getElementById('kpiYear').value);
+                const isBeforeJune2026 = (year < 2026) || (year === 2026 && month < 6);
+
+                const waLabel = document.getElementById('wa_target_label');
+                if (waLabel) {
+                    if (isBeforeJune2026) {
+                        waLabel.innerText = "Lead masuk ke Cs baik via DM / WA Target 50/bulan untuk lead baru";
+                    } else {
+                        waLabel.innerText = "Lead masuk ke Cs baik via DM / WA Target 100/bulan untuk lead baru";
+                    }
+                }
+
                 // Default values if no stored data
                 const defaults = {
-                    sosmed_leads: { target: '50', realisasi: '' },
+                    sosmed_leads: { target: isBeforeJune2026 ? '50' : '100', realisasi: '' },
                     sosmed_followers: { target: '100', realisasi: '' },
                     sosmed_posting: { target: '90', realisasi: '' },
                     konten_testimoni: { target: '3', realisasi: '' },
                     konten_video_event: { target: '90', realisasi: '' }
                 };
 
-                const data = savedData ? JSON.parse(savedData) : defaults;
+                let data = savedData ? JSON.parse(savedData) : defaults;
+
+                // Adjust target for sosmed_leads based on date if it matches the old default
+                if (data.sosmed_leads) {
+                    if (isBeforeJune2026) {
+                        if (data.sosmed_leads.target === '100') {
+                            data.sosmed_leads.target = '50';
+                        }
+                    } else {
+                        if (data.sosmed_leads.target === '50') {
+                            data.sosmed_leads.target = '100';
+                        }
+                    }
+                }
 
                 rows.forEach(row => {
                     const rowId = row.getAttribute('data-row-id');

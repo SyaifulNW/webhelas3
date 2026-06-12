@@ -895,7 +895,7 @@
                                                     <button type="submit" class="btn btn-xs text-danger border-0"><i class="fas fa-trash-alt"></i></button>
                                                 </form>
                                             @else
-                                                <span class="badge badge-system">AUTO</span>
+                                                
                                             @endif
                                         </td>
                                         @endif
@@ -927,7 +927,7 @@
                                         </td>
                                         @if($canEdit)
                                         <td class="text-center">
-                                            @if(isset($sub->is_auto)) <span class="badge badge-system">AUTO</span>
+                                            @if(isset($sub->is_auto)) 
                                             @else
                                                 <form action="{{ route('admin.keuangan.laba-rugi.destroy', $sub->id) }}" method="POST" class="d-inline delete-form">
                                                     @csrf @method('DELETE')
@@ -1108,7 +1108,7 @@
                                                             <button type="submit" class="btn btn-xs text-danger border-0"><i class="fas fa-trash-alt"></i></button>
                                                         </form>
                                                     @else
-                                                        <span class="badge badge-system">AUTO</span>
+                                                        
                                                     @endif
                                                 </td>
                                                 @endif
@@ -1176,7 +1176,7 @@
                                         </td>
                                         @if($canEdit)
                                         <td class="text-center">
-                                            @if(isset($sub->is_auto)) <span class="badge badge-system">AUTO</span>
+                                            @if(isset($sub->is_auto)) 
                                             @else
                                                 <form action="{{ route('admin.keuangan.laba-rugi.destroy', $sub->id) }}" method="POST" class="d-inline delete-form">
                                                     @csrf @method('DELETE')

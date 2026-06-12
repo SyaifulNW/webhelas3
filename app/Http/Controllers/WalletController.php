@@ -57,13 +57,38 @@ class WalletController extends Controller
         $wallet->pending_balance = $currentPending;
         $wallet->save();
 
-        // Optional: Filter recent transactions too? Let's filter the list if filtered.
-        $recentTransactionsQuery = $wallet->transactions()->latest();
-        if ($request->has('month') || $request->has('year')) {
-            $recentTransactionsQuery->whereYear('created_at', $selectedYear)
-                                    ->whereMonth('created_at', $selectedMonth);
+        // Get dynamic incomes
+        $dynamicIncomes = \App\Services\EarningsService::getDynamicTransactions($user->id, $selectedYear, $selectedMonth);
+
+        // Fetch withdrawals from DB
+        $withdrawalQuery = $wallet->transactions()->where('type', 'withdrawal')->latest();
+        if ($selectedMonth) {
+            $withdrawalQuery->whereMonth('created_at', $selectedMonth);
         }
-        $recentTransactions = $recentTransactionsQuery->take(10)->get();
+        if ($selectedYear) {
+            $withdrawalQuery->whereYear('created_at', $selectedYear);
+        }
+        $dbWithdrawals = $withdrawalQuery->get()->map(function ($t) {
+            return [
+                'id' => $t->id,
+                'created_at' => $t->created_at,
+                'type' => 'withdrawal',
+                'source' => 'Penarikan Dana',
+                'description' => 'Penarikan ke rekening ' . $t->bank_name . ' (' . $t->account_number . ')',
+                'amount' => $t->amount,
+                'status' => $t->status,
+                'reference_no' => $t->reference_no,
+                'admin_note' => $t->admin_note,
+            ];
+        });
+
+        // Merge and sort
+        $recentTransactions = $dynamicIncomes->concat($dbWithdrawals)
+            ->sortByDesc('created_at')
+            ->take(10)
+            ->map(function ($item) {
+                return (object) $item;
+            });
 
         $totalIncome = $monthlyIncome;
         $totalWithdrawal = $monthlyWithdrawal;
@@ -87,17 +112,57 @@ class WalletController extends Controller
         $user = Auth::user();
         $wallet = $user->ensureWalletExists();
         
-        $query = $wallet->transactions()->latest();
+        $selectedMonth = $request->get('month');
+        $selectedYear = $request->get('year');
+
+        // Get dynamic incomes
+        $dynamicIncomes = \App\Services\EarningsService::getDynamicTransactions($user->id, $selectedYear, $selectedMonth);
+
+        // Fetch withdrawals from DB
+        $withdrawalQuery = $wallet->transactions()->where('type', 'withdrawal')->latest();
+        if ($selectedMonth) {
+            $withdrawalQuery->whereMonth('created_at', $selectedMonth);
+        }
+        if ($selectedYear) {
+            $withdrawalQuery->whereYear('created_at', $selectedYear);
+        }
+        $dbWithdrawals = $withdrawalQuery->get()->map(function ($t) {
+            return [
+                'id' => $t->id,
+                'created_at' => $t->created_at,
+                'type' => 'withdrawal',
+                'source' => 'Penarikan Dana',
+                'description' => 'Penarikan ke rekening ' . $t->bank_name . ' (' . $t->account_number . ')',
+                'amount' => $t->amount,
+                'status' => $t->status,
+                'reference_no' => $t->reference_no,
+                'admin_note' => $t->admin_note,
+            ];
+        });
+
+        $merged = $dynamicIncomes->concat($dbWithdrawals)->sortByDesc('created_at');
 
         if ($request->has('type') && $request->type !== 'all') {
-            $query->where('type', $request->type);
+            $merged = $merged->filter(fn($t) => $t['type'] === $request->type);
         }
 
         if ($request->has('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+            $merged = $merged->filter(fn($t) => $t['status'] === $request->status);
         }
 
-        $transactions = $query->paginate(20);
+        $transactions = $merged->map(fn($item) => (object)$item);
+
+        // Paginate manually
+        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 20;
+        $currentPageItems = $transactions->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $transactions = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentPageItems,
+            $transactions->count(),
+            $perPage,
+            $currentPage,
+            ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath()]
+        );
 
         return view('wallet.history', compact('wallet', 'transactions'));
     }

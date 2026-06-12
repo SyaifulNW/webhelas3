@@ -2316,24 +2316,42 @@ class PesertaSmiController extends Controller
         $peserta->save();
 
         if ($status === 'Approved' && $peserta->closing_cs_id) {
-            // Find the payment amount
-            // Since approval usually happens after editing a nominal, we'll try to find the relevant amount
-            // For now, we'll take the highest SPP value recorded or the pendaftaran fee
+            // Find the SPP payment amount (excluding biaya_pendaftaran)
             $nominal = 0;
             for ($i = 1; $i <= 12; $i++) {
                 $f = 'spp_' . $i;
                 if ($peserta->$f > $nominal) $nominal = $peserta->$f;
             }
-            if ($peserta->biaya_pendaftaran > $nominal) $nominal = $peserta->biaya_pendaftaran;
+            if ($peserta->pembayaran_spp > $nominal) $nominal = $peserta->pembayaran_spp;
+
+            // If SPP is 0 but salesplan nominal exists, fallback to salesplan nominal - 500,000 (registration fee)
+            if ($nominal == 0 && $peserta->salesPlan) {
+                $nominal = max(0, $peserta->salesPlan->nominal - 500000);
+            }
             
             if ($nominal > 0) {
-                $commission = $nominal * 0.1; // 10% Default Commission
+                $commission = $nominal * 0.1; // 10% Default Commission (e.g. 150k for 1.5M SPP)
                 \App\Services\WalletService::creditCommission(
                     $peserta->closing_cs_id,
                     $commission,
                     'Komisi M1T - ' . $peserta->nama,
                     'Approval Pembayaran SPP/Pendaftaran'
                 );
+
+                // Royalty Logic: Credit 5% to the parent/chapter if closing CS has a parent
+                $closingCs = \App\Models\User::find($peserta->closing_cs_id);
+                if ($closingCs && $closingCs->created_by) {
+                    $parentUser = \App\Models\User::find($closingCs->created_by);
+                    if ($parentUser && in_array(strtolower($parentUser->role), ['chapter', 'reseller', 'agen'])) {
+                        $royalty = $nominal * 0.05; // 5% Royalty
+                        \App\Services\WalletService::creditCommission(
+                            $parentUser->id,
+                            $royalty,
+                            'Royalti M1T - ' . $peserta->nama,
+                            'Royalti dari closing ' . $closingCs->name
+                        );
+                    }
+                }
             }
         }
 
