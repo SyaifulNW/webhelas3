@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TodoTemplate extends Model
 {
-    protected $fillable = ['created_by', 'judul', 'deskripsi', 'tipe', 'is_active'];
+    protected $fillable = ['created_by', 'judul', 'deskripsi', 'tipe', 'is_active', 'divisi'];
 
     public function creator()
     {

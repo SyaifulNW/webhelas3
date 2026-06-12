@@ -11,6 +11,9 @@ use Carbon\Carbon;
 
 class AgendaController extends Controller
 {
+    /** Daftar divisi yang tersedia */
+    const DIVISI_LIST = ['Divisi Keuangan', 'Sales & Marketing'];
+
     /** Periode string untuk query */
     private function getPeriode(string $tipe): string
     {
@@ -87,8 +90,21 @@ class AgendaController extends Controller
         });
     }
 
+    /**
+     * Hanya Linda yang boleh akses Agenda.
+     * Semua role lain (termasuk administrator) diarahkan ke 403.
+     */
+    private function authorizeAgenda(): void
+    {
+        if (Auth::user()->name !== 'Linda') {
+            abort(403, 'Fitur Agenda hanya tersedia untuk Linda.');
+        }
+    }
+
     public function index()
     {
+        $this->authorizeAgenda();
+
         $user    = Auth::user();
         $isAdmin = strtolower($user->role) === 'administrator';
 
@@ -115,21 +131,33 @@ class AgendaController extends Controller
 
         $this->generateLogs($user->id);
 
-        $templates = $this->attachLogs(
+        // Load all templates, grouped by divisi then by tipe
+        $allTemplates = $this->attachLogs(
             TodoTemplate::where('created_by', $user->id)
                 ->where('is_active', true)
-                ->orderBy('tipe')->orderBy('created_at')->get(),
+                ->orderBy('divisi')->orderBy('tipe')->orderBy('created_at')->get(),
             $user->id
         );
 
-        // Stats
-        $total    = $templates->count();
-        $selesai  = $templates->filter(fn($t) => $t->log && $t->log->is_done)->count();
-        $tersisa  = $total - $selesai;
-        $persen   = $total > 0 ? round(($selesai / $total) * 100) : 0;
+        $divisiList = self::DIVISI_LIST;
 
-        // Group by tipe
-        $grouped = $templates->groupBy('tipe');
+        // Build per-divisi data: stats + grouped templates
+        $divisiData = [];
+        foreach ($divisiList as $divisi) {
+            $templates = $allTemplates->filter(fn($t) => ($t->divisi ?? 'Divisi Keuangan') === $divisi)->values();
+            $total   = $templates->count();
+            $selesai = $templates->filter(fn($t) => $t->log && $t->log->is_done)->count();
+            $tersisa = $total - $selesai;
+            $persen  = $total > 0 ? round(($selesai / $total) * 100) : 0;
+            $divisiData[$divisi] = [
+                'templates'  => $templates,
+                'grouped'    => $templates->groupBy('tipe'),
+                'total'      => $total,
+                'selesai'    => $selesai,
+                'tersisa'    => $tersisa,
+                'persen'     => $persen,
+            ];
+        }
 
         // Periode info per tipe
         $periodeInfo = [
@@ -138,29 +166,27 @@ class AgendaController extends Controller
             'bulanan'  => self::getPeriodeInfo('bulanan'),
         ];
 
-        return view('agenda.index', compact(
-            'isAdmin', 'templates', 'grouped',
-            'total', 'selesai', 'tersisa', 'persen', 'periodeInfo'
-        ));
+        return view('agenda.index', compact('isAdmin', 'divisiList', 'divisiData', 'periodeInfo'));
     }
 
     public function store(Request $request)
     {
+        $this->authorizeAgenda();
+
         $request->validate([
-            'judul' => 'required|string|max:255',
-            'tipe'  => 'required|in:harian,mingguan,bulanan',
+            'judul'  => 'required|string|max:255',
+            'tipe'   => 'required|in:harian,mingguan,bulanan',
+            'divisi' => 'required|string|in:Divisi Keuangan,Sales & Marketing',
         ]);
 
         $user = Auth::user();
-        if (strtolower($user->role) === 'administrator') {
-            return response()->json(['success' => false, 'message' => 'Administrator tidak dapat menambah agenda.'], 403);
-        }
 
         $tpl = TodoTemplate::create([
             'created_by' => $user->id,
             'judul'      => $request->judul,
             'deskripsi'  => $request->deskripsi,
             'tipe'       => $request->tipe,
+            'divisi'     => $request->divisi,
             'is_active'  => true,
         ]);
 
@@ -178,12 +204,15 @@ class AgendaController extends Controller
             'judul'       => $tpl->judul,
             'deskripsi'   => $tpl->deskripsi ?? '',
             'tipe'        => $tpl->tipe,
+            'divisi'      => $tpl->divisi,
             'periode_info'=> self::getPeriodeInfo($tpl->tipe),
         ]);
     }
 
     public function toggleCheck(Request $request, $logId)
     {
+        $this->authorizeAgenda();
+
         $log = TodoLog::where('id', $logId)->where('user_id', Auth::id())->firstOrFail();
         $log->is_done = !$log->is_done;
         $log->done_at = $log->is_done ? now() : null;
@@ -193,6 +222,8 @@ class AgendaController extends Controller
 
     public function destroy($id)
     {
+        $this->authorizeAgenda();
+
         $tpl = TodoTemplate::where('id', $id)->where('created_by', Auth::id())->firstOrFail();
         $tpl->delete();
         return response()->json(['success' => true]);

@@ -13,7 +13,6 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* Header */
         .agenda-header-title {
             font-size: 1.3rem;
             font-weight: 800;
@@ -26,12 +25,69 @@
             margin-top: 2px;
         }
 
-        /* Stat Cards */
+        /* ── Divisi Tabs ────────────────────────────────────────────── */
+        .divisi-tabs {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0 20px;
+            flex-wrap: wrap;
+        }
+
+        .divisi-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #fff;
+            border: 1.5px solid #e3e6f0;
+            color: #555;
+            border-radius: 12px;
+            padding: 9px 22px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
+        }
+
+        .divisi-tab-btn:hover {
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+
+        .divisi-tab-btn.active {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, .3);
+        }
+
+        .divisi-tab-btn.active-sm {
+            background: #e83e8c;
+            border-color: #e83e8c;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(232, 62, 140, .3);
+        }
+
+        .divisi-tab-btn:hover.tab-sm {
+            border-color: #e83e8c;
+            color: #e83e8c;
+        }
+
+        /* ── Divisi Panels ──────────────────────────────────────────── */
+        .divisi-panel {
+            display: none;
+        }
+
+        .divisi-panel.active {
+            display: block;
+        }
+
+        /* ── Stat Cards ─────────────────────────────────────────────── */
         .stat-cards {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
-            margin: 18px 0;
+            margin: 0 0 18px;
         }
 
         @media(max-width:640px) {
@@ -45,11 +101,11 @@
             border: 1px solid #e3e6f0;
             border-radius: 14px;
             padding: 16px 18px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
         }
 
         .stat-card .stat-label {
-            font-size: 0.72rem;
+            font-size: .72rem;
             color: #aaa;
             margin-bottom: 6px;
             text-transform: uppercase;
@@ -74,7 +130,7 @@
             color: #4f46e5;
         }
 
-        /* Progress bar */
+        /* ── Progress ───────────────────────────────────────────────── */
         .progress-wrap {
             margin: 6px 0 20px;
         }
@@ -95,13 +151,13 @@
 
         .progress-pct {
             text-align: right;
-            font-size: 0.75rem;
+            font-size: .75rem;
             color: #4f46e5;
             font-weight: 700;
             margin-top: 4px;
         }
 
-        /* Filter tabs + search bar */
+        /* ── Filter Bar ─────────────────────────────────────────────── */
         .filter-bar {
             display: flex;
             align-items: center;
@@ -121,7 +177,7 @@
             color: #777;
             border-radius: 10px;
             padding: 7px 18px;
-            font-size: 0.82rem;
+            font-size: .82rem;
             font-weight: 700;
             cursor: pointer;
             transition: all .2s;
@@ -132,23 +188,6 @@
             background: #4f46e5;
             border-color: #4f46e5;
             color: #fff;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 160px;
-            background: #fff;
-            border: 1px solid #e3e6f0;
-            border-radius: 10px;
-            padding: 7px 14px 7px 34px;
-            color: #333;
-            font-size: 0.85rem;
-            outline: none;
-        }
-
-        .search-box:focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
         }
 
         .search-wrap {
@@ -162,7 +201,25 @@
             top: 50%;
             transform: translateY(-50%);
             color: #aaa;
-            font-size: 0.8rem;
+            font-size: .8rem;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 160px;
+            background: #fff;
+            border: 1px solid #e3e6f0;
+            border-radius: 10px;
+            padding: 7px 14px 7px 34px;
+            color: #333;
+            font-size: .85rem;
+            outline: none;
+            width: 100%;
+        }
+
+        .search-box:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
         }
 
         .btn-tambah {
@@ -172,7 +229,7 @@
             padding: 8px 18px;
             color: #fff;
             font-weight: 700;
-            font-size: 0.83rem;
+            font-size: .83rem;
             cursor: pointer;
             transition: background .2s;
             white-space: nowrap;
@@ -182,14 +239,14 @@
             background: #4338ca;
         }
 
-        /* Periode Card */
+        /* ── Periode Card ───────────────────────────────────────────── */
         .periode-card {
             background: #fff;
             border: 1px solid #e3e6f0;
             border-radius: 16px;
             margin-bottom: 20px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
         }
 
         .periode-card-header {
@@ -208,7 +265,7 @@
         }
 
         .tipe-chip {
-            font-size: 0.72rem;
+            font-size: .72rem;
             font-weight: 800;
             border-radius: 20px;
             padding: 4px 12px;
@@ -235,13 +292,13 @@
         }
 
         .periode-range {
-            font-size: 0.9rem;
+            font-size: .9rem;
             font-weight: 700;
             color: #1a1a2e;
         }
 
         .reset-info {
-            font-size: 0.76rem;
+            font-size: .76rem;
             color: #aaa;
             display: flex;
             align-items: center;
@@ -254,7 +311,7 @@
 
         .reset-note {
             padding: 7px 20px;
-            font-size: 0.75rem;
+            font-size: .75rem;
             color: #bbb;
             border-bottom: 1px solid #f0f2f8;
             background: #fafbff;
@@ -263,7 +320,7 @@
             gap: 6px;
         }
 
-        /* Table */
+        /* ── Table ──────────────────────────────────────────────────── */
         .agenda-table {
             width: 100%;
             border-collapse: collapse;
@@ -275,7 +332,7 @@
 
         .agenda-table thead th {
             padding: 10px 16px;
-            font-size: 0.75rem;
+            font-size: .75rem;
             color: #bbb;
             font-weight: 700;
             text-transform: uppercase;
@@ -298,7 +355,7 @@
 
         .agenda-table td {
             padding: 13px 16px;
-            font-size: 0.88rem;
+            font-size: .88rem;
             color: #555;
             vertical-align: middle;
         }
@@ -309,7 +366,7 @@
         }
 
         .agenda-table td .deskripsi {
-            font-size: 0.78rem;
+            font-size: .78rem;
             color: #aaa;
             margin-top: 2px;
         }
@@ -322,7 +379,7 @@
         .agenda-table td.col-no {
             width: 50px;
             color: #ccc;
-            font-size: 0.82rem;
+            font-size: .82rem;
             text-align: center;
         }
 
@@ -336,7 +393,7 @@
             text-align: center;
         }
 
-        /* Checklist button */
+        /* ── Buttons ────────────────────────────────────────────────── */
         .check-circle {
             width: 32px;
             height: 32px;
@@ -348,7 +405,7 @@
             align-items: center;
             justify-content: center;
             color: transparent;
-            font-size: 0.8rem;
+            font-size: .8rem;
             transition: all .2s;
             outline: none;
         }
@@ -363,7 +420,6 @@
             color: #fff;
         }
 
-        /* Delete button */
         .del-btn {
             width: 32px;
             height: 32px;
@@ -375,7 +431,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.78rem;
+            font-size: .78rem;
             transition: all .2s;
             outline: none;
         }
@@ -386,14 +442,14 @@
             color: #ef4444;
         }
 
-        /* Form inputs in modal */
+        /* ── Modal inputs ───────────────────────────────────────────── */
         .dark-input {
             background: #fff;
             border: 1px solid #e3e6f0;
             border-radius: 8px;
             color: #333;
             padding: 8px 12px;
-            font-size: 0.84rem;
+            font-size: .84rem;
             outline: none;
             width: 100%;
             transition: border .2s;
@@ -410,7 +466,7 @@
             border-radius: 8px;
             color: #333;
             padding: 8px 10px;
-            font-size: 0.84rem;
+            font-size: .84rem;
             outline: none;
             cursor: pointer;
             width: 100%;
@@ -426,7 +482,7 @@
             border-radius: 8px;
             color: #fff;
             padding: 8px 18px;
-            font-size: 0.84rem;
+            font-size: .84rem;
             cursor: pointer;
             font-weight: 700;
             transition: background .2s;
@@ -442,7 +498,7 @@
             border-radius: 8px;
             color: #888;
             padding: 8px 14px;
-            font-size: 0.84rem;
+            font-size: .84rem;
             cursor: pointer;
             transition: all .2s;
         }
@@ -452,7 +508,7 @@
             color: #555;
         }
 
-        /* Empty state */
+        /* ── Misc ───────────────────────────────────────────────────── */
         .empty-state {
             text-align: center;
             padding: 36px;
@@ -465,13 +521,12 @@
             display: block;
         }
 
-        /* Modal */
         .modal-dark .modal-content {
             background: #fff;
             border: 1px solid #e3e6f0;
             border-radius: 16px;
             color: #333;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, .12);
         }
 
         .modal-dark .modal-header {
@@ -493,17 +548,6 @@
             color: #aaa !important;
         }
 
-        .modal-label {
-            font-size: 0.78rem;
-            color: #aaa;
-            font-weight: 700;
-            margin-bottom: 6px;
-            display: block;
-            text-transform: uppercase;
-            letter-spacing: .4px;
-        }
-
-        /* Admin section header */
         .admin-user-header {
             background: #f0f2ff;
             border-left: 4px solid #4f46e5;
@@ -512,7 +556,7 @@
             margin-bottom: 12px;
             font-weight: 700;
             color: #1a1a2e;
-            font-size: 0.9rem;
+            font-size: .9rem;
         }
     </style>
 
@@ -528,19 +572,24 @@
                     <div class="agenda-header-sub">
                         {{ \Carbon\Carbon::now()->translatedFormat('l, j F Y') }}
                         &nbsp;·&nbsp;
-                        <span id="headerPersen">{{ $persen }}% selesai</span>
+                        <span id="headerPersen">
+                            {{-- overall persen across all divisi --}}
+                            @php
+                                $overallTotal = collect($divisiData)->sum('total');
+                                $overallSelesai = collect($divisiData)->sum('selesai');
+                                $overallPersen = $overallTotal > 0 ? round(($overallSelesai / $overallTotal) * 100) : 0;
+                            @endphp
+                            {{ $overallPersen }}% selesai
+                        </span>
                     </div>
                 @endif
             </div>
         </div>
 
+        {{-- ============ ADMINISTRATOR VIEW ============ --}}
         @if ($isAdmin)
-            {{-- ============ ADMINISTRATOR VIEW ============ --}}
             @if (empty($allAgendas))
-                <div class="empty-state">
-                    <i class="fas fa-clipboard-list "></i>
-                    Belum ada agenda dari tim.
-                </div>
+                <div class="empty-state"><i class="fas fa-clipboard-list"></i>Belum ada agenda dari tim.</div>
             @else
                 @foreach ($allAgendas as $entry)
                     <div class="mb-4">
@@ -548,7 +597,7 @@
                             <i class="fas fa-user mr-2 text-primary"></i>
                             {{ $entry['user']->name }}
                             @if ($entry['user']->divisi)
-                                <span style="color:#666; font-weight:400; font-size:0.8rem;"> —
+                                <span style="color:#666; font-weight:400; font-size:.8rem;"> —
                                     {{ $entry['user']->divisi }}</span>
                             @endif
                         </div>
@@ -601,128 +650,167 @@
                     </div>
                 @endforeach
             @endif
+
+            {{-- ============ USER (LINDA) VIEW ============ --}}
         @else
-            {{-- ============ USER BIASA VIEW ============ --}}
-
-            {{-- Stat Cards --}}
-            <div class="stat-cards">
-                <div class="stat-card">
-                    <div class="stat-label">Tampil hari ini</div>
-                    <div class="stat-value" id="statTotal">{{ $total }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Selesai</div>
-                    <div class="stat-value green" id="statSelesai">{{ $selesai }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Tersisa</div>
-                    <div class="stat-value orange" id="statTersisa">{{ $tersisa }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Progress</div>
-                    <div class="stat-value purple" id="statPersen">{{ $persen }}%</div>
-                </div>
+            {{-- ── DIVISI TABS ── --}}
+            @php
+                $divisiIcons = [
+                    'Divisi Keuangan' => 'fa-wallet',
+                    'Sales & Marketing' => 'fa-bullhorn',
+                ];
+                $firstDivisi = $divisiList[0];
+            @endphp
+            <div class="divisi-tabs" id="divisiTabs">
+                @foreach ($divisiList as $idx => $divisi)
+                    <button class="divisi-tab-btn {{ $idx === 0 ? 'active' : '' }}" data-divisi="{{ $divisi }}"
+                        data-idx="{{ $idx }}" onclick="switchDivisi('{{ $divisi }}', this)">
+                        <i class="fas {{ $divisiIcons[$divisi] ?? 'fa-layer-group' }}"></i>
+                        {{ $divisi }}
+                    </button>
+                @endforeach
             </div>
 
-            {{-- Progress Bar --}}
-            <div class="progress-wrap">
-                <div class="progress-track">
-                    <div class="progress-fill" id="progressFill" style="width: {{ $persen }}%"></div>
-                </div>
-                <div class="progress-pct" id="progressPct">{{ $persen }}%</div>
-            </div>
-
-            {{-- Filter Bar --}}
-            <div class="filter-bar">
-                <div class="tab-group">
-                    <button class="tab-btn active" data-filter="semua" onclick="setFilter('semua', this)">Semua</button>
-                    <button class="tab-btn" data-filter="harian" onclick="setFilter('harian', this)">Harian</button>
-                    <button class="tab-btn" data-filter="mingguan" onclick="setFilter('mingguan', this)">Mingguan</button>
-                    <button class="tab-btn" data-filter="bulanan" onclick="setFilter('bulanan', this)">Bulanan</button>
-                </div>
-                <div class="search-wrap">
-                    <i class="fas fa-search"></i>
-                    <input type="text" class="search-box" id="searchBox" placeholder="Cari agenda..."
-                        oninput="doSearch(this.value)">
-                </div>
-                <button class="btn-tambah" onclick="showAddModal()">
-                    <i class="fas fa-plus mr-1"></i> Tambah agenda
-                </button>
-            </div>
-
-            {{-- Periode Cards --}}
-            @foreach (['harian', 'mingguan', 'bulanan'] as $tipe)
+            {{-- ── DIVISI PANELS ── --}}
+            @foreach ($divisiList as $idx => $divisi)
                 @php
-                    $tplGroup = $grouped->get($tipe, collect());
-                    $pi = $periodeInfo[$tipe];
+                    $dData = $divisiData[$divisi];
+                    $total = $dData['total'];
+                    $selesai = $dData['selesai'];
+                    $tersisa = $dData['tersisa'];
+                    $persen = $dData['persen'];
+                    $grouped = $dData['grouped'];
+                    $divisiSlug = \Illuminate\Support\Str::slug($divisi, '_');
                 @endphp
-                <div class="periode-card" data-tipe="{{ $tipe }}" id="card-{{ $tipe }}">
-                    <div class="periode-card-header">
-                        <div class="left">
-                            <span class="tipe-chip chip-{{ $tipe }}">{{ ucfirst($tipe) }}</span>
-                            <span class="periode-range">{{ $pi['range'] }}</span>
+                <div class="divisi-panel {{ $idx === 0 ? 'active' : '' }}" id="panel-{{ $divisiSlug }}">
+
+                    {{-- Stat Cards --}}
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="stat-label">Total hari ini</div>
+                            <div class="stat-value" id="statTotal-{{ $divisiSlug }}">{{ $total }}</div>
                         </div>
-                        <div class="reset-info">
-                            <i class="fas fa-sync-alt"></i> Reset: {{ $pi['reset_label'] }}
+                        <div class="stat-card">
+                            <div class="stat-label">Selesai</div>
+                            <div class="stat-value green" id="statSelesai-{{ $divisiSlug }}">{{ $selesai }}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Tersisa</div>
+                            <div class="stat-value orange" id="statTersisa-{{ $divisiSlug }}">{{ $tersisa }}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Progress</div>
+                            <div class="stat-value purple" id="statPersen-{{ $divisiSlug }}">{{ $persen }}%</div>
                         </div>
                     </div>
-                    <div class="reset-note">
-                        <i class="fas fa-info-circle"></i> {{ $pi['reset_info'] }}
+
+                    {{-- Progress Bar --}}
+                    <div class="progress-wrap">
+                        <div class="progress-track">
+                            <div class="progress-fill" id="progressFill-{{ $divisiSlug }}"
+                                style="width:{{ $persen }}%"></div>
+                        </div>
+                        <div class="progress-pct" id="progressPct-{{ $divisiSlug }}">{{ $persen }}%</div>
                     </div>
-                    <table class="agenda-table">
-                        <thead>
-                            <tr>
-                                <th class="col-no">No</th>
-                                <th>Deskripsi Pekerjaan</th>
-                                <th class="col-check">Checklist</th>
-                                <th class="col-action">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-{{ $tipe }}">
-                            @forelse($tplGroup->values() as $i => $tpl)
-                                <tr class="todo-row {{ $tpl->log && $tpl->log->is_done ? 'done' : '' }}"
-                                    id="row-{{ $tpl->id }}" data-tipe="{{ $tipe }}"
-                                    data-judul="{{ strtolower($tpl->judul) }}">
-                                    <td class="col-no">{{ $i + 1 }}</td>
-                                    <td>
-                                        <div class="judul">{{ $tpl->judul }}</div>
-                                        @if ($tpl->deskripsi)
-                                            <div class="deskripsi">{{ $tpl->deskripsi }}</div>
-                                        @endif
-                                    </td>
-                                    <td class="col-check">
-                                        @if ($tpl->log)
-                                            <button class="check-circle {{ $tpl->log->is_done ? 'checked' : '' }}"
-                                                onclick="toggleCheck({{ $tpl->log->id }}, this)"
-                                                title="{{ $tpl->log->is_done ? 'Tandai belum selesai' : 'Tandai selesai' }}">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                        @endif
-                                    </td>
-                                    <td class="col-action">
-                                        <button class="del-btn" onclick="deleteAgenda({{ $tpl->id }})"
-                                            title="Hapus">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr class="empty-row-{{ $tipe }}">
-                                    <td colspan="4" class="empty-state" style="padding: 24px;">
-                                        <i class="fas fa-inbox"
-                                            style="font-size:1.5rem; margin-bottom:6px; display:block;"></i>
-                                        Belum ada agenda {{ $tipe }}.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+
+                    {{-- Filter Bar --}}
+                    <div class="filter-bar">
+                        <div class="tab-group" id="tabGroup-{{ $divisiSlug }}">
+                            <button class="tab-btn active" data-filter="semua"
+                                onclick="setFilter('semua',   this,'{{ $divisiSlug }}')">Semua</button>
+                            <button class="tab-btn" data-filter="harian"
+                                onclick="setFilter('harian',  this,'{{ $divisiSlug }}')">Harian</button>
+                            <button class="tab-btn"
+                                data-filter="mingguan"onclick="setFilter('mingguan',this,'{{ $divisiSlug }}')">Mingguan</button>
+                            <button class="tab-btn" data-filter="bulanan"
+                                onclick="setFilter('bulanan', this,'{{ $divisiSlug }}')">Bulanan</button>
+                        </div>
+                        <div class="search-wrap">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="search-box" id="searchBox-{{ $divisiSlug }}"
+                                placeholder="Cari agenda..." oninput="doSearch(this.value, '{{ $divisiSlug }}')">
+                        </div>
+                        <button class="btn-tambah" onclick="showAddModal('{{ $divisi }}')">
+                            <i class="fas fa-plus mr-1"></i> Tambah agenda
+                        </button>
+                    </div>
+
+                    {{-- Periode Cards --}}
+                    @foreach (['harian', 'mingguan', 'bulanan'] as $tipe)
+                        @php
+                            $tplGroup = $grouped->get($tipe, collect());
+                            $pi = $periodeInfo[$tipe];
+                        @endphp
+                        <div class="periode-card" data-tipe="{{ $tipe }}"
+                            id="card-{{ $divisiSlug }}-{{ $tipe }}">
+                            <div class="periode-card-header">
+                                <div class="left">
+                                    <span class="tipe-chip chip-{{ $tipe }}">{{ ucfirst($tipe) }}</span>
+                                    <span class="periode-range">{{ $pi['range'] }}</span>
+                                </div>
+                                <div class="reset-info"><i class="fas fa-sync-alt"></i> Reset: {{ $pi['reset_label'] }}
+                                </div>
+                            </div>
+                            <div class="reset-note"><i class="fas fa-info-circle"></i> {{ $pi['reset_info'] }}</div>
+                            <table class="agenda-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-no">No</th>
+                                        <th>Deskripsi Pekerjaan</th>
+                                        <th class="col-check">Checklist</th>
+                                        <th class="col-action">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-{{ $divisiSlug }}-{{ $tipe }}">
+                                    @forelse($tplGroup->values() as $i => $tpl)
+                                        <tr class="todo-row {{ $tpl->log && $tpl->log->is_done ? 'done' : '' }}"
+                                            id="row-{{ $tpl->id }}" data-tipe="{{ $tipe }}"
+                                            data-divisi="{{ $divisiSlug }}"
+                                            data-judul="{{ strtolower($tpl->judul) }}">
+                                            <td class="col-no">{{ $i + 1 }}</td>
+                                            <td>
+                                                <div class="judul">{{ $tpl->judul }}</div>
+                                                @if ($tpl->deskripsi)
+                                                    <div class="deskripsi">{{ $tpl->deskripsi }}</div>
+                                                @endif
+                                            </td>
+                                            <td class="col-check">
+                                                @if ($tpl->log)
+                                                    <button class="check-circle {{ $tpl->log->is_done ? 'checked' : '' }}"
+                                                        onclick="toggleCheck({{ $tpl->log->id }}, this, '{{ $divisiSlug }}')"
+                                                        title="{{ $tpl->log->is_done ? 'Tandai belum selesai' : 'Tandai selesai' }}">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                @endif
+                                            </td>
+                                            <td class="col-action">
+                                                <button class="del-btn"
+                                                    onclick="deleteAgenda({{ $tpl->id }}, '{{ $divisiSlug }}')"
+                                                    title="Hapus">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr class="empty-row-{{ $divisiSlug }}-{{ $tipe }}">
+                                            <td colspan="4" class="empty-state" style="padding:24px;">
+                                                <i class="fas fa-inbox"
+                                                    style="font-size:1.5rem;margin-bottom:6px;display:block;"></i>
+                                                Belum ada agenda {{ $tipe }}.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    @endforeach
+
+                </div>{{-- /divisi-panel --}}
             @endforeach
 
-        @endif {{-- end isAdmin --}}
+        @endif
 
-    </div>
+    </div>{{-- /agenda-wrap --}}
 
     {{-- ===== MODAL TAMBAH AGENDA ===== --}}
     @if (!$isAdmin)
@@ -735,11 +823,20 @@
                         <button type="button" class="close" data-dismiss="modal" style="color:#aaa;">&times;</button>
                     </div>
                     <div class="modal-body p-4">
+                        {{-- Hidden: divisi aktif --}}
+                        <input type="hidden" id="modalDivisi">
+
                         <div class="mb-3">
                             <label
-                                style="font-size:0.8rem; color:#aaa; font-weight:700; margin-bottom:6px; display:block;">JENIS
+                                style="font-size:.8rem;color:#aaa;font-weight:700;margin-bottom:6px;display:block;">DIVISI</label>
+                            <div id="modalDivisiLabel"
+                                style="font-weight:700;color:#4f46e5;font-size:.9rem;padding:6px 0;"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label
+                                style="font-size:.8rem;color:#aaa;font-weight:700;margin-bottom:6px;display:block;">JENIS
                                 AGENDA</label>
-                            <select id="modalTipe" class="dark-select" style="width:100%;">
+                            <select id="modalTipe" class="dark-select">
                                 <option value="harian">Harian</option>
                                 <option value="mingguan">Mingguan</option>
                                 <option value="bulanan">Bulanan</option>
@@ -747,13 +844,13 @@
                         </div>
                         <div class="mb-3">
                             <label
-                                style="font-size:0.8rem; color:#aaa; font-weight:700; margin-bottom:6px; display:block;">DESKRIPSI
+                                style="font-size:.8rem;color:#aaa;font-weight:700;margin-bottom:6px;display:block;">DESKRIPSI
                                 PEKERJAAN</label>
                             <input type="text" id="modalJudul" class="dark-input" placeholder="Tulis nama agenda...">
                         </div>
                         <div>
                             <label
-                                style="font-size:0.8rem; color:#aaa; font-weight:700; margin-bottom:6px; display:block;">CATATAN
+                                style="font-size:.8rem;color:#aaa;font-weight:700;margin-bottom:6px;display:block;">CATATAN
                                 (opsional)</label>
                             <input type="text" id="modalDeskripsi" class="dark-input"
                                 placeholder="Catatan tambahan...">
@@ -776,43 +873,76 @@
         const TOGGLE_BASE = '{{ url('agenda/toggle') }}';
         const DELETE_BASE = '{{ url('agenda') }}';
 
-        let currentFilter = 'semua';
-        let currentSearch = '';
+        // Track active filter per divisi
+        const filters = {};
+        const searches = {};
 
-        // ---- Filter Tab ----
-        function setFilter(filter, btn) {
-            currentFilter = filter;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        // ── Divisi Tab Switch ──────────────────────────────────────────────────────
+        function switchDivisi(divisi, btn) {
+            // Deactivate all tabs & panels
+            document.querySelectorAll('.divisi-tab-btn').forEach(b => {
+                b.classList.remove('active', 'active-sm');
+            });
+            document.querySelectorAll('.divisi-panel').forEach(p => p.classList.remove('active'));
+
+            // Activate clicked
+            const idx = parseInt(btn.dataset.idx);
+            btn.classList.add(idx === 1 ? 'active-sm' : 'active');
+
+            const slug = slugify(divisi);
+            const panel = document.getElementById('panel-' + slug);
+            if (panel) panel.classList.add('active');
+
+            // Update header subtitle
+            const slug0 = slugify(document.querySelector('.divisi-panel').id.replace('panel-', ''));
+            updateHeaderPersen();
+        }
+
+        function slugify(str) {
+            return str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+        }
+
+        // ── Filter (per divisi) ────────────────────────────────────────────────────
+        function setFilter(filter, btn, divisiSlug) {
+            filters[divisiSlug] = filter;
+            document.querySelectorAll('#tabGroup-' + divisiSlug + ' .tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            applyFilter();
+            applyFilter(divisiSlug);
         }
 
-        function doSearch(val) {
-            currentSearch = val.toLowerCase();
-            applyFilter();
+        function doSearch(val, divisiSlug) {
+            searches[divisiSlug] = val.toLowerCase();
+            applyFilter(divisiSlug);
         }
 
-        function applyFilter() {
-            document.querySelectorAll('.periode-card').forEach(card => {
+        function applyFilter(divisiSlug) {
+            const filter = filters[divisiSlug] || 'semua';
+            const search = searches[divisiSlug] || '';
+
+            document.querySelectorAll('#panel-' + divisiSlug + ' .periode-card').forEach(card => {
                 const tipe = card.dataset.tipe;
-                const showCard = currentFilter === 'semua' || currentFilter === tipe;
+                const showCard = filter === 'semua' || filter === tipe;
                 let hasVisible = false;
 
                 card.querySelectorAll('.todo-row').forEach(row => {
-                    const matchTipe = currentFilter === 'semua' || row.dataset.tipe === currentFilter;
-                    const matchSearch = !currentSearch || (row.dataset.judul && row.dataset.judul.includes(
-                        currentSearch));
+                    const matchTipe = filter === 'semua' || row.dataset.tipe === filter;
+                    const matchSearch = !search || (row.dataset.judul && row.dataset.judul.includes(
+                    search));
                     const show = matchTipe && matchSearch;
                     row.style.display = show ? '' : 'none';
                     if (show) hasVisible = true;
                 });
-
                 card.style.display = showCard ? '' : 'none';
             });
         }
 
-        // ---- Modal Tambah ----
-        function showAddModal() {
+        // ── Modal ──────────────────────────────────────────────────────────────────
+        let _currentDivisi = '';
+
+        function showAddModal(divisi) {
+            _currentDivisi = divisi;
+            document.getElementById('modalDivisi').value = divisi;
+            document.getElementById('modalDivisiLabel').textContent = divisi;
             document.getElementById('modalJudul').value = '';
             document.getElementById('modalDeskripsi').value = '';
             document.getElementById('modalTipe').value = 'harian';
@@ -824,6 +954,7 @@
             const judul = document.getElementById('modalJudul').value.trim();
             const deskripsi = document.getElementById('modalDeskripsi').value.trim();
             const tipe = document.getElementById('modalTipe').value;
+            const divisi = document.getElementById('modalDivisi').value;
 
             if (!judul) {
                 document.getElementById('modalJudul').focus();
@@ -838,7 +969,8 @@
                     _token: CSRF,
                     judul,
                     deskripsi,
-                    tipe
+                    tipe,
+                    divisi
                 })
                 .done(res => {
                     saveBtn.disabled = false;
@@ -847,10 +979,9 @@
                         alert(res.message);
                         return;
                     }
-
                     $('#modalTambah').modal('hide');
                     appendRow(res);
-                    updateStats(1, 0);
+                    updateStats(1, 0, slugify(res.divisi));
                     showToast('Agenda berhasil ditambahkan!');
                 })
                 .fail(() => {
@@ -860,7 +991,6 @@
                 });
         }
 
-        // Enter key in modal
         document.addEventListener('DOMContentLoaded', function() {
             const jd = document.getElementById('modalJudul');
             if (jd) jd.addEventListener('keypress', e => {
@@ -868,13 +998,13 @@
             });
         });
 
-        // ---- Append new row ----
+        // ── Append new row ─────────────────────────────────────────────────────────
         function appendRow(res) {
-            const tbody = document.getElementById('tbody-' + res.tipe);
+            const divisiSlug = slugify(res.divisi);
+            const tbody = document.getElementById('tbody-' + divisiSlug + '-' + res.tipe);
             if (!tbody) return;
 
-            // Remove empty state row
-            const emptyRow = tbody.querySelector('.empty-row-' + res.tipe);
+            const emptyRow = tbody.querySelector('.empty-row-' + divisiSlug + '-' + res.tipe);
             if (emptyRow) emptyRow.remove();
 
             const no = tbody.querySelectorAll('.todo-row').length + 1;
@@ -882,28 +1012,29 @@
             tr.className = 'todo-row';
             tr.id = 'row-' + res.template_id;
             tr.dataset.tipe = res.tipe;
+            tr.dataset.divisi = divisiSlug;
             tr.dataset.judul = res.judul.toLowerCase();
             tr.innerHTML = `
-        <td class="col-no">${no}</td>
-        <td>
-            <div class="judul">${escHtml(res.judul)}</div>
-            ${res.deskripsi ? `<div class="deskripsi">${escHtml(res.deskripsi)}</div>` : ''}
-        </td>
-        <td class="col-check">
-            <button class="check-circle" onclick="toggleCheck(${res.log_id}, this)" title="Tandai selesai">
-                <i class="fas fa-check"></i>
-            </button>
-        </td>
-        <td class="col-action">
-            <button class="del-btn" onclick="deleteAgenda(${res.template_id})" title="Hapus">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </td>`;
+            <td class="col-no">${no}</td>
+            <td>
+                <div class="judul">${escHtml(res.judul)}</div>
+                ${res.deskripsi ? `<div class="deskripsi">${escHtml(res.deskripsi)}</div>` : ''}
+            </td>
+            <td class="col-check">
+                <button class="check-circle" onclick="toggleCheck(${res.log_id}, this, '${divisiSlug}')" title="Tandai selesai">
+                    <i class="fas fa-check"></i>
+                </button>
+            </td>
+            <td class="col-action">
+                <button class="del-btn" onclick="deleteAgenda(${res.template_id}, '${divisiSlug}')" title="Hapus">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>`;
             tbody.appendChild(tr);
         }
 
-        // ---- Toggle Check ----
-        function toggleCheck(logId, btn) {
+        // ── Toggle Check ───────────────────────────────────────────────────────────
+        function toggleCheck(logId, btn, divisiSlug) {
             $.post(TOGGLE_BASE + '/' + logId, {
                     _token: CSRF
                 })
@@ -914,41 +1045,37 @@
                         btn.classList.add('checked');
                         row.classList.add('done');
                         btn.title = 'Tandai belum selesai';
-                        updateStats(0, 1);
+                        updateStats(0, 1, divisiSlug);
                     } else {
                         btn.classList.remove('checked');
                         row.classList.remove('done');
                         btn.title = 'Tandai selesai';
-                        updateStats(0, -1);
+                        updateStats(0, -1, divisiSlug);
                     }
                 });
         }
 
-        // ---- Delete ----
-        function deleteAgenda(templateId) {
+        // ── Delete ─────────────────────────────────────────────────────────────────
+        function deleteAgenda(templateId, divisiSlug) {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     title: 'Hapus agenda ini?',
                     text: 'Agenda dan seluruh riwayat checklist akan dihapus.',
                     icon: 'warning',
-                    background: '#252540',
-                    color: '#e0e0e0',
-                    position: 'top',
-                    width: '380px',
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444',
                     cancelButtonColor: '#4b5563',
                     confirmButtonText: 'Ya, Hapus!',
                     cancelButtonText: 'Batal'
                 }).then(r => {
-                    if (r.isConfirmed) doDelete(templateId);
+                    if (r.isConfirmed) doDelete(templateId, divisiSlug);
                 });
             } else {
-                if (confirm('Hapus agenda ini?')) doDelete(templateId);
+                if (confirm('Hapus agenda ini?')) doDelete(templateId, divisiSlug);
             }
         }
 
-        function doDelete(templateId) {
+        function doDelete(templateId, divisiSlug) {
             $.ajax({
                 url: DELETE_BASE + '/' + templateId,
                 type: 'DELETE',
@@ -960,12 +1087,12 @@
                     const row = document.getElementById('row-' + templateId);
                     if (row) {
                         const wasDone = row.classList.contains('done');
-                        row.style.transition = 'opacity 0.3s';
+                        row.style.transition = 'opacity .3s';
                         row.style.opacity = '0';
                         setTimeout(() => {
                             row.remove();
-                            updateStats(-1, wasDone ? -1 : 0);
-                            renumberRows();
+                            updateStats(-1, wasDone ? -1 : 0, divisiSlug);
+                            renumberRows(divisiSlug);
                         }, 300);
                     }
                     showToast('Agenda berhasil dihapus.');
@@ -973,37 +1100,63 @@
             });
         }
 
-        function renumberRows() {
-            document.querySelectorAll('.periode-card').forEach(card => {
+        function renumberRows(divisiSlug) {
+            document.querySelectorAll('#panel-' + divisiSlug + ' .periode-card').forEach(card => {
                 card.querySelectorAll('.todo-row').forEach((row, i) => {
-                    row.querySelector('.col-no').textContent = i + 1;
+                    const el = row.querySelector('.col-no');
+                    if (el) el.textContent = i + 1;
                 });
             });
         }
 
-        // ---- Stats ----
-        function updateStats(deltaTotal, deltaSelesai) {
-            let total = parseInt(document.getElementById('statTotal').textContent) + deltaTotal;
-            let selesai = parseInt(document.getElementById('statSelesai').textContent) + deltaSelesai;
+        // ── Stats ──────────────────────────────────────────────────────────────────
+        function updateStats(deltaTotal, deltaSelesai, divisiSlug) {
+            const get = id => parseInt(document.getElementById(id + '-' + divisiSlug)?.textContent ?? '0');
+            const set = (id, val) => {
+                const el = document.getElementById(id + '-' + divisiSlug);
+                if (el) el.textContent = val;
+            };
+
+            let total = get('statTotal') + deltaTotal;
+            let selesai = get('statSelesai') + deltaSelesai;
             let tersisa = total - selesai;
             let persen = total > 0 ? Math.round((selesai / total) * 100) : 0;
 
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statSelesai').textContent = selesai;
-            document.getElementById('statTersisa').textContent = tersisa;
-            document.getElementById('statPersen').textContent = persen + '%';
-            document.getElementById('progressFill').style.width = persen + '%';
-            document.getElementById('progressPct').textContent = persen + '%';
-            document.getElementById('headerPersen').textContent = persen + '% selesai';
+            set('statTotal', total);
+            set('statSelesai', selesai);
+            set('statTersisa', tersisa);
+            set('statPersen', persen + '%');
+
+            const fill = document.getElementById('progressFill-' + divisiSlug);
+            const pct = document.getElementById('progressPct-' + divisiSlug);
+            if (fill) fill.style.width = persen + '%';
+            if (pct) pct.textContent = persen + '%';
+
+            updateHeaderPersen();
         }
 
-        // ---- Toast ----
+        function updateHeaderPersen() {
+            // Sum all divisi panels for overall header %
+            let total = 0,
+                selesai = 0;
+            document.querySelectorAll('[id^="statTotal-"]').forEach(el => {
+                total += parseInt(el.textContent || '0');
+            });
+            document.querySelectorAll('[id^="statSelesai-"]').forEach(el => {
+                selesai += parseInt(el.textContent || '0');
+            });
+            const persen = total > 0 ? Math.round((selesai / total) * 100) : 0;
+            const hdr = document.getElementById('headerPersen');
+            if (hdr) hdr.textContent = persen + '% selesai';
+        }
+
+        // ── Toast ──────────────────────────────────────────────────────────────────
         function showToast(msg) {
             document.querySelectorAll('.agenda-toast').forEach(t => t.remove());
             const t = document.createElement('div');
             t.className = 'agenda-toast';
             t.style.cssText =
-                'position:fixed;top:22px;right:22px;z-index:99999;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;font-size:0.84rem;display:flex;align-items:center;gap:8px;box-shadow:0 6px 24px rgba(79,70,229,0.4);animation:none;';
+                'position:fixed;top:22px;right:22px;z-index:99999;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;font-size:.84rem;display:flex;align-items:center;gap:8px;box-shadow:0 6px 24px rgba(79,70,229,.4);';
             t.innerHTML = '<i class="fas fa-check-circle"></i>' + msg;
             document.body.appendChild(t);
             setTimeout(() => {
@@ -1014,7 +1167,7 @@
         }
 
         function escHtml(s) {
-            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
     </script>
 @endsection

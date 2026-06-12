@@ -595,6 +595,14 @@
                         </a>
                     </li>
 
+                    {{-- 10. MINUTES OF MEETING (MoM) — Administrator: rekap semua divisi, read-only --}}
+                    <li class="nav-item {{ request()->routeIs('admin.mom.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.mom.index') }}" title="Minutes of Meeting (MoM)">
+                            <i class="fas fa-fw fa-clipboard-list"></i>
+                            <span><strong>Minutes of Meeting (MoM)</strong></span>
+                        </a>
+                    </li>
+
                     {{-- Extra Admin Menu --}}
                     @if (\App\Models\Menu::isActive('activity_cs'))
                         <li class="nav-item {{ request()->routeIs('admin.activity-cs.index') ? 'active' : '' }}">
@@ -766,8 +774,8 @@
                     @if (strtolower(Auth::user()->role) === 'marketing')
                         {{-- <ul class="navbar-nav sidebar sidebar-dark" style="background-color: #0b198f;"> --}}
                         <!-- Removed nested ul that was in original code as it might break layout, kept items inline or check if separate section needed.
-                                                                                                                                                                                 Original code started a NEW ul inside the sidebar ul which is invalid HTML structure.
-                                                                                                                                                                                 I will flatten this out into the existing list. -->
+                                                                                                                                                                                                                     Original code started a NEW ul inside the sidebar ul which is invalid HTML structure.
+                                                                                                                                                                                                                     I will flatten this out into the existing list. -->
 
                         <hr class="sidebar-divider my-0">
 
@@ -1333,8 +1341,10 @@
                                 </div>
                             </li>
                         @endif
+                    @endif
 
-                        {{-- Minutes of Meeting (MoM) untuk Yasmin --}}
+                    {{-- Minutes of Meeting (MoM) — untuk Linda, Yasmin, dan Agus Setyo --}}
+                    @if (in_array($userName, ['Linda', 'Yasmin', 'Agus Setyo']))
                         <li class="nav-item {{ request()->routeIs('admin.mom.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.mom.index') }}"
                                 title="Minutes of Meeting (MoM)">
@@ -1349,9 +1359,13 @@
 
 
                     {{-- Penilaian Karyawan (HRD) --}}
-                    @if (\App\Models\Menu::isActive('penilaian_karyawan') && ($userRole !== 'administrator' || auth()->user()->name === 'Yasmin'))
+                    @if (
+                        \App\Models\Menu::isActive('penilaian_karyawan') &&
+                            ($userRole !== 'administrator' || auth()->user()->name === 'Yasmin') &&
+                            !in_array(auth()->user()->name, ['Yasmin', 'Linda']))
                         @if (auth()->user()->name !== 'Agus Setyo')
-                            <li class="nav-item {{ request()->routeIs('hr.dashboard') || request()->routeIs('manager.penilaian-cs.index') ? 'active' : '' }}">
+                            <li
+                                class="nav-item {{ request()->routeIs('hr.dashboard') || request()->routeIs('manager.penilaian-cs.index') ? 'active' : '' }}">
                                 <a class="nav-link text-white" href="{{ route('hr.dashboard') }}">
                                     <i class="fa-solid fa-list-user me-2"></i>
                                     <span>HRD</span>
@@ -1458,8 +1472,28 @@
 
                 <hr class="sidebar-divider d-none d-md-block" />
 
-                {{-- Menu Agenda (semua role kecuali chapter, reseller, agen) --}}
-                @if (!in_array(strtolower(Auth::user()->role), ['chapter', 'reseller', 'agen']))
+                {{-- Menu MoM — semua role internal kecuali administrator (sudah ada di blok khusus administrator),
+                     chapter, reseller, agen, dan variannya --}}
+                @php
+                    $momUserRole = strtolower(trim(auth()->user()->role ?? ''));
+                    $momUserName = auth()->user()->name ?? '';
+                    $momBlocked =
+                        $momUserRole === 'administrator' ||
+                        in_array($momUserName, ['Linda', 'Yasmin', 'Agus Setyo']) ||
+                        in_array($momUserRole, \App\Http\Controllers\Admin\MomController::BLOCKED_ROLES) ||
+                        str_starts_with($momUserRole, 'chapter_');
+                @endphp
+                @if (!$momBlocked)
+                    <li class="nav-item {{ request()->routeIs('admin.mom.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.mom.index') }}" title="Minutes of Meeting (MoM)">
+                            <i class="fas fa-fw fa-clipboard-list"></i>
+                            <span><strong>Minutes of Meeting (MoM)</strong></span>
+                        </a>
+                    </li>
+                @endif
+
+                {{-- Menu Agenda (hanya Linda) --}}
+                @if (auth()->user()->name === 'Linda')
                     <li class="nav-item {{ request()->routeIs('agenda.index') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('agenda.index') }}" title="AGENDA">
                             <i class="fas fa-fw fa-calendar-check"></i>

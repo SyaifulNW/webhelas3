@@ -1,47 +1,68 @@
 @extends('layouts.masteradmin')
 
 @section('content')
+    @php
+        $canEdit = $permissions['canEdit'] ?? false;
+        $isReadOnly = $permissions['isReadOnly'] ?? true;
+        $seeAllData = $permissions['seeAllData'] ?? false;
+        $availableUnits = $permissions['canAccessUnits'] ?? ['Helas Corp'];
+        $colCount = $canEdit ? 9 : 8;
+    @endphp
+
     <div class="container-fluid px-4">
 
-        <!-- ===== HEADER ===== -->
+        {{-- ===== HEADER ===== --}}
         <div class="row mb-3 align-items-start">
-            <div class="col-12">
-                <h1 class="h3 font-weight-bold text-gray-800 mb-1">
-                    <i class="fas fa-clipboard-list text-primary mr-2"></i> Minutes of Meeting (MoM)
-                </h1>
-                <p class="text-muted small mb-0">Media pencatatan, monitoring hasil rapat, dan tindak lanjut pekerjaan tim.
-                </p>
+            <div class="col-12 d-flex align-items-center flex-wrap" style="gap:8px;">
+                <div>
+                    <h1 class="h3 font-weight-bold text-gray-800 mb-1">
+                        <i class="fas fa-clipboard-list text-primary mr-2"></i> Minutes of Meeting (MoM)
+                    </h1>
+                    <p class="text-muted small mb-0">Media pencatatan, monitoring hasil rapat, dan tindak lanjut pekerjaan
+                        tim.</p>
+                </div>
+                <div class="ml-auto d-flex align-items-center" style="gap:6px;">
+                    @if ($isReadOnly)
+                        <span class="badge badge-warning px-3 py-2" style="font-size:.7rem;">
+                            <i class="fas fa-eye mr-1"></i> Read Only — Rekap semua divisi
+                        </span>
+                    @endif
+                    @if ($seeAllData)
+                        <span class="badge badge-info px-3 py-2" style="font-size:.7rem;">
+                            <i class="fas fa-globe mr-1"></i> Semua Data
+                        </span>
+                    @else
+                        <span class="badge badge-secondary px-3 py-2" style="font-size:.7rem;">
+                            <i class="fas fa-user mr-1"></i> Data Saya
+                        </span>
+                    @endif
+                </div>
             </div>
         </div>
 
-        <!-- ===== TABS ===== -->
+        {{-- ===== TABS ===== --}}
         <ul class="nav nav-tabs mom-tabs mb-0" id="momTabs" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link {{ $unit === 'Helas Corp' ? 'active' : '' }} d-flex align-items-center" href="#"
-                    data-unit="Helas Corp" role="tab">
-                    <i class="fas fa-building mr-2"></i>
-                    <span>MoM Helas Corp</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ $unit === 'Helas Aesthetic Clinic' ? 'active' : '' }} d-flex align-items-center"
-                    href="#" data-unit="Helas Aesthetic Clinic" role="tab">
-                    <i class="fas fa-clinic-medical mr-2"></i>
-                    <span>MoM Helas Aesthetic Clinic</span>
-                </a>
-            </li>
+            @foreach ($availableUnits as $tabUnit)
+                <li class="nav-item">
+                    <a class="nav-link {{ $unit === $tabUnit ? 'active' : '' }} d-flex align-items-center" href="#"
+                        data-unit="{{ $tabUnit }}" role="tab">
+                        <i class="fas {{ $tabUnit === 'Helas Corp' ? 'fa-building' : 'fa-clinic-medical' }} mr-2"></i>
+                        <span>MoM {{ $tabUnit }}</span>
+                    </a>
+                </li>
+            @endforeach
         </ul>
 
-        <!-- ===== TAB CONTENT PANEL ===== -->
+        {{-- ===== TAB CONTENT PANEL ===== --}}
         <div class="tab-panel-wrapper">
 
-            <!-- Toolbar: Filter + Refresh + Tambah -->
+            {{-- Toolbar --}}
             <div class="row mb-3 align-items-center px-1 pt-3">
-                <div class="col-md-8 d-flex align-items-center" style="gap: 8px;">
+                <div class="col-md-8 d-flex align-items-center flex-wrap" style="gap:8px;">
                     <label for="filter-status" class="mb-0 text-muted font-weight-bold text-uppercase"
-                        style="font-size: 0.68rem; letter-spacing: 0.5px; white-space: nowrap;">Filter Status:</label>
+                        style="font-size:.68rem;letter-spacing:.5px;white-space:nowrap;">Filter Status:</label>
                     <select id="filter-status" class="border rounded px-2 py-1 text-dark font-weight-bold"
-                        style="font-size: 0.8rem; outline: none; cursor: pointer; background: #fff; height: 32px; min-width: 130px;">
+                        style="font-size:.8rem;outline:none;cursor:pointer;background:#fff;height:32px;min-width:130px;">
                         <option value="all">Semua Status</option>
                         <option value="Progress">Progress</option>
                         <option value="Done">Done</option>
@@ -49,164 +70,316 @@
                     </select>
                     <button id="btn-refresh"
                         class="btn btn-light border shadow-sm d-flex align-items-center justify-content-center"
-                        style="height: 32px; width: 32px; padding: 0;" title="Refresh / Reset Filter">
-                        <i class="fas fa-sync-alt text-secondary" style="font-size: 0.8rem;"></i>
+                        style="height:32px;width:32px;padding:0;" title="Refresh">
+                        <i class="fas fa-sync-alt text-secondary" style="font-size:.8rem;"></i>
                     </button>
-                    <!-- Active unit badge -->
                     <span id="active-unit-badge" class="badge badge-pill px-3 py-2 font-weight-bold"
-                        style="font-size: 0.72rem;">
+                        style="font-size:.72rem;">
                         <i class="fas fa-building mr-1"></i>
                         <span id="active-unit-label">{{ $unit }}</span>
                     </span>
                 </div>
-                <div class="col-md-4 d-flex justify-content-md-end align-items-center mt-2 mt-md-0">
-                    <button id="btn-add-mom" class="btn btn-primary px-4 shadow-sm font-weight-bold" style="height: 38px;">
-                        <i class="fas fa-plus mr-1"></i> Tambah MoM
-                    </button>
+                <div class="col-md-4 d-flex justify-content-md-end align-items-center mt-2 mt-md-0" style="gap:8px;">
+                    @if ($canEdit && $unit === 'Helas Corp')
+                        <a href="{{ route('admin.mom.create', ['username' => \Illuminate\Support\Str::slug(Auth::user()->name)]) }}"
+                            class="btn btn-primary px-3 shadow-sm font-weight-bold"
+                            style="height:38px;line-height:26px;white-space:nowrap;">
+                            <i class="fas fa-link mr-1"></i> Tambah via Link
+                        </a>
+                    @endif
+                    @if ($canEdit)
+                        <button id="btn-add-mom" class="btn btn-primary px-4 shadow-sm font-weight-bold"
+                            style="height:38px;">
+                            <i class="fas fa-plus mr-1"></i> Tambah MoM
+                        </button>
+                    @endif
                 </div>
             </div>
 
-            <!-- ===== TABEL ===== -->
-            <div class="card border-0 shadow-sm mb-4" style="border-radius: 0 0 12px 12px; overflow: hidden;">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover mb-0" id="mom-table">
-                            <thead class="text-white text-center" id="mom-thead">
-                                <tr>
-                                    <th class="py-3 text-uppercase small align-middle" style="width:50px;">No</th>
-                                    <th class="py-3 text-uppercase small align-middle" style="width:120px;">Tanggal</th>
-                                    <th class="py-3 text-uppercase small align-middle">Keterangan / Poin</th>
-                                    <th class="py-3 text-uppercase small align-middle" style="width:120px;">Deadline</th>
-                                    <th class="py-3 text-uppercase small align-middle" style="width:130px;">PIC</th>
-                                    <th class="py-3 text-uppercase small align-middle" style="width:170px;">Target</th>
-                                    <th class="py-3 text-uppercase small align-middle" style="width:170px;">Hasil</th>
-                                    <th class="py-3 text-uppercase small align-middle" style="width:130px;">Status</th>
-                                    <th class="py-3 text-uppercase small align-middle" style="width:55px;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mom-table-body" class="bg-white">
-                                @forelse($moms as $index => $item)
-                                    <tr data-id="{{ $item->id }}">
+            {{-- ===== KONTEN TABEL ===== --}}
+            <div id="mom-content-area">
 
-                                        {{-- No --}}
-                                        <td class="text-center font-weight-bold text-muted no-col align-middle">
-                                            {{ $index + 1 }}</td>
+                @if ($seeAllData)
+                    {{-- ── ADMIN VIEW: grouped per user ── --}}
+                    @if ($groupedMoms && $groupedMoms->isNotEmpty())
+                        @foreach ($groupedMoms as $creatorId => $rows)
+                            @php
+                                $creator = $rows->first()->creator;
+                                $creatorName = $creator->name ?? '(User dihapus)';
+                                $creatorRole = $creator->role ?? '';
+                                $creatorDivisi = $creator->divisi ?? '';
+                                // Label: pakai divisi jika ada, fallback ke role
+                                $divisiLabel = $creatorDivisi ?: $creatorRole;
+                            @endphp
 
-                                        {{-- Tanggal --}}
-                                        <td class="p-1 align-middle">
-                                            <input type="date" class="form-control-inline text-center live-field"
-                                                data-field="tanggal" value="{{ $item->tanggal }}">
-                                        </td>
+                            <div class="mom-user-group mb-4" data-creator="{{ $creatorId }}">
+                                {{-- Header indikator divisi --}}
+                                <div class="mom-user-header">
+                                    <i class="fas fa-user mr-2"></i>
+                                    <span class="mom-user-name">{{ $creatorName }}</span>
+                                    @if ($divisiLabel)
+                                        <span class="mom-user-divisi"> — {{ $divisiLabel }}</span>
+                                    @endif
+                                    <span class="mom-user-count ml-auto">{{ $rows->count() }} data</span>
+                                </div>
 
-                                        {{-- Keterangan --}}
-                                        <td class="p-0 align-middle tc-cell" data-label="Keterangan / Poin">
-                                            <div class="tc-view">
-                                                <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
-                                                @if ($item->keterangan)
-                                                    <button class="btn-lihat"
-                                                        onclick="showPopup('Keterangan / Poin', this.closest('td').querySelector('textarea').value)">
-                                                        <i class="fas fa-eye"></i> Lihat
-                                                    </button>
-                                                @endif
-                                            </div>
-                                            <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat...">{{ $item->keterangan }}</textarea>
-                                        </td>
-
-                                        {{-- Deadline --}}
-                                        <td class="p-1 align-middle">
-                                            <input type="date" class="form-control-inline text-center live-field"
-                                                data-field="deadline" value="{{ $item->deadline }}">
-                                        </td>
-
-                                        {{-- PIC --}}
-                                        <td class="p-1 align-middle">
-                                            <textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1"
-                                                placeholder="Nama PIC ...">{{ $item->pic }}</textarea>
-                                        </td>
-
-                                        {{-- Target --}}
-                                        <td class="p-0 align-middle tc-cell" data-label="Target">
-                                            <div class="tc-view">
-                                                <div class="tc-text" data-placeholder="Target pekerjaan...">
-                                                    {{ $item->target ?: '' }}</div>
-                                                @if ($item->target)
-                                                    <button class="btn-lihat"
-                                                        onclick="showPopup('Target', this.closest('td').querySelector('textarea').value)">
-                                                        <i class="fas fa-eye"></i> Lihat
-                                                    </button>
-                                                @endif
-                                            </div>
-                                            <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan...">{{ $item->target }}</textarea>
-                                        </td>
-
-                                        {{-- Hasil --}}
-                                        <td class="p-0 align-middle tc-cell" data-label="Hasil">
-                                            <div class="tc-view">
-                                                <div class="tc-text" data-placeholder="Hasil tindak lanjut...">
-                                                    {{ $item->hasil ?: '' }}</div>
-                                                @if ($item->hasil)
-                                                    <button class="btn-lihat"
-                                                        onclick="showPopup('Hasil', this.closest('td').querySelector('textarea').value)">
-                                                        <i class="fas fa-eye"></i> Lihat
-                                                    </button>
-                                                @endif
-                                            </div>
-                                            <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut...">{{ $item->hasil }}</textarea>
-                                        </td>
-
-                                        {{-- Status --}}
-                                        <td class="text-center align-middle p-1">
+                                {{-- Tabel per user --}}
+                                <div class="card border-0 shadow-sm" style="border-radius:0 0 10px 10px;overflow:hidden;">
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover mb-0 mom-group-table">
+                                                <thead class="text-white text-center mom-group-thead" id="mom-thead">
+                                                    <tr>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:40px;">No</th>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:105px;">Tanggal</th>
+                                                        <th class="py-2 text-uppercase small align-middle">Keterangan / Poin
+                                                        </th>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:105px;">Deadline</th>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:120px;">PIC</th>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:155px;">Target</th>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:155px;">Hasil</th>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:115px;">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white">
+                                                    @foreach ($rows as $idx => $item)
+                                                        @php
+                                                            $sc =
+                                                                $item->status === 'Done'
+                                                                    ? 'bg-status-done'
+                                                                    : ($item->status === 'Overdue'
+                                                                        ? 'bg-status-overdue'
+                                                                        : 'bg-status-progress');
+                                                        @endphp
+                                                        <tr>
+                                                            <td
+                                                                class="text-center font-weight-bold text-muted align-middle small">
+                                                                {{ $idx + 1 }}</td>
+                                                            <td class="text-center align-middle small">
+                                                                {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
+                                                            </td>
+                                                            <td class="p-0 align-middle tc-cell readonly-cell"
+                                                                data-label="Keterangan / Poin">
+                                                                <div class="tc-view">
+                                                                    <div class="tc-text">{{ $item->keterangan ?: '' }}
+                                                                    </div>
+                                                                    @if ($item->keterangan)
+                                                                        <button class="btn-lihat"
+                                                                            onclick="showPopup('Keterangan / Poin', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                            <i class="fas fa-eye"></i> Lihat
+                                                                        </button>
+                                                                    @endif
+                                                                </div>
+                                                            </td>
+                                                            <td class="text-center align-middle small">
+                                                                {{ $item->deadline ? \Carbon\Carbon::parse($item->deadline)->format('d/m/Y') : '-' }}
+                                                            </td>
+                                                            <td class="align-middle small" style="padding:5px 7px;">
+                                                                {{ $item->pic ?: '-' }}</td>
+                                                            <td class="p-0 align-middle tc-cell readonly-cell"
+                                                                data-label="Target">
+                                                                <div class="tc-view">
+                                                                    <div class="tc-text"
+                                                                        data-placeholder="Target pekerjaan...">
+                                                                        {{ $item->target ?: '' }}</div>
+                                                                    @if ($item->target)
+                                                                        <button class="btn-lihat"
+                                                                            onclick="showPopup('Target', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                            <i class="fas fa-eye"></i> Lihat
+                                                                        </button>
+                                                                    @endif
+                                                                </div>
+                                                            </td>
+                                                            <td class="p-0 align-middle tc-cell readonly-cell"
+                                                                data-label="Hasil">
+                                                                <div class="tc-view">
+                                                                    <div class="tc-text"
+                                                                        data-placeholder="Hasil tindak lanjut...">
+                                                                        {{ $item->hasil ?: '' }}</div>
+                                                                    @if ($item->hasil)
+                                                                        <button class="btn-lihat"
+                                                                            onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                            <i class="fas fa-eye"></i> Lihat
+                                                                        </button>
+                                                                    @endif
+                                                                </div>
+                                                            </td>
+                                                            <td class="text-center align-middle p-1">
+                                                                <span class="{{ $sc }}"
+                                                                    style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 1px 3px rgba(0,0,0,.12);">
+                                                                    {{ $item->status ?: '-' }}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-folder-open fa-2x mb-2 d-block" style="opacity:.3;"></i>
+                            <strong>Belum Ada Data MoM</strong>
+                        </div>
+                    @endif
+                @else
+                    {{-- ── NON-ADMIN VIEW: tabel biasa ── --}}
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius:0 0 12px 12px;overflow:hidden;">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover mb-0" id="mom-table">
+                                    <thead class="text-white text-center" id="mom-thead">
+                                        <tr>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:50px;">No</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:120px;">
+                                                Tanggal</th>
+                                            <th class="py-3 text-uppercase small align-middle">Keterangan / Poin</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:120px;">
+                                                Deadline</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:130px;">PIC
+                                            </th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:170px;">Target
+                                            </th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:170px;">Hasil
+                                            </th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:130px;">Status
+                                            </th>
+                                            @if ($canEdit)
+                                                <th class="py-3 text-uppercase small align-middle" style="width:55px;">
+                                                    Aksi</th>
+                                            @endif
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mom-table-body" class="bg-white">
+                                        @forelse($moms as $index => $item)
                                             @php
-                                                $sc = 'bg-status-progress';
-                                                if ($item->status === 'Done') {
-                                                    $sc = 'bg-status-done';
-                                                } elseif ($item->status === 'Overdue') {
-                                                    $sc = 'bg-status-overdue';
-                                                }
+                                                $sc =
+                                                    $item->status === 'Done'
+                                                        ? 'bg-status-done'
+                                                        : ($item->status === 'Overdue'
+                                                            ? 'bg-status-overdue'
+                                                            : 'bg-status-progress');
                                             @endphp
-                                            <select
-                                                class="form-control-inline live-field status-select {{ $sc }}"
-                                                data-field="status">
-                                                <option value="" disabled {{ !$item->status ? 'selected' : '' }}>
-                                                    Pilih status</option>
-                                                <option value="Progress"
-                                                    {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
-                                                <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>
-                                                    Done</option>
-                                                <option value="Overdue"
-                                                    {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
-                                            </select>
-                                        </td>
+                                            <tr data-id="{{ $item->id }}">
+                                                <td class="text-center font-weight-bold text-muted no-col align-middle">
+                                                    {{ $index + 1 }}</td>
 
-                                        {{-- Action --}}
-                                        <td class="text-center align-middle p-1">
-                                            <button class="btn btn-link text-danger p-0 btn-delete"
-                                                data-id="{{ $item->id }}" title="Hapus">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </td>
+                                                <td class="p-1 align-middle">
+                                                    <input type="date"
+                                                        class="form-control-inline text-center live-field"
+                                                        data-field="tanggal" value="{{ $item->tanggal }}">
+                                                </td>
 
-                                    </tr>
-                                @empty
-                                    <tr class="empty-row">
-                                        <td colspan="9" class="text-center py-5 text-muted">
-                                            <i class="fas fa-folder-open fa-2x mb-2 d-block opacity-30"></i>
-                                            <strong>Belum Ada Data MoM</strong>
-                                            <div class="small">Klik tombol "Tambah MoM" untuk menambah data.</div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                                <td class="p-0 align-middle tc-cell" data-label="Keterangan / Poin">
+                                                    <div class="tc-view">
+                                                        <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
+                                                        @if ($item->keterangan)
+                                                            <button class="btn-lihat"
+                                                                onclick="showPopup('Keterangan / Poin', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                <i class="fas fa-eye"></i> Lihat
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                    <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat...">{{ $item->keterangan }}</textarea>
+                                                </td>
+
+                                                <td class="p-1 align-middle">
+                                                    <input type="date"
+                                                        class="form-control-inline text-center live-field"
+                                                        data-field="deadline" value="{{ $item->deadline }}">
+                                                </td>
+
+                                                <td class="p-1 align-middle">
+                                                    <textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1"
+                                                        placeholder="Nama PIC ...">{{ $item->pic }}</textarea>
+                                                </td>
+
+                                                <td class="p-0 align-middle tc-cell" data-label="Target">
+                                                    <div class="tc-view">
+                                                        <div class="tc-text" data-placeholder="Target pekerjaan...">
+                                                            {{ $item->target ?: '' }}</div>
+                                                        @if ($item->target)
+                                                            <button class="btn-lihat"
+                                                                onclick="showPopup('Target', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                <i class="fas fa-eye"></i> Lihat
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                    <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan...">{{ $item->target }}</textarea>
+                                                </td>
+
+                                                <td class="p-0 align-middle tc-cell" data-label="Hasil">
+                                                    <div class="tc-view">
+                                                        <div class="tc-text" data-placeholder="Hasil tindak lanjut...">
+                                                            {{ $item->hasil ?: '' }}</div>
+                                                        @if ($item->hasil)
+                                                            <button class="btn-lihat"
+                                                                onclick="showPopup('Hasil', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                <i class="fas fa-eye"></i> Lihat
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                    <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut...">{{ $item->hasil }}</textarea>
+                                                </td>
+
+                                                <td class="text-center align-middle p-1">
+                                                    <select
+                                                        class="form-control-inline live-field status-select {{ $sc }}"
+                                                        data-field="status">
+                                                        <option value="" disabled
+                                                            {{ !$item->status ? 'selected' : '' }}>Pilih status</option>
+                                                        <option value="Progress"
+                                                            {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress
+                                                        </option>
+                                                        <option value="Done"
+                                                            {{ $item->status === 'Done' ? 'selected' : '' }}>Done
+                                                        </option>
+                                                        <option value="Overdue"
+                                                            {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue
+                                                        </option>
+                                                    </select>
+                                                </td>
+
+                                                <td class="text-center align-middle p-1">
+                                                    <button class="btn btn-link text-danger p-0 btn-delete"
+                                                        data-id="{{ $item->id }}" title="Hapus">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr class="empty-row">
+                                                <td colspan="{{ $colCount }}" class="text-center py-5 text-muted">
+                                                    <i class="fas fa-folder-open fa-2x mb-2 d-block"
+                                                        style="opacity:.3;"></i>
+                                                    <strong>Belum Ada Data MoM</strong>
+                                                    <div class="small">Klik tombol "Tambah MoM" untuk menambah data.</div>
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                @endif
 
-        </div><!-- /tab-panel-wrapper -->
+            </div>{{-- /mom-content-area --}}
 
-    </div><!-- /container -->
+        </div>{{-- /tab-panel-wrapper --}}
+    </div>{{-- /container --}}
 
-    <!-- ===== DETAIL POPUP ===== -->
+    {{-- ===== POPUP DETAIL ===== --}}
     <div id="mom-popup-overlay" onclick="closePopup(event)">
         <div id="mom-popup-box">
             <div class="mpop-header">
@@ -217,9 +390,9 @@
         </div>
     </div>
 
-    <!-- ===== CSS ===== -->
+    {{-- ===== CSS ===== --}}
     <style>
-        /* ---- Tab styles ---- */
+        /* ── Tabs ──────────────────────────────────────────── */
         .mom-tabs {
             border-bottom: none;
         }
@@ -229,11 +402,11 @@
             border-bottom: none;
             border-radius: 8px 8px 0 0;
             color: #6c757d;
-            font-size: 0.82rem;
+            font-size: .82rem;
             font-weight: 600;
             padding: 10px 20px;
             background: #f8f9fc;
-            transition: all 0.18s;
+            transition: all .18s;
             margin-right: 4px;
         }
 
@@ -250,15 +423,6 @@
             z-index: 2;
         }
 
-        .tab-panel-wrapper {
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 0 8px 8px 8px;
-            padding: 0 16px 16px 16px;
-            position: relative;
-        }
-
-        /* Tab color: Helas Corp = blue, Helas Aesthetic Clinic = pink */
         .mom-tabs .nav-link[data-unit="Helas Corp"].active {
             border-top: 3px solid #4e73df;
             color: #4e73df;
@@ -269,11 +433,22 @@
             color: #e83e8c;
         }
 
-        #mom-thead.thead-corp {
+        .tab-panel-wrapper {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 0 8px 8px 8px;
+            padding: 0 16px 16px;
+            position: relative;
+        }
+
+        /* ── Thead / btn color ──────────────────────────────── */
+        #mom-thead.thead-corp,
+        .mom-group-thead.thead-corp {
             background-color: #4e73df;
         }
 
-        #mom-thead.thead-clinic {
+        #mom-thead.thead-clinic,
+        .mom-group-thead.thead-clinic {
             background-color: #e83e8c;
         }
 
@@ -287,7 +462,6 @@
             border-color: #e83e8c;
         }
 
-        /* badge unit */
         #active-unit-badge.badge-corp {
             background-color: #dde8ff;
             color: #2850b0;
@@ -298,24 +472,68 @@
             color: #a01060;
         }
 
-        /* ---- General inline control ---- */
+        /* ── Admin user-group header (pola Agenda) ──────────── */
+        .mom-user-header {
+            display: flex;
+            align-items: center;
+            background: #f0f2ff;
+            border-left: 4px solid #4f46e5;
+            border-radius: 0 8px 0 0;
+            padding: 10px 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+            font-size: .88rem;
+            margin-bottom: 0;
+        }
+
+        .mom-user-name {
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+
+        .mom-user-divisi {
+            color: #555;
+            font-weight: 400;
+            font-size: .8rem;
+        }
+
+        .mom-user-count {
+            margin-left: auto;
+            background: #4f46e5;
+            color: #fff;
+            font-size: .68rem;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+
+        /* ── Read-only cell ─────────────────────────────────── */
+        .readonly-cell {
+            cursor: default !important;
+        }
+
+        .readonly-cell:hover .tc-view {
+            background: transparent !important;
+        }
+
+        /* ── Inline controls ────────────────────────────────── */
         .form-control-inline {
             background: transparent !important;
             border: 1px solid transparent !important;
             width: 100% !important;
             padding: 5px 7px !important;
-            font-size: 0.82rem !important;
+            font-size: .82rem !important;
             color: #333 !important;
             resize: none !important;
             border-radius: 4px !important;
-            transition: border-color 0.15s, background 0.15s !important;
+            transition: border-color .15s, background .15s !important;
             font-family: inherit !important;
         }
 
         .form-control-inline:hover,
         .form-control-inline:focus {
             background: #f0f4ff !important;
-            border-color: rgba(78, 115, 223, 0.45) !important;
+            border-color: rgba(78, 115, 223, .45) !important;
             outline: none !important;
             box-shadow: none !important;
         }
@@ -325,14 +543,14 @@
             text-align: center !important;
         }
 
-        /* ---- Status dropdown ---- */
+        /* ── Status ─────────────────────────────────────────── */
         .status-select {
             border-radius: 20px !important;
             padding: 3px 10px !important;
-            font-size: 0.72rem !important;
+            font-size: .72rem !important;
             font-weight: 800 !important;
             text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
+            letter-spacing: .5px !important;
             text-align: center !important;
             text-align-last: center !important;
             width: 108px !important;
@@ -340,7 +558,7 @@
             border: none !important;
             -webkit-appearance: none !important;
             appearance: none !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .12) !important;
         }
 
         .bg-status-progress {
@@ -363,7 +581,7 @@
             color: #888 !important;
         }
 
-        /* ---- Truncate-cell (keterangan / target / hasil) ---- */
+        /* ── tc-cell ────────────────────────────────────────── */
         .tc-cell {
             min-width: 130px;
             max-width: 200px;
@@ -376,7 +594,7 @@
         }
 
         .tc-text {
-            font-size: 0.82rem;
+            font-size: .82rem;
             color: #333;
             line-height: 1.45;
             display: -webkit-box;
@@ -391,13 +609,13 @@
             content: attr(data-placeholder);
             color: #aaa;
             font-style: italic;
-            font-size: 0.78rem;
+            font-size: .78rem;
         }
 
         .btn-lihat {
             display: inline-block;
             margin-top: 3px;
-            font-size: 0.67rem;
+            font-size: .67rem;
             padding: 1px 7px;
             border-radius: 10px;
             font-weight: 700;
@@ -405,7 +623,7 @@
             color: #4e73df;
             background: transparent;
             cursor: pointer;
-            transition: all 0.18s;
+            transition: all .18s;
             line-height: 1.6;
         }
 
@@ -418,7 +636,7 @@
             display: none;
             width: 100%;
             padding: 5px 8px;
-            font-size: 0.82rem;
+            font-size: .82rem;
             font-family: inherit;
             color: #333;
             border: 1px solid #4e73df;
@@ -426,10 +644,10 @@
             resize: none;
             overflow: hidden;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.12);
+            box-shadow: 0 0 0 3px rgba(78, 115, 223, .12);
             background: #f0f4ff;
             min-height: 60px;
-            transition: all 0.15s;
+            transition: all .15s;
         }
 
         .tc-cell.editing .tc-view {
@@ -440,13 +658,13 @@
             display: block;
         }
 
-        .tc-cell:not(.editing):hover .tc-view {
+        .tc-cell:not(.editing):not(.readonly-cell):hover .tc-view {
             background: #f5f7ff;
             border-radius: 4px;
         }
 
         .btn-delete {
-            transition: transform 0.15s;
+            transition: transform .15s;
         }
 
         .btn-delete:hover {
@@ -460,12 +678,12 @@
             min-height: unset !important;
         }
 
-        /* ---- Popup ---- */
+        /* ── Popup ──────────────────────────────────────────── */
         #mom-popup-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.45);
+            background: rgba(0, 0, 0, .45);
             z-index: 9999;
             align-items: center;
             justify-content: center;
@@ -478,16 +696,16 @@
         #mom-popup-box {
             background: #fff;
             border-radius: 14px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .22);
             width: 100%;
             max-width: 500px;
             overflow: hidden;
-            animation: mpopIn 0.18s ease;
+            animation: mpopIn .18s ease;
         }
 
         @keyframes mpopIn {
             from {
-                transform: scale(0.9);
+                transform: scale(.9);
                 opacity: 0;
             }
 
@@ -505,11 +723,11 @@
             align-items: center;
             justify-content: space-between;
             font-weight: 700;
-            font-size: 0.92rem;
+            font-size: .92rem;
         }
 
         .mpop-close {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, .2);
             border: none;
             color: #fff;
             border-radius: 50%;
@@ -519,17 +737,17 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.15s;
+            font-size: .9rem;
+            transition: background .15s;
         }
 
         .mpop-close:hover {
-            background: rgba(255, 255, 255, 0.38);
+            background: rgba(255, 255, 255, .38);
         }
 
         .mpop-body {
             padding: 18px 22px;
-            font-size: 0.88rem;
+            font-size: .88rem;
             color: #333;
             line-height: 1.75;
             white-space: pre-wrap;
@@ -537,25 +755,9 @@
             max-height: 62vh;
             overflow-y: auto;
         }
-
-        /* Loading overlay */
-        #tab-loading {
-            display: none;
-            position: absolute;
-            inset: 0;
-            background: rgba(255, 255, 255, 0.75);
-            z-index: 10;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0 8px 8px 8px;
-        }
-
-        #tab-loading.active {
-            display: flex;
-        }
     </style>
 
-    <!-- ===== SCRIPT ===== -->
+    {{-- ===== JAVASCRIPT ===== --}}
     <script>
         (function($) {
             'use strict';
@@ -563,50 +765,49 @@
             const CSRF = "{{ csrf_token() }}";
             const ROUTE_STORE = "{{ route('admin.mom.store') }}";
             const ROUTE_INDEX = "{{ route('admin.mom.index') }}";
+            const CAN_EDIT = {{ $canEdit ? 'true' : 'false' }};
+            const SEE_ALL = {{ $seeAllData ? 'true' : 'false' }};
+            const COL_COUNT = {{ $colCount }};
 
-            // Active unit — driven by the initially loaded tab
             let activeUnit = "{{ $unit }}";
 
-            // ─── Apply tab visual theming ───────────────────────────────────────────
+            // ── Theme ────────────────────────────────────────────────────────────────
 
-            function applyUnitTheme(unit) {
-                const isClinic = unit === 'Helas Aesthetic Clinic';
-
-                // thead color
-                $('#mom-thead')
-                    .removeClass('thead-corp thead-clinic')
-                    .addClass(isClinic ? 'thead-clinic' : 'thead-corp');
-
-                // add button color
-                $('#btn-add-mom')
-                    .removeClass('btn-corp btn-clinic')
-                    .addClass(isClinic ? 'btn-clinic' : 'btn-corp');
-
-                // badge
-                const $badge = $('#active-unit-badge');
-                $badge.removeClass('badge-corp badge-clinic')
-                    .addClass(isClinic ? 'badge-clinic' : 'badge-corp');
-                $badge.find('i').removeClass('fa-building fa-clinic-medical')
-                    .addClass(isClinic ? 'fa-clinic-medical' : 'fa-building');
-                $('#active-unit-label').text(unit);
+            function statusClass(s) {
+                return s === 'Done' ? 'bg-status-done' : s === 'Overdue' ? 'bg-status-overdue' : 'bg-status-progress';
             }
 
-            // Init theme on load
+            function applyUnitTheme(unit) {
+                const clinic = unit === 'Helas Aesthetic Clinic';
+                // thead — apply to ALL thead elements (grouped tables + single table)
+                $('#mom-thead, .mom-group-thead')
+                    .removeClass('thead-corp thead-clinic')
+                    .addClass(clinic ? 'thead-clinic' : 'thead-corp');
+                if (CAN_EDIT) {
+                    $('#btn-add-mom').removeClass('btn-corp btn-clinic').addClass(clinic ? 'btn-clinic' : 'btn-corp');
+                }
+                const $b = $('#active-unit-badge');
+                $b.removeClass('badge-corp badge-clinic').addClass(clinic ? 'badge-clinic' : 'badge-corp');
+                $b.find('i').removeClass('fa-building fa-clinic-medical').addClass(clinic ? 'fa-clinic-medical' :
+                    'fa-building');
+                $('#active-unit-label').text(unit);
+            }
             applyUnitTheme(activeUnit);
 
-            // ─── Helpers ────────────────────────────────────────────────────────────
+            // ── Helpers ──────────────────────────────────────────────────────────────
 
             function toast(msg, icon = 'success', timer = 900) {
                 Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer,
-                    timerProgressBar: true
-                }).fire({
-                    icon,
-                    title: msg
-                });
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer,
+                        timerProgressBar: true
+                    })
+                    .fire({
+                        icon,
+                        title: msg
+                    });
             }
 
             function reindex() {
@@ -617,177 +818,241 @@
             }
 
             function checkEmpty() {
-                const real = $('#mom-table-body tr').not('.empty-row,.filtered-empty');
-                if (real.length === 0) {
-                    $('#mom-table-body').html(`
-                        <tr class="empty-row">
-                            <td colspan="9" class="text-center py-5 text-muted">
-                                <i class="fas fa-folder-open fa-2x d-block mb-2 opacity-30"></i>
-                                <strong>Belum Ada Data MoM</strong>
-                                <div class="small">Klik "Tambah MoM" untuk menambah data.</div>
-                            </td>
-                        </tr>`);
+                if ($('#mom-table-body tr').not('.empty-row,.filtered-empty').length === 0) {
+                    $('#mom-table-body').html(emptyRow());
                 }
             }
 
+            function emptyRow() {
+                return `<tr class="empty-row">
+                <td colspan="${COL_COUNT}" class="text-center py-5 text-muted">
+                    <i class="fas fa-folder-open fa-2x d-block mb-2" style="opacity:.3;"></i>
+                    <strong>Belum Ada Data MoM</strong>
+                    ${CAN_EDIT ? '<div class="small">Klik "Tambah MoM" untuk menambah data.</div>' : ''}
+                </td>
+            </tr>`;
+            }
+
+            // ── Filter (non-admin only — admin reloads from server) ───────────────────
+
             function applyFilter() {
+                if (SEE_ALL) {
+                    loadUnit(activeUnit, false);
+                    return;
+                }
                 const f = $('#filter-status').val();
                 $('.filtered-empty').remove();
                 let vis = 0;
                 $('#mom-table-body tr').not('.empty-row').each(function() {
-                    const tr = $(this);
-                    const s = tr.find('[data-field="status"]').val();
+                    const s = $(this).find('[data-field="status"]').val() || '';
                     if (f === 'all' || s === f) {
-                        tr.show();
+                        $(this).show();
                         vis++;
-                    } else tr.hide();
+                    } else $(this).hide();
                 });
                 reindex();
                 const total = $('#mom-table-body tr').not('.empty-row,.filtered-empty').length;
                 if (vis === 0 && total > 0) {
-                    $('#mom-table-body').append(`
-                        <tr class="filtered-empty">
-                            <td colspan="9" class="text-center py-5 text-muted">
-                                <i class="fas fa-filter fa-lg mx-auto d-block mb-2 opacity-30"></i>
-                                Tidak ada data dengan status "<strong>${f}</strong>".
-                            </td>
-                        </tr>`);
+                    $('#mom-table-body').append(`<tr class="filtered-empty">
+                    <td colspan="${COL_COUNT}" class="text-center py-5 text-muted">
+                        <i class="fas fa-filter fa-lg d-block mb-2" style="opacity:.3;"></i>
+                        Tidak ada data dengan status "<strong>${f}</strong>".
+                    </td>
+                </tr>`);
                 }
             }
 
             function autoResize(el) {
                 if (!el) return;
                 el.style.height = 'auto';
-                el.style.height = (el.scrollHeight) + 'px';
+                el.style.height = el.scrollHeight + 'px';
             }
 
-            // ─── Build table rows from JSON data array ───────────────────────────────
+            function escHtml(str) {
+                return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(
+                    /"/g, '&quot;');
+            }
+
+            function fmtDate(val) {
+                if (!val) return '-';
+                const p = val.split('-');
+                return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : val;
+            }
+
+            // ── Row builders (non-admin) ──────────────────────────────────────────────
+
+            function buildTcCell(item, field, label, placeholder) {
+                const val = item[field] || '';
+                const lihat = val ?
+                    `<button class="btn-lihat" onclick="showPopup('${label}', this.closest('td').querySelector('textarea,.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
+                    '';
+                return `<td class="p-0 align-middle tc-cell" data-label="${label}">
+                <div class="tc-view">
+                    <div class="tc-text" data-placeholder="${placeholder}">${escHtml(val)}</div>${lihat}
+                </div>
+                <textarea class="tc-textarea live-field" data-field="${field}" placeholder="${placeholder}">${escHtml(val)}</textarea>
+            </td>`;
+            }
 
             function buildRowsHtml(moms) {
-                if (!moms || moms.length === 0) {
-                    return `<tr class="empty-row">
-                        <td colspan="9" class="text-center py-5 text-muted">
-                            <i class="fas fa-folder-open fa-2x d-block mb-2 opacity-30"></i>
-                            <strong>Belum Ada Data MoM</strong>
-                            <div class="small">Klik "Tambah MoM" untuk menambah data.</div>
-                        </td>
-                    </tr>`;
-                }
-
-                const statusClass = {
-                    Progress: 'bg-status-progress',
-                    Done: 'bg-status-done',
-                    Overdue: 'bg-status-overdue'
-                };
-
-                return moms.map(function(item, i) {
-                    const sc = statusClass[item.status] || 'bg-status-progress';
-                    return `
-                    <tr data-id="${item.id}">
-                        <td class="text-center font-weight-bold text-muted no-col align-middle">${i + 1}</td>
-                        <td class="p-1 align-middle">
-                            <input type="date" class="form-control-inline text-center live-field" data-field="tanggal" value="${item.tanggal || ''}">
-                        </td>
-                        <td class="p-0 align-middle tc-cell" data-label="Keterangan / Poin">
-                            <div class="tc-view">
-                                <div class="tc-text">${escHtml(item.keterangan || '')}</div>
-                                ${item.keterangan ? `<button class="btn-lihat" onclick="showPopup('Keterangan / Poin', this.closest('td').querySelector('textarea').value)"><i class="fas fa-eye"></i> Lihat</button>` : ''}
-                            </div>
-                            <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat...">${escHtml(item.keterangan || '')}</textarea>
-                        </td>
-                        <td class="p-1 align-middle">
-                            <input type="date" class="form-control-inline text-center live-field" data-field="deadline" value="${item.deadline || ''}">
-                        </td>
-                        <td class="p-1 align-middle">
-                            <textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1" placeholder="PIC...">${escHtml(item.pic || '')}</textarea>
-                        </td>
-                        <td class="p-0 align-middle tc-cell" data-label="Target">
-                            <div class="tc-view">
-                                <div class="tc-text" data-placeholder="Target pekerjaan...">${escHtml(item.target || '')}</div>
-                                ${item.target ? `<button class="btn-lihat" onclick="showPopup('Target', this.closest('td').querySelector('textarea').value)"><i class="fas fa-eye"></i> Lihat</button>` : ''}
-                            </div>
-                            <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan...">${escHtml(item.target || '')}</textarea>
-                        </td>
-                        <td class="p-0 align-middle tc-cell" data-label="Hasil">
-                            <div class="tc-view">
-                                <div class="tc-text" data-placeholder="Hasil tindak lanjut...">${escHtml(item.hasil || '')}</div>
-                                ${item.hasil ? `<button class="btn-lihat" onclick="showPopup('Hasil', this.closest('td').querySelector('textarea').value)"><i class="fas fa-eye"></i> Lihat</button>` : ''}
-                            </div>
-                            <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut...">${escHtml(item.hasil || '')}</textarea>
-                        </td>
-                        <td class="text-center align-middle p-1">
-                            <select class="form-control-inline live-field status-select ${sc}" data-field="status">
-                                <option value="" disabled>Pilih status</option>
-                                <option value="Progress" ${item.status === 'Progress' ? 'selected' : ''}>Progress</option>
-                                <option value="Done"     ${item.status === 'Done'     ? 'selected' : ''}>Done</option>
-                                <option value="Overdue"  ${item.status === 'Overdue'  ? 'selected' : ''}>Overdue</option>
-                            </select>
-                        </td>
-                        <td class="text-center align-middle p-1">
-                            <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>`;
-                }).join('');
-            }
-
-            // ─── Build single new row HTML ────────────────────────────────────────────
-
-            function buildNewRow(item) {
-                return `
-                <tr data-id="${item.id}">
-                    <td class="text-center font-weight-bold text-muted no-col align-middle">1</td>
-                    <td class="p-1 align-middle">
-                        <input type="date" class="form-control-inline text-center live-field" data-field="tanggal" value="${item.tanggal || ''}">
-                    </td>
-                    <td class="p-0 align-middle tc-cell editing" data-label="Keterangan / Poin">
-                        <div class="tc-view"><div class="tc-text"></div></div>
-                        <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat..."></textarea>
-                    </td>
-                    <td class="p-1 align-middle">
-                        <input type="date" class="form-control-inline text-center live-field" data-field="deadline" value="">
-                    </td>
-                    <td class="p-1 align-middle">
-                        <textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1" placeholder="PIC..."></textarea>
-                    </td>
-                    <td class="p-0 align-middle tc-cell" data-label="Target">
-                        <div class="tc-view"><div class="tc-text" data-placeholder="Target pekerjaan..."></div></div>
-                        <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan..."></textarea>
-                    </td>
-                    <td class="p-0 align-middle tc-cell" data-label="Hasil">
-                        <div class="tc-view"><div class="tc-text" data-placeholder="Hasil tindak lanjut..."></div></div>
-                        <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut..."></textarea>
-                    </td>
+                if (!moms || moms.length === 0) return emptyRow();
+                return moms.map((item, i) => {
+                    const sc = statusClass(item.status);
+                    return `<tr data-id="${item.id}">
+                    <td class="text-center font-weight-bold text-muted no-col align-middle">${i + 1}</td>
+                    <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="tanggal" value="${escHtml(item.tanggal||'')}"></td>
+                    ${buildTcCell(item,'keterangan','Keterangan / Poin','Tulis keterangan/poin rapat...')}
+                    <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value="${escHtml(item.deadline||'')}"></td>
+                    <td class="p-1 align-middle"><textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1" placeholder="Nama PIC ...">${escHtml(item.pic||'')}</textarea></td>
+                    ${buildTcCell(item,'target','Target','Target pekerjaan...')}
+                    ${buildTcCell(item,'hasil','Hasil','Hasil tindak lanjut...')}
                     <td class="text-center align-middle p-1">
-                        <select class="form-control-inline live-field status-select bg-status-none" data-field="status">
-                            <option value="" disabled selected>Pilih status</option>
-                            <option value="Progress">Progress</option>
-                            <option value="Done">Done</option>
-                            <option value="Overdue">Overdue</option>
+                        <select class="form-control-inline live-field status-select ${sc}" data-field="status">
+                            <option value="" disabled>Pilih status</option>
+                            <option value="Progress" ${item.status==='Progress'?'selected':''}>Progress</option>
+                            <option value="Done"     ${item.status==='Done'    ?'selected':''}>Done</option>
+                            <option value="Overdue"  ${item.status==='Overdue' ?'selected':''}>Overdue</option>
                         </select>
                     </td>
                     <td class="text-center align-middle p-1">
-                        <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>
                     </td>
                 </tr>`;
+                }).join('');
             }
 
-            // HTML escape helper
-            function escHtml(str) {
-                return String(str)
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;');
+            function buildNewRow(item) {
+                return `<tr data-id="${item.id}">
+                <td class="text-center font-weight-bold text-muted no-col align-middle">1</td>
+                <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="tanggal" value="${item.tanggal||''}"></td>
+                <td class="p-0 align-middle tc-cell editing" data-label="Keterangan / Poin">
+                    <div class="tc-view"><div class="tc-text"></div></div>
+                    <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat..."></textarea>
+                </td>
+                <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value=""></td>
+                <td class="p-1 align-middle"><textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1" placeholder="PIC..."></textarea></td>
+                <td class="p-0 align-middle tc-cell" data-label="Target">
+                    <div class="tc-view"><div class="tc-text" data-placeholder="Target pekerjaan..."></div></div>
+                    <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan..."></textarea>
+                </td>
+                <td class="p-0 align-middle tc-cell" data-label="Hasil">
+                    <div class="tc-view"><div class="tc-text" data-placeholder="Hasil tindak lanjut..."></div></div>
+                    <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut..."></textarea>
+                </td>
+                <td class="text-center align-middle p-1">
+                    <select class="form-control-inline live-field status-select bg-status-none" data-field="status">
+                        <option value="" disabled selected>Pilih status</option>
+                        <option value="Progress">Progress</option>
+                        <option value="Done">Done</option>
+                        <option value="Overdue">Overdue</option>
+                    </select>
+                </td>
+                <td class="text-center align-middle p-1">
+                    <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            </tr>`;
             }
 
-            // ─── Save Field via AJAX ─────────────────────────────────────────────────
+            // ── Admin grouped HTML builder (for AJAX reload) ─────────────────────────
+
+            function buildGroupedHtml(moms) {
+                if (!moms || moms.length === 0) {
+                    return `<div class="text-center py-5 text-muted">
+                    <i class="fas fa-folder-open fa-2x mb-2 d-block" style="opacity:.3;"></i>
+                    <strong>Belum Ada Data MoM</strong>
+                </div>`;
+                }
+
+                // Group by created_by
+                const groups = {};
+                moms.forEach(item => {
+                    const key = item.created_by ?? 'unknown';
+                    if (!groups[key]) groups[key] = {
+                        creator: item.creator,
+                        rows: []
+                    };
+                    groups[key].rows.push(item);
+                });
+
+                const clinic = activeUnit === 'Helas Aesthetic Clinic';
+                const theadClass = clinic ? 'thead-clinic' : 'thead-corp';
+
+                return Object.values(groups).map(group => {
+                    const name = group.creator?.name || '(User dihapus)';
+                    const divisi = group.creator?.divisi || group.creator?.role || '';
+                    const divisiHtml = divisi ? ` <span class="mom-user-divisi"> — ${escHtml(divisi)}</span>` :
+                        '';
+                    const count = group.rows.length;
+
+                    const rows = group.rows.map((item, i) => {
+                        const sc = statusClass(item.status);
+                        const keterangan = item.keterangan || '';
+                        const target = item.hasil || '';
+                        const hasil = item.hasil || '';
+
+                        const tcReadonly = (val, label, placeholder) => {
+                            const lihat = val ?
+                                `<button class="btn-lihat" onclick="showPopup('${label}', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
+                                '';
+                            return `<td class="p-0 align-middle tc-cell readonly-cell" data-label="${label}">
+                            <div class="tc-view">
+                                <div class="tc-text" data-placeholder="${placeholder}">${escHtml(val)}</div>${lihat}
+                            </div>
+                        </td>`;
+                        };
+
+                        return `<tr>
+                        <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
+                        <td class="text-center align-middle small">${fmtDate(item.tanggal)}</td>
+                        ${tcReadonly(keterangan, 'Keterangan / Poin', 'Tulis keterangan/poin rapat...')}
+                        <td class="text-center align-middle small">${fmtDate(item.deadline)}</td>
+                        <td class="align-middle small" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>
+                        ${tcReadonly(item.target||'', 'Target', 'Target pekerjaan...')}
+                        ${tcReadonly(item.hasil||'', 'Hasil', 'Hasil tindak lanjut...')}
+                        <td class="text-center align-middle p-1">
+                            <span class="${sc}" style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 1px 3px rgba(0,0,0,.12);">
+                                ${escHtml(item.status||'-')}
+                            </span>
+                        </td>
+                    </tr>`;
+                    }).join('');
+
+                    return `<div class="mom-user-group mb-4">
+                    <div class="mom-user-header">
+                        <i class="fas fa-user mr-2"></i>
+                        <span class="mom-user-name">${escHtml(name)}</span>${divisiHtml}
+                        <span class="mom-user-count ml-auto">${count} data</span>
+                    </div>
+                    <div class="card border-0 shadow-sm" style="border-radius:0 0 10px 10px;overflow:hidden;">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover mb-0 mom-group-table">
+                                    <thead class="text-white text-center mom-group-thead ${theadClass}">
+                                        <tr>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:40px;">No</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:105px;">Tanggal</th>
+                                            <th class="py-2 text-uppercase small align-middle">Keterangan / Poin</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:105px;">Deadline</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:120px;">PIC</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:155px;">Target</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:155px;">Hasil</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:115px;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">${rows}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                }).join('');
+            }
+
+            // ── AJAX: Save field ─────────────────────────────────────────────────────
 
             function saveField(id, field, value, $el) {
-                if ($el) $el.css('opacity', '0.6');
+                if (!CAN_EDIT) return;
+                if ($el) $el.css('opacity', '.6');
                 $.ajax({
                     url: '/admin/mom/' + id,
                     type: 'POST',
@@ -800,40 +1065,33 @@
                         if ($el) $el.css('opacity', '');
                         if (field === 'status') {
                             $el.removeClass(
-                                'bg-status-progress bg-status-done bg-status-overdue bg-status-none');
-                            const map = {
-                                Progress: 'bg-status-progress',
-                                Done: 'bg-status-done',
-                                Overdue: 'bg-status-overdue'
-                            };
-                            $el.addClass(map[value] || 'bg-status-progress');
+                                    'bg-status-progress bg-status-done bg-status-overdue bg-status-none')
+                                .addClass(statusClass(value));
                             applyFilter();
                         }
                         toast('Tersimpan', 'success', 700);
                     },
-                    error() {
+                    error(xhr) {
                         if ($el) $el.css('opacity', '');
-                        toast('Gagal menyimpan', 'error', 1500);
+                        toast(xhr.responseJSON?.message || 'Gagal menyimpan', 'error', 1800);
                     }
                 });
             }
 
-            // ─── Load data for a given unit ──────────────────────────────────────────
+            // ── Load unit (AJAX) ─────────────────────────────────────────────────────
 
             function loadUnit(unit, resetFilter) {
                 activeUnit = unit;
                 applyUnitTheme(unit);
-
                 if (resetFilter) $('#filter-status').val('all');
 
-                const status = $('#filter-status').val();
                 const params = {
-                    unit: unit
+                    unit
                 };
-                if (status && status !== 'all') params.status = status;
+                const f = $('#filter-status').val();
+                if (f && f !== 'all') params.status = f;
 
-                const $icon = $('#btn-refresh').find('i');
-                $icon.addClass('fa-spin');
+                const $icon = $('#btn-refresh').find('i').addClass('fa-spin');
 
                 $.ajax({
                     url: ROUTE_INDEX,
@@ -847,14 +1105,20 @@
                             return;
                         }
 
-                        $('#mom-table-body').html(buildRowsHtml(res.data));
-                        $('.auto-resize').each(function() {
-                            autoResize(this);
-                        });
-                        $('.tc-textarea').each(function() {
-                            $(this).data('orig', $(this).val().trim());
-                        });
-                        applyFilter();
+                        if (SEE_ALL) {
+                            // Admin: rebuild grouped view
+                            $('#mom-content-area').html(buildGroupedHtml(res.data));
+                        } else {
+                            // Non-admin: rebuild flat table
+                            $('#mom-table-body').html(buildRowsHtml(res.data));
+                            $('.auto-resize').each(function() {
+                                autoResize(this);
+                            });
+                            $('.tc-textarea').each(function() {
+                                $(this).data('orig', $(this).val().trim());
+                            });
+                            applyFilter();
+                        }
                     },
                     error() {
                         $icon.removeClass('fa-spin');
@@ -863,178 +1127,162 @@
                 });
             }
 
-            // ─── Event: Tab click ────────────────────────────────────────────────────
+            // ── Tab switch ───────────────────────────────────────────────────────────
 
             $('#momTabs .nav-link').on('click', function(e) {
                 e.preventDefault();
-                const $link = $(this);
-                const unit = $link.data('unit');
-
-                if (unit === activeUnit) return; // already active
-
-                // Switch active tab
+                const unit = $(this).data('unit');
+                if (unit === activeUnit) return;
                 $('#momTabs .nav-link').removeClass('active');
-                $link.addClass('active');
-
+                $(this).addClass('active');
                 loadUnit(unit, true);
             });
 
-            // ─── Event: Click on tc-cell → enter edit mode ───────────────────────────
+            // ── Non-admin edit events ────────────────────────────────────────────────
 
-            $(document).on('click', '.tc-cell:not(.editing)', function(e) {
-                if ($(e.target).closest('.btn-lihat').length) return;
-                const $td = $(this);
-                $td.addClass('editing');
-                const $ta = $td.find('.tc-textarea');
-                autoResize($ta[0]);
-                $ta.focus();
-            });
-
-            // Blur from tc-textarea → exit edit mode, save if changed
-            $(document).on('blur', '.tc-textarea.live-field', function() {
-                const $ta = $(this);
-                const $td = $ta.closest('.tc-cell');
-                const $tr = $td.closest('tr');
-                const id = $tr.data('id');
-                const field = $ta.data('field');
-                const val = $ta.val().trim();
-                const orig = $ta.data('orig') ?? '';
-
-                const label = $td.data('label') || field;
-                const $view = $td.find('.tc-view');
-                const $text = $view.find('.tc-text');
-                $text.text(val);
-
-                let $btn = $view.find('.btn-lihat');
-                if (val.length > 0) {
-                    if ($btn.length === 0) {
-                        $btn = $(`<button class="btn-lihat"><i class="fas fa-eye"></i> Lihat</button>`);
-                        $view.append($btn);
-                    }
-                    $btn.attr('onclick',
-                        `showPopup('${label}', this.closest('td').querySelector('textarea').value)`);
-                } else {
-                    $btn.remove();
-                }
-
-                $td.removeClass('editing');
-
-                if (val !== orig) {
-                    $ta.data('orig', val);
-                    saveField(id, field, val, $ta);
-                }
-            });
-
-            $(document).on('focus', '.tc-textarea.live-field', function() {
-                if ($(this).data('orig') === undefined) {
-                    $(this).data('orig', $(this).val().trim());
-                }
-            });
-
-            $(document).on('input', '.tc-textarea', function() {
-                autoResize(this);
-            });
-
-            // ─── Event: Regular live-field (date, pic, status) ────────────────────────
-
-            $(document).on('change', 'input.live-field, select.live-field, textarea.form-control-inline.live-field',
-                function() {
-                    const $el = $(this);
-                    const $tr = $el.closest('tr');
-                    const id = $tr.data('id');
-                    const field = $el.data('field');
-                    if (!id || !field) return;
-                    saveField(id, field, $el.val(), $el);
+            if (CAN_EDIT) {
+                $(document).on('click', '.tc-cell:not(.editing):not(.readonly-cell)', function(e) {
+                    if ($(e.target).closest('.btn-lihat').length) return;
+                    $(this).addClass('editing');
+                    const $ta = $(this).find('.tc-textarea');
+                    autoResize($ta[0]);
+                    $ta.focus();
                 });
 
-            $(document).on('input', '.auto-resize', function() {
-                autoResize(this);
-            });
+                $(document).on('blur', '.tc-textarea.live-field', function() {
+                    const $ta = $(this);
+                    const $td = $ta.closest('.tc-cell');
+                    const id = $td.closest('tr').data('id');
+                    const field = $ta.data('field');
+                    const val = $ta.val().trim();
+                    const orig = $ta.data('orig') ?? '';
+                    const $text = $td.find('.tc-text');
 
-            // ─── Button: Tambah MoM ──────────────────────────────────────────────────
+                    $text.text(val);
+                    let $btn = $td.find('.tc-view .btn-lihat');
+                    if (val) {
+                        if (!$btn.length) {
+                            $btn = $(`<button class="btn-lihat"><i class="fas fa-eye"></i> Lihat</button>`);
+                            $td.find('.tc-view').append($btn);
+                        }
+                        $btn.attr('onclick',
+                            `showPopup('${$td.data('label')}', this.closest('td').querySelector('textarea,.tc-text').textContent)`
+                        );
+                    } else {
+                        $btn.remove();
+                    }
 
-            $('#btn-add-mom').on('click', function() {
-                const $btn = $(this);
-                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menambah...');
-                $.ajax({
-                    url: ROUTE_STORE,
-                    type: 'POST',
-                    data: {
-                        _token: CSRF,
-                        unit: activeUnit
-                    },
-                    success(res) {
-                        $btn.prop('disabled', false).html(
-                            '<i class="fas fa-plus mr-1"></i> Tambah MoM');
-                        $('.empty-row').remove();
-                        const $row = $(buildNewRow(res.data));
-                        $('#mom-table-body').prepend($row);
-                        reindex();
-                        applyFilter();
-                        const $ta = $row.find('textarea[data-field="keterangan"]');
-                        autoResize($ta[0]);
-                        $ta.focus();
-                        toast('Data MoM baru berhasil dibuat.', 'success');
-                    },
-                    error() {
-                        $btn.prop('disabled', false).html(
-                            '<i class="fas fa-plus mr-1"></i> Tambah MoM');
-                        Swal.fire('Gagal', 'Terjadi kesalahan saat membuat MoM baru.', 'error');
+                    $td.removeClass('editing');
+                    if (val !== orig) {
+                        $ta.data('orig', val);
+                        saveField(id, field, val, $ta);
                     }
                 });
-            });
 
-            // ─── Button: Hapus ───────────────────────────────────────────────────────
+                $(document).on('focus', '.tc-textarea.live-field', function() {
+                    if ($(this).data('orig') === undefined) $(this).data('orig', $(this).val().trim());
+                });
 
-            $(document).on('click', '.btn-delete', function() {
-                const $btn = $(this);
-                const $tr = $btn.closest('tr');
-                const id = $btn.data('id');
-                Swal.fire({
-                    title: 'Hapus data MoM ini?',
-                    text: 'Data yang dihapus tidak bisa dipulihkan.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#e74a3b',
-                    cancelButtonColor: '#858796',
-                    confirmButtonText: 'Ya, Hapus!',
-                    cancelButtonText: 'Batal'
-                }).then(r => {
-                    if (!r.isConfirmed) return;
+                $(document).on('input', '.tc-textarea', function() {
+                    autoResize(this);
+                });
+
+                $(document).on('change', 'input.live-field, select.live-field, textarea.form-control-inline.live-field',
+                    function() {
+                        const $el = $(this);
+                        const id = $el.closest('tr').data('id');
+                        const field = $el.data('field');
+                        if (!id || !field) return;
+                        saveField(id, field, $el.val(), $el);
+                    });
+
+                $(document).on('input', '.auto-resize', function() {
+                    autoResize(this);
+                });
+
+                // Tambah MoM
+                $('#btn-add-mom').on('click', function() {
+                    const $btn = $(this);
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menambah...');
                     $.ajax({
-                        url: '/admin/mom/' + id,
+                        url: ROUTE_STORE,
                         type: 'POST',
                         data: {
                             _token: CSRF,
-                            _method: 'DELETE'
+                            unit: activeUnit
                         },
-                        success() {
-                            $tr.fadeOut(350, function() {
-                                $tr.remove();
-                                reindex();
-                                checkEmpty();
-                            });
-                            toast('Data MoM berhasil dihapus.', 'success');
+                        success(res) {
+                            $btn.prop('disabled', false).html(
+                                '<i class="fas fa-plus mr-1"></i> Tambah MoM');
+                            $('.empty-row').remove();
+                            const $row = $(buildNewRow(res.data));
+                            $('#mom-table-body').prepend($row);
+                            reindex();
+                            applyFilter();
+                            const $ta = $row.find('textarea[data-field="keterangan"]');
+                            autoResize($ta[0]);
+                            $ta.focus();
+                            toast('Data MoM baru berhasil dibuat.', 'success');
                         },
-                        error() {
-                            Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus data.',
+                        error(xhr) {
+                            $btn.prop('disabled', false).html(
+                                '<i class="fas fa-plus mr-1"></i> Tambah MoM');
+                            Swal.fire('Gagal', xhr.responseJSON?.message || 'Terjadi kesalahan.',
                                 'error');
                         }
                     });
                 });
-            });
 
-            // ─── Filter & Refresh ────────────────────────────────────────────────────
+                // Hapus
+                $(document).on('click', '.btn-delete', function() {
+                    const $tr = $(this).closest('tr');
+                    const id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Hapus data MoM ini?',
+                        text: 'Data yang dihapus tidak bisa dipulihkan.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e74a3b',
+                        cancelButtonColor: '#858796',
+                        confirmButtonText: 'Ya, Hapus!',
+                        cancelButtonText: 'Batal'
+                    }).then(r => {
+                        if (!r.isConfirmed) return;
+                        $.ajax({
+                            url: '/admin/mom/' + id,
+                            type: 'POST',
+                            data: {
+                                _token: CSRF,
+                                _method: 'DELETE'
+                            },
+                            success() {
+                                $tr.fadeOut(350, function() {
+                                    $tr.remove();
+                                    reindex();
+                                    checkEmpty();
+                                });
+                                toast('Data MoM berhasil dihapus.', 'success');
+                            },
+                            error(xhr) {
+                                Swal.fire('Gagal', xhr.responseJSON?.message ||
+                                    'Gagal menghapus.', 'error');
+                            }
+                        });
+                    });
+                });
+            }
+
+            // ── Filter & Refresh ─────────────────────────────────────────────────────
 
             $('#filter-status').on('change', applyFilter);
-
             $('#btn-refresh').on('click', function() {
                 loadUnit(activeUnit, false);
             });
 
-            // ─── Init ────────────────────────────────────────────────────────────────
+            // ── Init ─────────────────────────────────────────────────────────────────
 
             $(function() {
+                applyUnitTheme(activeUnit);
                 $('.auto-resize').each(function() {
                     autoResize(this);
                 });
@@ -1045,23 +1293,21 @@
 
         })(jQuery);
 
-        // ─── Popup (global) ────────────────────────────────────────────────────────────
-
+        // ── Popup ─────────────────────────────────────────────────────────────────────
         window.showPopup = function(title, text) {
             document.getElementById('mom-popup-title').textContent = title;
-            document.getElementById('mom-popup-body').textContent = (text && text.trim()) ? text : '(Tidak ada data)';
+            document.getElementById('mom-popup-body').textContent = (text && String(text).trim()) ? text.trim() :
+                '(Tidak ada data)';
             document.getElementById('mom-popup-overlay').classList.add('active');
             document.body.style.overflow = 'hidden';
         };
-
         window.closePopup = function(e) {
             if (e === null || e.target === document.getElementById('mom-popup-overlay')) {
                 document.getElementById('mom-popup-overlay').classList.remove('active');
                 document.body.style.overflow = '';
             }
         };
-
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 document.getElementById('mom-popup-overlay').classList.remove('active');
                 document.body.style.overflow = '';

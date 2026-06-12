@@ -171,8 +171,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/employee/store', [App\Http\Controllers\AbsensiController::class, 'storeEmployee'])->name('hr.employee.store');
     Route::delete('/hr/employee/{id}', [App\Http\Controllers\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
     Route::view('/hrd-dashboard', 'hrd_dashboard')->name('hr.dashboard');
-    // Agenda (To-Do List) — semua role kecuali chapter, reseller, agen
-    Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,operasional,hrd,produksi'])->group(function () {
+    // Agenda (To-Do List) — hanya Linda (cs-mbc/cs-smi, name check di controller)
+    Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,cs-smi,operasional,hrd,produksi'])->group(function () {
         Route::get('/agenda', [App\Http\Controllers\AgendaController::class, 'index'])->name('agenda.index');
         Route::post('/agenda/store', [App\Http\Controllers\AgendaController::class, 'store'])->name('agenda.store');
         Route::post('/agenda/toggle/{logId}', [App\Http\Controllers\AgendaController::class, 'toggleCheck'])->name('agenda.toggle');
@@ -353,11 +353,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/cs/{id}/database', [AdminController::class, 'database'])->name('cs.database');
         Route::get('/cs/{id}', [AdminController::class, 'detailCS'])->name('cs.detail');
 
-        // Minutes of Meeting (MoM)
-        Route::get('/mom', [App\Http\Controllers\Admin\MomController::class, 'index'])->name('mom.index');
-        Route::post('/mom', [App\Http\Controllers\Admin\MomController::class, 'store'])->name('mom.store');
-        Route::put('/mom/{id}', [App\Http\Controllers\Admin\MomController::class, 'update'])->name('mom.update');
-        Route::delete('/mom/{id}', [App\Http\Controllers\Admin\MomController::class, 'destroy'])->name('mom.destroy');
+        // Minutes of Meeting (MoM) — semua divisi internal kecuali chapter, reseller, agen
+        Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,cs-smi,operasional,hrd,produksi'])->group(function () {
+            Route::get('/mom', [App\Http\Controllers\Admin\MomController::class, 'index'])->name('mom.index');
+            Route::post('/mom', [App\Http\Controllers\Admin\MomController::class, 'store'])->name('mom.store');
+            Route::put('/mom/{id}', [App\Http\Controllers\Admin\MomController::class, 'update'])->name('mom.update');
+            Route::delete('/mom/{id}', [App\Http\Controllers\Admin\MomController::class, 'destroy'])->name('mom.destroy');
+            // Form-based input (separate from AJAX store above)
+            Route::get('/mom/form-{username}', [App\Http\Controllers\Admin\MomController::class, 'create'])->name('mom.create');
+            Route::post('/mom/form-submit', [App\Http\Controllers\Admin\MomController::class, 'submitForm'])->name('mom.formSubmit');
+        });
 
         // Wallet Management (Admin)
         Route::prefix('wallet')->name('wallet.')->group(function () {
