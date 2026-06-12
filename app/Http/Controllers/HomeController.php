@@ -171,29 +171,44 @@ class HomeController extends Controller
                     ->whereYear('salesplans.updated_at', $tahun)
                     ->whereMonth('salesplans.updated_at', $bulanNum);
                 
+                $sumSql = 'CAST(COALESCE(NULLIF(COALESCE(peserta_smis.pembayaran_spp, 0) + COALESCE(peserta_smis.spp_1, 0) + COALESCE(peserta_smis.spp_2, 0) + COALESCE(peserta_smis.spp_3, 0) + COALESCE(peserta_smis.spp_4, 0) + COALESCE(peserta_smis.spp_5, 0) + COALESCE(peserta_smis.spp_6, 0) + COALESCE(peserta_smis.spp_7, 0) + COALESCE(peserta_smis.spp_8, 0) + COALESCE(peserta_smis.spp_9, 0) + COALESCE(peserta_smis.spp_10, 0) + COALESCE(peserta_smis.spp_11, 0) + COALESCE(peserta_smis.spp_12, 0), 0), GREATEST(0, COALESCE(salesplans.nominal, 0) - 500000), 0) AS DECIMAL(15,2))';
+
                 $omsetPribadi = (clone $baseOmsetQuery)
                     ->where('salesplans.created_by', $userId)
-                    ->sum(\DB::raw('CAST(COALESCE(peserta_smis.pembayaran_spp, salesplans.nominal, 0) AS DECIMAL(15,2))'));
+                    ->sum(\DB::raw($sumSql));
                 
                 $omsetReseller = 0;
                 if ($resellerMembersIds->isNotEmpty()) {
                     $omsetReseller = (clone $baseOmsetQuery)
                         ->whereIn('salesplans.created_by', $resellerMembersIds)
-                        ->sum(\DB::raw('CAST(COALESCE(peserta_smis.pembayaran_spp, salesplans.nominal, 0) AS DECIMAL(15,2))'));
+                        ->sum(\DB::raw($sumSql));
                 }
                 
                 $omsetBulanIni = $omsetPribadi + $omsetReseller;
 
                 $monthEarnings = \App\Services\EarningsService::calculateTotalEarnings($userId, $tahun, $bulanNum);
                 
-                // Detailed breakdown for view (optional but good for compatibility)
-                $komisi = $omsetPribadi * 0.10;
+                // Detailed breakdown for view (excluding registration fee for commission and royalty)
+                $sppSql = $sumSql;
+
+                $sppPribadi = (clone $baseOmsetQuery)
+                    ->where('salesplans.created_by', $userId)
+                    ->sum(\DB::raw($sppSql));
+
+                $sppReseller = 0;
+                if ($resellerMembersIds->isNotEmpty()) {
+                    $sppReseller = (clone $baseOmsetQuery)
+                        ->whereIn('salesplans.created_by', $resellerMembersIds)
+                        ->sum(\DB::raw($sppSql));
+                }
+
+                $komisi = $sppPribadi * 0.10;
                 $directFee = 0;
                 if ($isChapter) {
                     $totalParticipantsCount = (clone $baseOmsetQuery)->whereIn('salesplans.created_by', $regionalTeamIds)->count();
                     $directFee = $totalParticipantsCount * 500000;
                 }
-                $royalti = $omsetReseller * 0.05;
+                $royalti = $sppReseller * 0.05;
                 $bonusPribadi = ($omsetPribadi >= 20000000) ? ($omsetPribadi * 0.1) : (($omsetPribadi >= 10000000) ? ($omsetPribadi * 0.05) : 0);
                 $bonusTim = ($resellerMembersIds->isNotEmpty() && ($omsetPribadi + $omsetReseller) >= 30000000) ? (($omsetPribadi + $omsetReseller) * 0.1) : 0;
 
@@ -240,16 +255,42 @@ class HomeController extends Controller
                 $totalEarningsAllTime = \App\Services\EarningsService::calculateTotalEarnings($userId);
                 $totalWithdrawnAllTime = $wallet->transactions()
                     ->where('type', 'withdrawal')
-                    ->whereIn('status', ['success', 'pending', 'rejected'])
+                    ->whereIn('status', ['success', 'pending'])
                     ->sum('amount');
                 $availableBalance = $totalEarningsAllTime - $totalWithdrawnAllTime;
                 $currentPending = $wallet->transactions()
                     ->where('type', 'withdrawal')
-                    ->whereIn('status', ['pending', 'rejected'])
+                    ->where('status', 'pending')
                     ->sum('amount');
                 
-                // Recent Transactions (Limit 5 for dashboard)
-                $walletTransactions = $wallet->transactions()->latest()->take(5)->get();
+                // Recent Transactions (Limit 5 for dashboard, merging dynamic incomes and withdrawals)
+                $dynamicIncomes = \App\Services\EarningsService::getDynamicTransactions($userId, $tahun, $bulanNum);
+                $dbWithdrawals = $wallet->transactions()->where('type', 'withdrawal')
+                    ->whereYear('created_at', $tahun)
+                    ->whereMonth('created_at', $bulanNum)
+                    ->latest()
+                    ->get()
+                    ->map(function ($t) {
+                        return [
+                            'id' => $t->id,
+                            'created_at' => $t->created_at,
+                            'type' => 'withdrawal',
+                            'source' => 'Penarikan Dana',
+                            'description' => 'Penarikan ke rekening ' . $t->bank_name . ' (' . $t->account_number . ')',
+                            'amount' => $t->amount,
+                            'status' => $t->status,
+                            'reference_no' => $t->reference_no,
+                            'admin_note' => $t->admin_note,
+                        ];
+                    });
+
+                $walletTransactions = $dynamicIncomes->concat($dbWithdrawals)
+                    ->sortByDesc('created_at')
+                    ->take(5)
+                    ->map(function ($item) {
+                        return (object) $item;
+                    });
+
                 $savedBankName = $wallet->bank_name;
                 $savedAccountNumber = $wallet->account_number;
                 $savedAccountName = $wallet->account_name;

@@ -101,10 +101,8 @@
                             <th class="py-2" style="width: 80px;">CPA (≤ 10%)</th>
                             <th class="py-2" style="width: 75px;">ROAS (≥ 5X)</th>
                             <th class="py-2" style="width: 85px;">CPL (≤ 30k)</th>
-                            <th class="py-2" style="width: 70px;">CTR (≥ 2%)</th>
                             <th class="py-2" style="width: 90px;">BUDGET Terpakai(RP)</th>
                             <th class="py-2" style="width: 105px;">REALISASI (RP)</th>
-                            <th class="py-2" style="width: 100px;">PENGAJUAN BUDGET (RP)</th>
                             <th class="py-2 pe-3" style="width: 50px;">AKSI</th>
                         </tr>
                     </thead>
@@ -163,12 +161,6 @@
                             </td>
                             <td class="px-1">
                                 <div class="jakarta-group manual-input">
-                                    <input type="text" name="ctr" class="ads-input-target ads-auto-save ads-clean-decimal" data-target="2" data-type="min" placeholder="0" value="{{ (float)$item->ctr }}">
-                                    <span class="unit">%</span>
-                                </div>
-                            </td>
-                            <td class="px-1">
-                                <div class="jakarta-group manual-input">
                                     <span class="unit ps-1">Rp</span>
                                     <input type="text" name="budget_iklan" class="ads-auto-save text-center ads-number-format" placeholder="0" value="{{ number_format($item->budget_iklan, 0, ',', '.') }}">
                                 </div>
@@ -177,12 +169,6 @@
                                 <div class="jakarta-group bg-light">
                                     <span class="unit ps-1 text-danger fw-bold">Rp</span>
                                     <input type="text" class="text-center fw-800 text-danger ads-realisasi-input" placeholder="0" value="{{ number_format($item->realisasi ?? 0, 0, ',', '.') }}" readonly style="border:none; background:transparent; width:100%; outline:none;">
-                                </div>
-                            </td>
-                            <td class="px-1">
-                                <div class="jakarta-group manual-input">
-                                    <span class="unit ps-1">Rp</span>
-                                    <input type="text" name="pengajuan_budget" class="ads-auto-save text-center ads-number-format" placeholder="0" value="{{ number_format($item->pengajuan_budget, 0, ',', '.') }}">
                                 </div>
                             </td>
                             <td class="text-center">
@@ -204,7 +190,7 @@
                                     <span id="total-omset">{{ number_format($adsPerformances->sum('omset'), 0, ',', '.') }}</span>
                                 </div>
                             </td>
-                            <td colspan="5" class="bg-indigo-900 opacity-50"></td>
+                            <td colspan="4" class="bg-indigo-900 opacity-50"></td>
                             <td class="text-center px-1">
                                 <div class="d-flex align-items-center justify-content-center">
                                     <span class="me-1">Rp</span>
@@ -217,16 +203,10 @@
                                     <span id="total-realisasi">{{ number_format($adsPerformances->sum('realisasi'), 0, ',', '.') }}</span>
                                 </div>
                             </td>
-                             <td class="text-center px-1 pe-2">
-                                <div class="d-flex align-items-center justify-content-center">
-                                    <span class="me-1">Rp</span>
-                                    <span id="total-pengajuan">{{ number_format($adsPerformances->sum('pengajuan_budget'), 0, ',', '.') }}</span>
-                                </div>
-                            </td>
                             <td class="bg-indigo-950"></td>
                         </tr>
                         <tr class="bg-white text-dark fw-800" style="font-size: 0.75rem;">
-                            <td colspan="11" class="py-2 text-end pe-4 text-muted" style="letter-spacing: 0.5px; border-right: 1px solid #e2e8f0;">SISA BUDGET (REALISASI - BUDGET TERPAKAI)</td>
+                            <td colspan="10" class="py-2 text-end pe-4 text-muted" style="letter-spacing: 0.5px; border-right: 1px solid #e2e8f0;">SISA BUDGET (REALISASI - BUDGET TERPAKAI)</td>
                             <td colspan="2" class="text-center px-1">
                                 <div class="d-flex align-items-center justify-content-center py-2" style="border-radius: 8px; background: #f8fafc; border: 1.5px dashed #e2e8f0;">
                                     <span class="me-1 text-primary">Rp</span>
@@ -346,7 +326,6 @@
             let totalOmset = 0;
             let totalBudget = 0;
             let totalRealisasi = 0;
-            let totalPengajuan = 0;
 
             $('#ads-tbody tr').each(function() {
                 const $row = $(this);
@@ -355,7 +334,6 @@
                 totalOmset += parseFloat(unformatNumber($row.find('input[name="omset"]').val())) || 0;
                 totalBudget += parseFloat(unformatNumber($row.find('input[name="budget_iklan"]').val())) || 0;
                 totalRealisasi += parseFloat(unformatNumber($row.find('.ads-realisasi-input').val())) || 0;
-                totalPengajuan += parseFloat(unformatNumber($row.find('input[name="pengajuan_budget"]').val())) || 0;
             });
 
             $('#total-leads').text(formatNumber(totalLeads));
@@ -363,7 +341,6 @@
             $('#total-omset').text(formatNumber(totalOmset));
             $('#total-budget').text(formatNumber(totalBudget));
             $('#total-realisasi').text(formatNumber(totalRealisasi));
-            $('#total-pengajuan').text(formatNumber(totalPengajuan));
 
             // Sisa Budget Calculation
             const sisaBudget = totalRealisasi - totalBudget;
@@ -481,12 +458,6 @@
                     </td>
                     <td class="px-1">
                         <div class="jakarta-group manual-input">
-                            <input type="text" name="ctr" class="ads-input-target ads-auto-save ads-clean-decimal" data-target="2" data-type="min" placeholder="0">
-                            <span class="unit">%</span>
-                        </div>
-                    </td>
-                    <td class="px-1">
-                        <div class="jakarta-group manual-input">
                             <span class="unit ps-1">Rp</span>
                             <input type="text" name="budget_iklan" class="ads-auto-save text-center ads-number-format" placeholder="0">
                         </div>
@@ -495,12 +466,6 @@
                         <div class="jakarta-group bg-light">
                             <span class="unit ps-1 text-danger fw-bold">Rp</span>
                             <input type="text" class="text-center fw-800 text-danger ads-realisasi-input" placeholder="0" readonly style="border:none; background:transparent; width:100%; outline:none;">
-                        </div>
-                    </td>
-                    <td class="px-1">
-                        <div class="jakarta-group manual-input">
-                            <span class="unit ps-1">Rp</span>
-                            <input type="text" name="pengajuan_budget" class="ads-auto-save text-center ads-number-format" placeholder="0">
                         </div>
                     </td>
                     <td class="text-center">
@@ -573,7 +538,7 @@
         // Auto Save logic - Separated between rapid input and final change
         $(document).on('input', '.ads-auto-save', function() {
             const $row = $(this).closest('tr');
-            const triggerFields = ['budget_iklan', 'pengajuan_budget', 'total_leads', 'jumlah_closing', 'omset'];
+            const triggerFields = ['budget_iklan', 'total_leads', 'jumlah_closing', 'omset'];
             
             if (triggerFields.includes(this.name)) {
                 calculateMetrics($row);
@@ -585,7 +550,7 @@
         // Save for text, date, and other fields on CHANGE (blur/finish typing)
         $(document).on('change', '.ads-auto-save', function() {
             const $row = $(this).closest('tr');
-            const triggerFields = ['budget_iklan', 'pengajuan_budget', 'total_leads', 'jumlah_closing', 'omset'];
+            const triggerFields = ['budget_iklan', 'total_leads', 'jumlah_closing', 'omset'];
             
             if (this.name === 'is_running') {
                 const isChecked = $(this).is(':checked');

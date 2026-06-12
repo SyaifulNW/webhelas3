@@ -126,7 +126,6 @@
                     <th style="width: 55px;">CPL</th>
                     <th style="width: 55px;">Budget Terpakai</th>
                     <th style="width: 60px;">Realisasi</th>
-                    <th style="width: 55px;">Pengajuan Budget</th>
                 </tr>
             </thead>
             <tbody>
@@ -156,7 +155,6 @@
                     <td class="{{ $isCplMet ? 'met-target' : 'missed-target' }}">Rp{{ number_format($item->cpl, 0, ',', '.') }}</td>
                     <td class="fw-bold">Rp{{ number_format($item->budget_iklan, 0, ',', '.') }}</td>
                     <td class="fw-bold" style="color: #b91c1c;">Rp{{ number_format($item->realisasi ?? 0, 0, ',', '.') }}</td>
-                    <td class="fw-bold">Rp{{ number_format($item->pengajuan_budget ?? 0, 0, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -169,14 +167,12 @@
                     <td colspan="4" style="background-color: #312e81; opacity: 0.5;"></td>
                     <td style="font-weight: bold;">Rp {{ number_format($adsPerformances->sum('budget_iklan'), 0, ',', '.') }}</td>
                     <td style="font-weight: bold; color: #fbbf24;">Rp {{ number_format($adsPerformances->sum('realisasi'), 0, ',', '.') }}</td>
-                    <td style="font-weight: bold;">Rp {{ number_format($adsPerformances->sum('pengajuan_budget'), 0, ',', '.') }}</td>
                 </tr>
                 <tr style="background-color: #f8fafc; color: #1e293b; font-size: 8px;">
                     <td colspan="12" style="padding: 6px; text-align: right; font-weight: bold; border-right: 1px solid #e2e8f0;">SISA BUDGET (REALISASI - BUDGET TERPAKAI)</td>
                     <td colspan="2" style="padding: 6px; text-align: center; font-weight: bold; color: #1e40af; background-color: #eff6ff;">
                         Rp {{ number_format(($adsPerformances->sum('realisasi') - $adsPerformances->sum('budget_iklan')), 0, ',', '.') }}
                     </td>
-                    <td style="background-color: #f1f5f9;"></td>
                 </tr>
             </tfoot>
         </table>

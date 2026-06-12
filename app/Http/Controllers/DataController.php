@@ -948,24 +948,45 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                         }
                         
                         // Direct assignment and save to bypass mass-assignment issues if any
-                        $data->$field = $request->value;
+                        if ($field === 'ikut_zoom' && !empty($request->input('salesplan_id'))) {
+                            // Don't save to data table to avoid marking other classes as done
+                        } else {
+                            $data->$field = $request->value;
+                        }
 
                         if ($field === 'ikut_zoom') {
-                            if ($request->value == 1) {
-                                // Find any schedule for this participant and update it to 'done'
-                                $schedule = \App\Models\ZoomSchedule::where('data_id', $data->id)->first();
+                            $salesplanId = $request->input('salesplan_id');
+                            if (!empty($salesplanId)) {
+                                $schedule = \App\Models\ZoomSchedule::where('salesplan_id', $salesplanId)->first();
+                                if (!$schedule && $request->value == 1) {
+                                    $schedule = new \App\Models\ZoomSchedule();
+                                    $schedule->data_id = $data->id;
+                                    $schedule->salesplan_id = $salesplanId;
+                                    $schedule->cs_id = auth()->id() ?: $data->pic;
+                                    $schedule->scheduled_at = now();
+                                    $schedule->zoom_link = '';
+                                }
                                 if ($schedule) {
-                                    $schedule->status = 'done';
+                                    $schedule->status = ($request->value == 1) ? 'done' : 'scheduled';
                                     $schedule->save();
                                 }
                             } else {
-                                // If they set ikut_zoom = 0, find any 'done' schedule and change it back to 'scheduled'
-                                $schedule = \App\Models\ZoomSchedule::where('data_id', $data->id)
-                                    ->where('status', 'done')
-                                    ->first();
-                                if ($schedule) {
-                                    $schedule->status = 'scheduled';
-                                    $schedule->save();
+                                if ($request->value == 1) {
+                                    // Find any schedule for this participant and update it to 'done'
+                                    $schedule = \App\Models\ZoomSchedule::where('data_id', $data->id)->first();
+                                    if ($schedule) {
+                                        $schedule->status = 'done';
+                                        $schedule->save();
+                                    }
+                                } else {
+                                    // If they set ikut_zoom = 0, find any 'done' schedule and change it back to 'scheduled'
+                                    $schedule = \App\Models\ZoomSchedule::where('data_id', $data->id)
+                                        ->where('status', 'done')
+                                        ->first();
+                                    if ($schedule) {
+                                        $schedule->status = 'scheduled';
+                                        $schedule->save();
+                                    }
                                 }
                             }
                         }

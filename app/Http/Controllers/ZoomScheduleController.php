@@ -70,19 +70,11 @@ class ZoomScheduleController extends Controller
             $schedule->notes = $request->input('notes');
             $schedule->save();
 
-            // Auto-sync "ikut_zoom" on the participant record
+            // Auto-sync "ikut_zoom" on the participant record only if not related to a specific salesplan/class
+            // (to avoid marking other classes of the same participant as completed)
             $isDone = ($request->input('status') === 'done');
             $zoomVal = $isDone ? 1 : 0;
-            if (!empty($salesplanId)) {
-                $sp = SalesPlan::find($salesplanId);
-                if ($sp) {
-                    $d = Data::find($sp->data_id);
-                    if ($d) {
-                        $d->ikut_zoom = $zoomVal;
-                        $d->save();
-                    }
-                }
-            } elseif (!empty($dataId)) {
+            if (empty($salesplanId) && !empty($dataId)) {
                 $data = Data::find($dataId);
                 if ($data) {
                     $data->ikut_zoom = $zoomVal;
@@ -140,7 +132,7 @@ class ZoomScheduleController extends Controller
         $user = Auth::user();
         $isAdmin = in_array(strtolower($user->role), ['administrator', 'manager', 'operasional']);
 
-        $query = ZoomSchedule::with(['data.kelas', 'cs']);
+        $query = ZoomSchedule::with(['data.kelas', 'salesPlan.kelas', 'cs']);
 
         // Date range filters from FullCalendar
         if ($request->has('start')) {
@@ -199,8 +191,10 @@ class ZoomScheduleController extends Controller
                     'data_id' => $schedule->data_id,
                     'salesplan_id' => $schedule->salesplan_id,
                     'no_wa' => $schedule->data ? $schedule->data->no_wa : '',
-                    'kelas_nama' => $schedule->data ? ($schedule->data->kelas->nama_kelas ?? '') : '',
-                    'ikut_zoom' => $schedule->data ? $schedule->data->ikut_zoom : 0,
+                    'kelas_nama' => $schedule->salesPlan && $schedule->salesPlan->kelas 
+                        ? $schedule->salesPlan->kelas->nama_kelas 
+                        : ($schedule->data && $schedule->data->kelas ? $schedule->data->kelas->nama_kelas : ''),
+                    'ikut_zoom' => ($schedule->status === 'done') ? 1 : (($schedule->salesplan_id) ? 0 : ($schedule->data ? $schedule->data->ikut_zoom : 0)),
                     'bant_budget' => $schedule->data ? $schedule->data->bant_budget : 0,
                     'bant_authority' => $schedule->data ? $schedule->data->bant_authority : 0,
                     'bant_time' => $schedule->data ? $schedule->data->bant_time : 0,

@@ -134,7 +134,7 @@
             @endphp
             <!-- Dedicated Zoom button for this prospect -->
             <button type="button" class="btn btn-zoom-bant p-0 d-flex align-items-center justify-content-center shadow-sm"
-                    style="width: 24px; height: 24px; border-radius: 6px; background: {{ ($schedule && strtolower($schedule->status) === 'done') || $item->ikut_zoom == 1 ? '#3CDE1D' : ($schedule && strtolower($schedule->status) === 'scheduled' ? '#25799E' : ($schedule && strtolower($schedule->status) === 'cancelled' ? '#E61717' : '#ffffff')) }}; color: {{ ($schedule && in_array(strtolower($schedule->status), ['done', 'scheduled', 'cancelled'])) || $item->ikut_zoom == 1 ? '#ffffff' : '#475569' }}; border: {{ ($schedule && in_array(strtolower($schedule->status), ['done', 'scheduled', 'cancelled'])) || $item->ikut_zoom == 1 ? 'none' : '1px solid #cbd5e1' }}; transition: all 0.2s;"
+                    style="width: 24px; height: 24px; border-radius: 6px; background: {{ ($schedule && strtolower($schedule->status) === 'done') || ($item->ikut_zoom == 1 && !$schedule) ? '#3CDE1D' : ($schedule && strtolower($schedule->status) === 'scheduled' ? '#25799E' : ($schedule && strtolower($schedule->status) === 'cancelled' ? '#E61717' : '#ffffff')) }}; color: {{ ($schedule && in_array(strtolower($schedule->status), ['done', 'scheduled', 'cancelled'])) || ($item->ikut_zoom == 1 && !$schedule) ? '#ffffff' : '#475569' }}; border: {{ ($schedule && in_array(strtolower($schedule->status), ['done', 'scheduled', 'cancelled'])) || ($item->ikut_zoom == 1 && !$schedule) ? 'none' : '1px solid #cbd5e1' }}; transition: all 0.2s;"
                     data-id="{{ $item->id }}" 
                     data-nama="{{ $item->nama }}"
                     data-kelas-nama="M1T"
@@ -148,7 +148,7 @@
                     data-bant-budget="{{ $item->bant_budget }}"
                     data-bant-authority="{{ $item->bant_authority }}"
                     data-bant-time="{{ $item->bant_time }}"
-                    data-ikut-zoom="{{ $item->ikut_zoom }}"
+                    data-ikut-zoom="{{ ($schedule && strtolower($schedule->status) === 'done') ? '1' : ($item->ikut_zoom && !$schedule ? '1' : '0') }}"
                     title="Zoom & BANT (M1T)">
                 <i class="fas fa-video" style="font-size: 0.7rem;"></i>
             </button>

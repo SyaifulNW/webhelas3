@@ -1,5 +1,10 @@
 @extends('layouts.masteradmin')
 
+@php
+    $isBeforeJune2026 = ($tahun < 2026) || ($tahun == 2026 && $bulanNum < 6);
+    $waTarget = $isBeforeJune2026 ? 50 : 100;
+@endphp
+
 @section('content')
 <div class="container my-4">
     <h4 class="mb-3 text-center text-primary">📅 KPI MARKETING SOSMED SPESIALIS</h4>
@@ -82,7 +87,7 @@
                         </tr>
                         <tr>
                             <td class="px-3">Klik Link WA</td>
-                            <td class="text-center">≥ 50 / bulan</td>
+                            <td class="text-center">≥ {{ $waTarget }} / bulan</td>
                             <td class="px-3">
                                 <div class="input-group input-group-sm">
                                     <input type="number" id="real_link_wa" name="link_wa_real" class="form-control" placeholder="0" value="{{ optional($savedKpi)->link_wa_real }}" oninput="hitungDanSimpan()">
@@ -239,7 +244,7 @@
 
                 // Link WA
                 let lReal = document.getElementById('real_link_wa').value;
-                if(lReal !== "") document.getElementById('skor_link_wa').value = Math.round((parseFloat(lReal) / 50) * 100);
+                if(lReal !== "") document.getElementById('skor_link_wa').value = Math.round((parseFloat(lReal) / {{ $waTarget }}) * 100);
 
                 // Zoom
                 let zReal = document.getElementById('real_zoom').value;

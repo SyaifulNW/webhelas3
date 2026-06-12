@@ -3357,6 +3357,8 @@
             let canEdit = $btn.data('can-edit') == 1;
 
             $('#zoomBant_data_id').val(id);
+            let salesplanId = $btn.data('salesplan-id') || $btn.attr('data-salesplan-id') || '';
+            $('#zoomBant_salesplan_id').val(salesplanId);
             $('#zoomBantNama').text(nama);
             $('#zoomBantNoWa').text(noWa);
 
@@ -3492,11 +3494,12 @@
                         $btnZoom.attr('data-schedule-status', status);
                         $btnZoom.attr('data-schedule-notes', notes);
 
-                        let ikutZoomVal = $btnZoom.attr('data-ikut-zoom') || '0';
+                        let ikutZoomVal = (status === 'done') ? '1' : '0';
+                        $btnZoom.attr('data-ikut-zoom', ikutZoomVal);
                         if (status === 'done') {
-                            $btnZoom.attr('data-ikut-zoom', '1');
                             $btnZoom.closest('tr').find('.checkbox-ikut-zoom').prop('checked', true);
-                            ikutZoomVal = '1';
+                        } else {
+                            $btnZoom.closest('tr').find('.checkbox-ikut-zoom').prop('checked', false);
                         }
 
                         // Dynamically update Zoom button colors
@@ -3545,11 +3548,13 @@
 
         function saveZoomBantField(field, value) {
             let id = $('#zoomBant_data_id').val();
+            let salesplanId = $('#zoomBant_salesplan_id').val();
             if (!id) return;
 
             $.post('{{ route('admin.database.update-inline') }}', {
                 _token: '{{ csrf_token() }}',
                 id: id,
+                salesplan_id: salesplanId,
                 field: field,
                 value: value
             }).done(function(r) {
@@ -3557,7 +3562,7 @@
                     showDetailToast('Tersimpan!');
 
                     // Sync the data attributes on the trigger buttons in that row!
-                    let $btnZoom = $(`.btn-zoom-bant[data-id="${id}"]`);
+                    let $btnZoom = salesplanId ? $(`.btn-zoom-bant[data-salesplan-id="${salesplanId}"]`) : $(`.btn-zoom-bant[data-id="${id}"]`);
                     if ($btnZoom.length) {
                         $btnZoom.attr('data-' + field.replace('_', '-'), value);
 
@@ -5175,6 +5180,7 @@
                 {{-- Body --}}
                 <div class="modal-body p-4 bg-light text-dark">
                     <input type="hidden" id="zoomBant_data_id">
+                    <input type="hidden" id="zoomBant_salesplan_id">
 
                     <div class="row" id="zoomBantRowContainer">
                         <!-- Kolom Kiri: Zoom Section -->
@@ -6696,6 +6702,7 @@
 
         $(document).on('click', '#btnMarkZoomDone', function() {
             let dataId = $('#btnRescheduleZoom').data('id');
+            let salesplanId = $('#btnRescheduleZoom').data('salesplan-id');
             if (!dataId) return;
 
             $.post('{{ route('admin.database.update-inline') }}', {
@@ -6721,7 +6728,7 @@
                     }
 
                     // Update Trigger Button on Main Table
-                    let $btnZoom = $(`.btn-zoom-bant[data-id="${dataId}"]`);
+                    let $btnZoom = salesplanId ? $(`.btn-zoom-bant[data-salesplan-id="${salesplanId}"]`) : $(`.btn-zoom-bant[data-id="${dataId}"]`);
                     if ($btnZoom.length) {
                         $btnZoom.attr('data-ikut-zoom', '1');
                         $btnZoom.attr('data-schedule-status', 'done');
