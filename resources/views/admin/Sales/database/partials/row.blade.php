@@ -6,12 +6,12 @@
 @endphp
 
 @if($isChapterView)
-    @include('admin.database.partials.row_chapter', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
+    @include('admin.Sales.database.partials.row_chapter', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
 @elseif($isAdminCSView)
-    @include('admin.database.partials.row_cs', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
+    @include('admin.Sales.database.partials.row_cs', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
 @elseif($isCSMBCView)
-    @include('admin.database.partials.row_mbc', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
+    @include('admin.Sales.database.partials.row_mbc', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
 @else
     {{-- Fallback for marketing or other roles --}}
-    @include('admin.database.partials.row_mbc', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
+    @include('admin.Sales.database.partials.row_mbc', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
 @endif

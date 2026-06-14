@@ -66,7 +66,7 @@ class SettingController extends Controller
             'chapter'
         ];
 
-        return view('admin.settings.index', [
+        return view('admin.Core.settings.index', [
             'usersPusat' => $usersPusat,
             'usersCabang' => $usersCabang,
             'menus' => $menus,

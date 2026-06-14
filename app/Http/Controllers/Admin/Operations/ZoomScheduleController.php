@@ -123,7 +123,7 @@ class ZoomScheduleController extends Controller
             $progressPercent = min(100, round(($todaySchedulesCount / 4) * 100));
         }
 
-        return view('admin.zoom_schedule.calendar', compact('isAdmin', 'csUsers', 'todaySchedulesCount', 'progressPercent'));
+        return view('admin.Operations.zoom_schedule.calendar', compact('isAdmin', 'csUsers', 'todaySchedulesCount', 'progressPercent'));
     }
 
     /**

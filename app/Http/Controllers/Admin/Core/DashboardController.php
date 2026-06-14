@@ -21,7 +21,7 @@ class DashboardController extends Controller
             'inventory' => (int) \App\Models\InventarisKantor::sum('jumlah')
         ];
 
-        return view('admin.operasional', compact('stats'));
+        return view('admin.Core.operasional', compact('stats'));
     }
 
     public function keuangan()
@@ -64,7 +64,7 @@ class DashboardController extends Controller
             'pending_invoice' => $pendingInvoice
         ];
 
-        return view('admin.keuangan', compact('stats'));
+        return view('admin.Core.keuangan', compact('stats'));
     }
 
     public function labaRugi(Request $request)
@@ -377,7 +377,7 @@ class DashboardController extends Controller
         // Fetch All Classes for "Biaya Iklan" expand/collapse
         $semuaKelas = \App\Models\Kelas::orderBy('nama_kelas')->get();
 
-        return view('admin.keuangan.laba-rugi', compact('pendapatan', 'biaya', 'bulan', 'tahun', 'totalSmi', 'totalSmiPendaftaran', 'totalSmiSpp', 'totalSmiTunggakan', 'smiBreakdown', 'totalMbc', 'mbcBreakdown', 'totalPrivate', 'kelasBulanIni', 'semuaKelas', 'chapterAutoSales', 'agenAutoSales', 'chapterTotal', 'agenTotal'));
+        return view('admin.Finance.keuangan.laba-rugi', compact('pendapatan', 'biaya', 'bulan', 'tahun', 'totalSmi', 'totalSmiPendaftaran', 'totalSmiSpp', 'totalSmiTunggakan', 'smiBreakdown', 'totalMbc', 'mbcBreakdown', 'totalPrivate', 'kelasBulanIni', 'semuaKelas', 'chapterAutoSales', 'agenAutoSales', 'chapterTotal', 'agenTotal'));
     }
 
     public function zakat(Request $request)
@@ -473,7 +473,7 @@ class DashboardController extends Controller
         // Combine
         $zakatRecords = $autoRecords->concat($manualRecords);
 
-        return view('admin.keuangan.zakat', compact('zakatRecords', 'zakatFitraRecords', 'bulan', 'tahun'));
+        return view('admin.Finance.keuangan.zakat', compact('zakatRecords', 'zakatFitraRecords', 'bulan', 'tahun'));
     }
 
     public function getSmiDetails(Request $request)
@@ -861,7 +861,7 @@ class DashboardController extends Controller
         // Fetch All Classes for PDF consistency
         $semuaKelas = \App\Models\Kelas::orderBy('nama_kelas')->get();
 
-        $pdf = PDF::loadView('admin.keuangan.laba-rugi-pdf', compact(
+        $pdf = PDF::loadView('admin.Finance.keuangan.laba-rugi-pdf', compact(
             'pendapatan',
             'biaya',
             'bulan',
@@ -1033,7 +1033,7 @@ class DashboardController extends Controller
             ->orderBy('tanggal', 'asc')
             ->get();
 
-        return view('admin.keuangan.kas', compact('kas', 'bulan', 'tahun'));
+        return view('admin.Finance.keuangan.kas', compact('kas', 'bulan', 'tahun'));
     }
 
     public function storeKas(Request $request)

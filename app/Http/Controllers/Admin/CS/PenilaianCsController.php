@@ -60,7 +60,7 @@ class PenilaianCsController extends Controller
                              ->get();
         }
 
-        return $this->getPenilaianData($request, $daftarCs, 'admin.penilaian-cs.index');
+        return $this->getPenilaianData($request, $daftarCs, 'admin.CS.penilaian-cs.index');
     }
 
     public function managerIndex(Request $request)
@@ -81,7 +81,7 @@ class PenilaianCsController extends Controller
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
-             $routeView = 'admin.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
+             $routeView = 'admin.CS.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
         } elseif ($userName === 'Yasmin') {
             // Yasmin melihat user spesifik, tapi tidak melihat dirinya sendiri dan Linda
             $daftarCs = User::where(function($q) {
@@ -92,14 +92,14 @@ class PenilaianCsController extends Controller
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
-            $routeView = 'admin.penilaian-cs.index';
+            $routeView = 'admin.CS.penilaian-cs.index';
         } elseif ($userName === 'Agus Setyo') {
             // Agus Setyo view self (but excluded by user request)
             $daftarCs = User::where('name', 'Agus Setyo')
                             ->where('id', '!=', auth()->id())
                             ->where('is_active', 1)
                             ->get();
-            $routeView = 'admin.penilaian-cs.index';
+            $routeView = 'admin.CS.penilaian-cs.index';
         } else {
             // Administrator / Other Managers -> See all relevant roles + Yasmin
             $daftarCs = User::where(function($q) {
@@ -257,11 +257,11 @@ class PenilaianCsController extends Controller
         }
 
         // Determine View
-        $viewName = 'admin.penilaian-cs.index';
+        $viewName = 'admin.CS.penilaian-cs.index';
         
         // Jika Agus Setyo login dan melihat datanya sendiri -> Tampilkan Self View
         if ($namaUser === 'Agus Setyo' && optional(auth()->user())->name === 'Agus Setyo') {
-            $viewName = 'admin.penilaian-cs.self';
+            $viewName = 'admin.CS.penilaian-cs.self';
         }
 
         return view($viewName, compact(
@@ -859,7 +859,7 @@ public function store(Request $request)
         // ... (This might be redundant if we just print the form, but let's pass listPesertaSMI for the checklist)
         $listPesertaSMI = \App\Models\PesertaSmi::all();
         
-        $pdf = \PDF::loadView('admin.penilaian-cs.pdf', compact('data', 'tanggal', 'listPesertaSMI', 'namaUser'));
+        $pdf = \PDF::loadView('admin.CS.penilaian-cs.pdf', compact('data', 'tanggal', 'listPesertaSMI', 'namaUser'));
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,

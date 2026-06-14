@@ -15,7 +15,7 @@
 
     <form id="filterForm" action="{{ route('penjualan.index') }}" method="GET">
         <div class="row g-3" id="table-container">
-            @include('admin.penjualan.table')
+            @include('admin.Sales.penjualan.table')
         </div>
     </form>
 

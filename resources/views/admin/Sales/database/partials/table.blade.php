@@ -6,6 +6,6 @@
     </tr>
 @else
     @foreach($data as $item)
-        @include('admin.database.partials.row', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
+        @include('admin.Sales.database.partials.row', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
     @endforeach
 @endif

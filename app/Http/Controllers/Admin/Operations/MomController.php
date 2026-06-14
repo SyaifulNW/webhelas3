@@ -139,7 +139,7 @@ class MomController extends Controller
             ]);
         }
 
-        return view('admin.mom.index', compact('moms', 'unit', 'permissions', 'groupedMoms'));
+        return view('admin.Operations.mom.index', compact('moms', 'unit', 'permissions', 'groupedMoms'));
     }
 
     /**
@@ -167,7 +167,7 @@ class MomController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
-        return view('admin.mom.form-mom', compact('unit'));
+        return view('admin.Operations.mom.form-mom', compact('unit'));
     }
 
     /**

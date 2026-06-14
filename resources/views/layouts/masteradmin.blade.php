@@ -1483,7 +1483,7 @@
                     $momBlocked =
                         $momUserRole === 'administrator' ||
                         in_array($momUserName, ['Linda', 'Yasmin', 'Agus Setyo']) ||
-                        in_array($momUserRole, \App\Http\Controllers\Admin\MomController::BLOCKED_ROLES) ||
+                        in_array($momUserRole, \App\Http\Controllers\Admin\Operations\MomController::BLOCKED_ROLES) ||
                         str_starts_with($momUserRole, 'chapter_');
                 @endphp
                 @if (!$momBlocked)

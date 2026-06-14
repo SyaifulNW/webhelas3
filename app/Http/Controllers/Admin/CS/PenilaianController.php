@@ -220,7 +220,7 @@ class PenilaianController extends Controller
         // ============================
         // 8. KIRIM KE VIEW
         // ============================
-        return view('admin.penilaian.index', compact(
+        return view('admin.CS.penilaian.index', compact(
             'bulan',
             'tahun',
             'totalOmset',
@@ -379,7 +379,7 @@ class PenilaianController extends Controller
             // Add other variables if needed by template
         ];
 
-        $pdf = PDF::loadView('admin.penilaian.pdf', $data);
+        $pdf = PDF::loadView('admin.CS.penilaian.pdf', $data);
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,

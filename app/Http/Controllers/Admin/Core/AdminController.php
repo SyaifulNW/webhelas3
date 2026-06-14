@@ -32,7 +32,7 @@ class AdminController extends Controller
             )
             ->get();
 
-        return view('admin.administrator', compact(
+        return view('admin.Core.administrator', compact(
             'totalUser',
             'totalDatabase',
             'totalKelas',

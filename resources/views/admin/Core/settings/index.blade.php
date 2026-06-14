@@ -100,7 +100,7 @@
                                         </tr>
 
                                         {{-- Modal Edit (Pusat) --}}
-                                        @include('admin.settings.partials.edit_modal', [
+                                        @include('admin.Core.settings.partials.edit_modal', [
                                             'u' => $u,
                                             'roles' => $roles,
                                         ])
@@ -289,7 +289,7 @@
 
                                                                 {{-- Modal Edit (Cabang - Staff) --}}
                                                                 @include(
-                                                                    'admin.settings.partials.edit_modal',
+                                                                    'admin.Core.settings.partials.edit_modal',
                                                                     ['u' => $u, 'roles' => $roles]
                                                                 )
                                                             @endforeach
@@ -301,7 +301,7 @@
 
                                         {{-- Modal Edit (Leader) --}}
                                         @if ($leader)
-                                            @include('admin.settings.partials.edit_modal', [
+                                            @include('admin.Core.settings.partials.edit_modal', [
                                                 'u' => $leader,
                                                 'roles' => $roles,
                                             ])

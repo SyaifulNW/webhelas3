@@ -91,7 +91,7 @@ class DailyController extends Controller
         $totalNilai = $kpiCalculated['totalNilai'];
         $totalBobot = $kpiCalculated['totalBobot'];
 
-        return view('admin.dailyactivity.index', compact(
+        return view('admin.CS.dailyactivity.index', compact(
             'activities', 'daily', 'tanggal',
             'kpiData', 'totalNilai', 'totalBobot', 'automatedIds'
         ));
@@ -378,7 +378,7 @@ class DailyController extends Controller
     // Hitung Rekap KPI untuk ditampilkan di bawah PDF
     $kpiCalculated = $this->getKpiData($user, $carbonBulan->toDateString());
 
-    $pdf = Pdf::loadView('admin.dailyactivity.pdf', [
+    $pdf = Pdf::loadView('admin.CS.dailyactivity.pdf', [
         'categories' => $categories,
         'total' => $total,
         'jumlahHari' => $jumlahHari,

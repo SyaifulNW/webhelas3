@@ -30,7 +30,7 @@ class KelasController extends Controller
         // Urutkan berdasarkan tanggal dibuat terbaru (created_at)
         $kelas = $query->latest('created_at')->get();
 
-        return view('admin.kelas.index', compact('kelas'));
+        return view('admin.Operations.kelas.index', compact('kelas'));
     }
 
 

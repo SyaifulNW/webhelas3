@@ -20,7 +20,7 @@
 
             {{-- Global Filters --}}
             <div class="d-flex align-items-center gap-2 pe-2">
-                @include('admin.penjualan.partials.filters')
+                @include('admin.Sales.penjualan.partials.filters')
             </div>
         </div>
     </div>
@@ -37,7 +37,7 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            @include('admin.penjualan.partials.table_body', ['data' => $salesDataPusat])
+                            @include('admin.Sales.penjualan.partials.table_body', ['data' => $salesDataPusat])
                         </div>
                     </div>
                 </div>
@@ -53,7 +53,7 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            @include('admin.penjualan.partials.table_body', ['data' => $salesDataChapter, 'isChapter' => true])
+                            @include('admin.Sales.penjualan.partials.table_body', ['data' => $salesDataChapter, 'isChapter' => true])
                         </div>
                     </div>
                 </div>

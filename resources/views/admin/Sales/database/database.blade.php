@@ -2074,7 +2074,7 @@
                         <tbody id="tableBody">
 
                             @foreach ($data as $item)
-                                @include('admin.database.partials.row', [
+                                @include('admin.Sales.database.partials.row', [
                                     'item' => $item,
                                     'loop' => $loop,
                                     'kelas' => $kelas,

@@ -790,7 +790,7 @@
                                 </tr>
                             </thead>
                             <tbody id="smiTableBody">
-                                @include('admin.peserta-smi.table-rows')
+                                @include('admin.Sales.peserta-smi.table-rows')
                             </tbody>
                         </table>
                     </div>

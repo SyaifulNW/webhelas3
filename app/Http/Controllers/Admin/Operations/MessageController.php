@@ -19,7 +19,7 @@ class MessageController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('admin.messages.index', compact('messages'));
+        return view('admin.Operations.messages.index', compact('messages'));
     }
 
     /**
@@ -34,7 +34,7 @@ class MessageController extends Controller
             $message->update(['is_read' => true]);
         }
 
-        return view('admin.messages.show', compact('message'));
+        return view('admin.Operations.messages.show', compact('message'));
     }
 
     /**

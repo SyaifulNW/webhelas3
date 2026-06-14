@@ -167,7 +167,7 @@ class AdminActivityController extends Controller
             }
         }
 
-        return view('admin.activity-cs.index', compact(
+        return view('admin.CS.activity-cs.index', compact(
             'csList', 'csId', 'tanggal', 
             'activities', 'daily', 
             'kpiData', 'totalNilai', 'totalBobot'
@@ -334,7 +334,7 @@ class AdminActivityController extends Controller
             $totalBobot += $bobotKategori;
         }
 
-        $pdf = Pdf::loadView('admin.dailyactivity.pdf', [
+        $pdf = Pdf::loadView('admin.CS.dailyactivity.pdf', [
             'categories' => $categories,
             'total' => $total,
             'jumlahHari' => $jumlahHari,
