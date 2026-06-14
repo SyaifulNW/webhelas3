@@ -12,37 +12,43 @@ class Menu extends Model
 
     // Helper to check if active
     public static function isActive($name) {
-        $menu = self::where('name', $name)->first();
-        if ($menu) {
-            // Special case for settings menu for Yasmin
-            if (in_array($name, ['settings', 'keuangan']) && auth()->check() && auth()->user()->name === 'Yasmin') {
-                return true;
-            }
-            
-            // GLOBAL override if menu is disabled globally
-            if (!$menu->is_active) {
-                return false;
-            }
+        $userId = auth()->check() ? auth()->user()->id : 'guest';
+        $version = \Cache::get('menu_cache_version', 1);
+        $cacheKey = "menu_active_{$name}_{$userId}_v{$version}";
 
-            // Role based check
-            if (auth()->check()) {
-                try {
-                    $role = strtolower(trim(auth()->user()->role));
-                    $roleMenu = \DB::table('role_menus')->where('role', $role)
-                                ->where('menu_id', $menu->id)
-                                ->first();
-                    if ($roleMenu) {
-                        return $roleMenu->can_access;
-                    }
-                } catch (\Exception $e) {
-                    // Ignore if table missing
+        return \Cache::remember($cacheKey, 3600, function() use ($name) {
+            $menu = self::where('name', $name)->first();
+            if ($menu) {
+                // Special case for settings menu for Yasmin
+                if (in_array($name, ['settings', 'keuangan']) && auth()->check() && auth()->user()->name === 'Yasmin') {
+                    return true;
                 }
-            }
+                
+                // GLOBAL override if menu is disabled globally
+                if (!$menu->is_active) {
+                    return false;
+                }
 
-            // Fallback to global setting
-            return $menu->is_active;
-        }
-        return true; // Default true if not found in menus table
+                // Role based check
+                if (auth()->check()) {
+                    try {
+                        $role = strtolower(trim(auth()->user()->role));
+                        $roleMenu = \DB::table('role_menus')->where('role', $role)
+                                    ->where('menu_id', $menu->id)
+                                    ->first();
+                        if ($roleMenu) {
+                            return (bool)$roleMenu->can_access;
+                        }
+                    } catch (\Exception $e) {
+                        // Ignore if table missing
+                    }
+                }
+
+                // Fallback to global setting
+                return (bool)$menu->is_active;
+            }
+            return true; // Default true if not found in menus table
+        });
     }
 
     public static function hasRoleAccess($menuName, $role) {

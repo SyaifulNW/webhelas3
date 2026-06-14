@@ -13,9 +13,11 @@ class AddUnitToMomsTable extends Migration
      */
     public function up()
     {
-        Schema::table('moms', function (Blueprint $table) {
-            $table->string('unit')->default('Helas Corp')->after('status');
-        });
+        if (!Schema::hasColumn('moms', 'unit')) {
+            Schema::table('moms', function (Blueprint $table) {
+                $table->string('unit')->default('Helas Corp')->after('status');
+            });
+        }
     }
 
     /**
@@ -25,8 +27,10 @@ class AddUnitToMomsTable extends Migration
      */
     public function down()
     {
-        Schema::table('moms', function (Blueprint $table) {
-            $table->dropColumn('unit');
-        });
+        if (Schema::hasColumn('moms', 'unit')) {
+            Schema::table('moms', function (Blueprint $table) {
+                $table->dropColumn('unit');
+            });
+        }
     }
 }

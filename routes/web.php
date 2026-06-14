@@ -2,39 +2,61 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\DataController;
-use App\Http\Controllers\OngkirController;
-use App\Http\Controllers\WilayahController;
-use App\Http\Controllers\AlumniController;
-use App\Http\Controllers\SalesPlanController;
-use App\Http\Controllers\DailyController;
-use App\Http\Controllers\KoordinasiController;
-use App\Http\Controllers\GanttChartController;
+// Common/General & Others
+use App\Http\Controllers\Common\OngkirController;
+use App\Http\Controllers\Common\WilayahController;
+use App\Http\Controllers\Common\KoordinasiController;
+use App\Http\Controllers\Common\HomeController;
+use App\Http\Controllers\Common\ChatController;
+use App\Http\Controllers\Common\PembelajaranSiswaController;
+use App\Http\Controllers\Common\ProfileController;
 
-use App\Http\Controllers\AdminActivityController;
-use App\Http\Controllers\AdvertisingController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\KasKecilController;
-use App\Http\Controllers\KelasController;
-use App\Http\Controllers\NotifikasiController;
-use App\Http\Controllers\MessageController;
-use App\Http\Controllers\ProgramKerjaController;
-use App\Http\Controllers\AdsActivityController;
-use App\Http\Controllers\MarketingController;
-use App\Http\Controllers\ChatController;
-use App\Http\Controllers\PesertaSmiController;
-use App\Http\Controllers\PembelajaranSiswaController;
-use App\Http\Controllers\PenjualanController;
-use App\Http\Controllers\MarketingParticipantController;
-use App\Http\Controllers\DashboardManagerController;
+// Marketing
+use App\Http\Controllers\Marketing\GanttChartController;
+use App\Http\Controllers\Marketing\ProgramKerjaController;
+use App\Http\Controllers\Marketing\MarketingController;
+use App\Http\Controllers\Marketing\MarketingParticipantController;
 use App\Http\Controllers\Marketing\PenilaianController as MarketingPenilaianController;
-use App\Http\Controllers\Admin\PenilaianController;
-use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\WalletController;
-use App\Http\Controllers\Admin\AdminWalletController;
+
+// Advertising
+use App\Http\Controllers\Advertising\AdvertisingController;
+use App\Http\Controllers\Advertising\AdsActivityController;
+
+// Manager
+use App\Http\Controllers\Manager\DashboardManagerController;
+
+// Reseller
+use App\Http\Controllers\Reseller\WalletController;
+
+// Admin Core
+use App\Http\Controllers\Admin\Core\AdminController;
+use App\Http\Controllers\Admin\Core\DashboardController;
+use App\Http\Controllers\Admin\Core\NotifikasiController;
+use App\Http\Controllers\Admin\Core\SettingController;
+
+// Admin CS
+use App\Http\Controllers\Admin\CS\AdminActivityController;
+use App\Http\Controllers\Admin\CS\DailyController;
+use App\Http\Controllers\Admin\CS\PenilaianController;
+use App\Http\Controllers\Admin\CS\PenilaianCsController;
+
+// Admin Finance
+use App\Http\Controllers\Admin\Finance\AdminWalletController;
+use App\Http\Controllers\Admin\Finance\KasKecilController;
+use App\Http\Controllers\Admin\Finance\PengajuanAnggaranController;
+
+// Admin Operations
+use App\Http\Controllers\Admin\Operations\KelasController;
+use App\Http\Controllers\Admin\Operations\MessageController;
+use App\Http\Controllers\Admin\Operations\MomController;
+use App\Http\Controllers\Admin\Operations\ZoomScheduleController;
+
+// Admin Sales
+use App\Http\Controllers\Admin\Sales\AlumniController;
+use App\Http\Controllers\Admin\Sales\DataController;
+use App\Http\Controllers\Admin\Sales\PenjualanController;
+use App\Http\Controllers\Admin\Sales\PesertaSmiController;
+use App\Http\Controllers\Admin\Sales\SalesPlanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,11 +92,11 @@ Route::middleware('auth')->group(function () {
             'absensi_jam_masuk_sabtu' => \App\Models\Setting::where('key', 'absensi_jam_masuk_sabtu')->value('value') ?? '08:00',
             'absensi_jam_pulang_sabtu' => \App\Models\Setting::where('key', 'absensi_jam_pulang_sabtu')->value('value') ?? '14:00',
         ];
-        return view('absensi', compact('settings'));
+        return view('hrd.absensi', compact('settings'));
     })->name('absensi');
 
-    Route::post('/api/absensi/store', [App\Http\Controllers\AbsensiController::class, 'store'])->name('api.absensi.store');
-    Route::get('/api/absensi/history', [App\Http\Controllers\AbsensiController::class, 'history'])->name('api.absensi.history');
+    Route::post('/api/absensi/store', [App\Http\Controllers\Hrd\AbsensiController::class, 'store'])->name('api.absensi.store');
+    Route::get('/api/absensi/history', [App\Http\Controllers\Hrd\AbsensiController::class, 'history'])->name('api.absensi.history');
 });
 
 
@@ -85,13 +107,8 @@ Route::post('/form-m1t/store', [DataController::class, 'storeFormM1t'])->name('f
 Auth::routes(['register' => false]);
 
 // ✅ Profile Routes
-Route::get('/profile', 'App\Http\Controllers\ProfileController@index')->name('profile.index');
-Route::put('/profile/update', 'App\Http\Controllers\ProfileController@update')->name('profile.update');
-
-// ✅ Reseller Registration (Disabled)
-// Route::get('/register/reseller', [App\Http\Controllers\Auth\ResellerRegisterController::class, 'showRegistrationForm'])->name('reseller.register');
-// Route::post('/register/reseller', [App\Http\Controllers\Auth\ResellerRegisterController::class, 'register']);
-
+Route::get('/profile', 'App\Http\Controllers\Common\ProfileController@index')->name('profile.index');
+Route::put('/profile/update', 'App\Http\Controllers\Common\ProfileController@update')->name('profile.update');
 // ✅ Custom Login Pages
 Route::get('/login-marketing', function () {
     return view('auth.login-marketing');
@@ -124,17 +141,6 @@ Route::middleware(['auth', 'role:administrator'])->group(function () {
         } catch (\Exception $e) {
             return "Error: " . $e->getMessage();
         }
-        // Recalculate real-time balance before withdrawal
-        $totalEarnings = \App\Services\EarningsService::calculateTotalEarnings($user->id);
-        $totalWithdrawn = $wallet->transactions()
-            ->where('type', 'withdrawal')
-            ->whereIn('status', ['success', 'pending'])
-            ->sum('amount');
-        $availableBalance = $totalEarnings - $totalWithdrawn;
-
-        if ($availableBalance < $request->amount) {
-            return back()->with('error', 'Saldo tidak mencukupi untuk penarikan ini.');
-        }
     });
 
     Route::get('/clear-system-cache', function () {
@@ -165,18 +171,18 @@ Route::middleware(['auth'])->group(function () {
     // Dashboards
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::post('/pendapatan-lainnya/store', [HomeController::class, 'storePendapatanLainnya'])->name('pendapatan.lainnya.store');
-    Route::get('/hr', [App\Http\Controllers\AbsensiController::class, 'hr'])->name('hr');
-    Route::post('/hr/settings/update', [App\Http\Controllers\AbsensiController::class, 'updateSettings'])->name('hr.settings.update');
-    Route::post('/hr/employee/update', [App\Http\Controllers\AbsensiController::class, 'updateEmployee'])->name('hr.employee.update');
-    Route::post('/hr/employee/store', [App\Http\Controllers\AbsensiController::class, 'storeEmployee'])->name('hr.employee.store');
-    Route::delete('/hr/employee/{id}', [App\Http\Controllers\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
-    Route::view('/hrd-dashboard', 'hrd_dashboard')->name('hr.dashboard');
+    Route::get('/hr', [App\Http\Controllers\Hrd\AbsensiController::class, 'hr'])->name('hr');
+    Route::post('/hr/settings/update', [App\Http\Controllers\Hrd\AbsensiController::class, 'updateSettings'])->name('hr.settings.update');
+    Route::post('/hr/employee/update', [App\Http\Controllers\Hrd\AbsensiController::class, 'updateEmployee'])->name('hr.employee.update');
+    Route::post('/hr/employee/store', [App\Http\Controllers\Hrd\AbsensiController::class, 'storeEmployee'])->name('hr.employee.store');
+    Route::delete('/hr/employee/{id}', [App\Http\Controllers\Hrd\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
+    Route::view('/hrd-dashboard', 'hrd.hrd_dashboard')->name('hr.dashboard');
     // Agenda (To-Do List) — hanya Linda (cs-mbc/cs-smi, name check di controller)
     Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,cs-smi,operasional,hrd,produksi'])->group(function () {
-        Route::get('/agenda', [App\Http\Controllers\AgendaController::class, 'index'])->name('agenda.index');
-        Route::post('/agenda/store', [App\Http\Controllers\AgendaController::class, 'store'])->name('agenda.store');
-        Route::post('/agenda/toggle/{logId}', [App\Http\Controllers\AgendaController::class, 'toggleCheck'])->name('agenda.toggle');
-        Route::delete('/agenda/{id}', [App\Http\Controllers\AgendaController::class, 'destroy'])->name('agenda.destroy');
+        Route::get('/agenda', [App\Http\Controllers\Common\AgendaController::class, 'index'])->name('agenda.index');
+        Route::post('/agenda/store', [App\Http\Controllers\Common\AgendaController::class, 'store'])->name('agenda.store');
+        Route::post('/agenda/toggle/{logId}', [App\Http\Controllers\Common\AgendaController::class, 'toggleCheck'])->name('agenda.toggle');
+        Route::delete('/agenda/{id}', [App\Http\Controllers\Common\AgendaController::class, 'destroy'])->name('agenda.destroy');
     });
     Route::get('/administrator', [AdminController::class, 'index'])->name('administrator');
     Route::get('/marketing', [MarketingController::class, 'index'])->name('marketing');
@@ -191,35 +197,35 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chat/{id}', [ChatController::class, 'store'])->name('chat.store');
 
     // Monitoring Perbaikan
-    Route::post('/monitoring-perbaikan/store', [\App\Http\Controllers\MonitoringPerbaikanController::class, 'store'])->name('monitoring-perbaikan.store');
-    Route::put('/monitoring-perbaikan/update/{id}', [\App\Http\Controllers\MonitoringPerbaikanController::class, 'update'])->name('monitoring-perbaikan.update');
-    Route::delete('/monitoring-perbaikan/destroy/{id}', [\App\Http\Controllers\MonitoringPerbaikanController::class, 'destroy'])->name('monitoring-perbaikan.destroy');
-    Route::post('/monitoring-perbaikan/{id}/upload-bukti', [\App\Http\Controllers\MonitoringPerbaikanController::class, 'uploadBukti'])->name('monitoring-perbaikan.upload-bukti');
+    Route::post('/monitoring-perbaikan/store', [\App\Http\Controllers\Operasional\MonitoringPerbaikanController::class, 'store'])->name('monitoring-perbaikan.store');
+    Route::put('/monitoring-perbaikan/update/{id}', [\App\Http\Controllers\Operasional\MonitoringPerbaikanController::class, 'update'])->name('monitoring-perbaikan.update');
+    Route::delete('/monitoring-perbaikan/destroy/{id}', [\App\Http\Controllers\Operasional\MonitoringPerbaikanController::class, 'destroy'])->name('monitoring-perbaikan.destroy');
+    Route::post('/monitoring-perbaikan/{id}/upload-bukti', [\App\Http\Controllers\Operasional\MonitoringPerbaikanController::class, 'uploadBukti'])->name('monitoring-perbaikan.upload-bukti');
 
     // Pengadaan Barang
-    Route::post('/pengadaan-barang/store', [\App\Http\Controllers\PengadaanBarangController::class, 'store'])->name('pengadaan-barang.store');
-    Route::put('/pengadaan-barang/update/{id}', [\App\Http\Controllers\PengadaanBarangController::class, 'update'])->name('pengadaan-barang.update');
-    Route::delete('/pengadaan-barang/destroy/{id}', [\App\Http\Controllers\PengadaanBarangController::class, 'destroy'])->name('pengadaan-barang.destroy');
-    Route::post('/pengadaan-barang/{id}/upload-bukti', [\App\Http\Controllers\PengadaanBarangController::class, 'uploadBukti'])->name('pengadaan-barang.upload-bukti');
-    Route::post('/pengadaan-barang/{id}/add-bukti', [\App\Http\Controllers\PengadaanBarangController::class, 'addBukti'])->name('pengadaan-barang.add-bukti');
-    Route::delete('/pengadaan-barang/{id}/bukti/{buktiId}', [\App\Http\Controllers\PengadaanBarangController::class, 'deleteBukti'])->name('pengadaan-barang.delete-bukti');
-    Route::get('/pengadaan-barang/cetak-laporan', [\App\Http\Controllers\PengadaanBarangController::class, 'cetakLaporan'])->name('pengadaan-barang.cetak-laporan');
+    Route::post('/pengadaan-barang/store', [\App\Http\Controllers\Operasional\PengadaanBarangController::class, 'store'])->name('pengadaan-barang.store');
+    Route::put('/pengadaan-barang/update/{id}', [\App\Http\Controllers\Operasional\PengadaanBarangController::class, 'update'])->name('pengadaan-barang.update');
+    Route::delete('/pengadaan-barang/destroy/{id}', [\App\Http\Controllers\Operasional\PengadaanBarangController::class, 'destroy'])->name('pengadaan-barang.destroy');
+    Route::post('/pengadaan-barang/{id}/upload-bukti', [\App\Http\Controllers\Operasional\PengadaanBarangController::class, 'uploadBukti'])->name('pengadaan-barang.upload-bukti');
+    Route::post('/pengadaan-barang/{id}/add-bukti', [\App\Http\Controllers\Operasional\PengadaanBarangController::class, 'addBukti'])->name('pengadaan-barang.add-bukti');
+    Route::delete('/pengadaan-barang/{id}/bukti/{buktiId}', [\App\Http\Controllers\Operasional\PengadaanBarangController::class, 'deleteBukti'])->name('pengadaan-barang.delete-bukti');
+    Route::get('/pengadaan-barang/cetak-laporan', [\App\Http\Controllers\Operasional\PengadaanBarangController::class, 'cetakLaporan'])->name('pengadaan-barang.cetak-laporan');
 
     // Inventaris Kantor
-    Route::get('/inventaris-kantor/search', [\App\Http\Controllers\InventarisKantorController::class, 'search'])->name('inventaris-kantor.search');
-    Route::post('/inventaris-kantor/store', [\App\Http\Controllers\InventarisKantorController::class, 'store'])->name('inventaris-kantor.store');
-    Route::put('/inventaris-kantor/update/{id}', [\App\Http\Controllers\InventarisKantorController::class, 'update'])->name('inventaris-kantor.update');
-    Route::delete('/inventaris-kantor/destroy/{id}', [\App\Http\Controllers\InventarisKantorController::class, 'destroy'])->name('inventaris-kantor.destroy');
-    Route::get('/inventaris-kantor/checklist-pdf', [\App\Http\Controllers\InventarisKantorController::class, 'generateChecklistPdf'])->name('inventaris-kantor.checklist-pdf');
+    Route::get('/inventaris-kantor/search', [\App\Http\Controllers\Operasional\InventarisKantorController::class, 'search'])->name('inventaris-kantor.search');
+    Route::post('/inventaris-kantor/store', [\App\Http\Controllers\Operasional\InventarisKantorController::class, 'store'])->name('inventaris-kantor.store');
+    Route::put('/inventaris-kantor/update/{id}', [\App\Http\Controllers\Operasional\InventarisKantorController::class, 'update'])->name('inventaris-kantor.update');
+    Route::delete('/inventaris-kantor/destroy/{id}', [\App\Http\Controllers\Operasional\InventarisKantorController::class, 'destroy'])->name('inventaris-kantor.destroy');
+    Route::get('/inventaris-kantor/checklist-pdf', [\App\Http\Controllers\Operasional\InventarisKantorController::class, 'generateChecklistPdf'])->name('inventaris-kantor.checklist-pdf');
     // Report Inventaris
-    Route::post('/inventaris-kantor/report/upload', [\App\Http\Controllers\InventarisKantorController::class, 'uploadReport'])->name('inventaris-kantor.report.upload');
-    Route::delete('/inventaris-kantor/report/{id}', [\App\Http\Controllers\InventarisKantorController::class, 'destroyReport'])->name('inventaris-kantor.report.destroy');
-    Route::get('/inventaris-kantor/report/{id}/download', [\App\Http\Controllers\InventarisKantorController::class, 'downloadReport'])->name('inventaris-kantor.report.download');
+    Route::post('/inventaris-kantor/report/upload', [\App\Http\Controllers\Operasional\InventarisKantorController::class, 'uploadReport'])->name('inventaris-kantor.report.upload');
+    Route::delete('/inventaris-kantor/report/{id}', [\App\Http\Controllers\Operasional\InventarisKantorController::class, 'destroyReport'])->name('inventaris-kantor.report.destroy');
+    Route::get('/inventaris-kantor/report/{id}/download', [\App\Http\Controllers\Operasional\InventarisKantorController::class, 'downloadReport'])->name('inventaris-kantor.report.download');
 
     // Zoom scheduling (CS and Admin)
-    Route::post('/zoom-schedule/store', [\App\Http\Controllers\ZoomScheduleController::class, 'store'])->name('zoom-schedule.store');
-    Route::get('/zoom-schedule/calendar', [\App\Http\Controllers\ZoomScheduleController::class, 'calendar'])->name('zoom-schedule.calendar');
-    Route::get('/zoom-schedule/events', [\App\Http\Controllers\ZoomScheduleController::class, 'getEvents'])->name('zoom-schedule.events');
+    Route::post('/zoom-schedule/store', [ZoomScheduleController::class, 'store'])->name('zoom-schedule.store');
+    Route::get('/zoom-schedule/calendar', [ZoomScheduleController::class, 'calendar'])->name('zoom-schedule.calendar');
+    Route::get('/zoom-schedule/events', [ZoomScheduleController::class, 'getEvents'])->name('zoom-schedule.events');
 
     // Admin Group (Prefix & Name 'admin.')
     Route::prefix('admin')->name('admin.')->group(function () {
@@ -300,20 +306,20 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/keuangan/kas-kecil', [KasKecilController::class, 'store'])->name('keuangan.kas-kecil.store');
         Route::delete('/keuangan/kas-kecil/{id}', [KasKecilController::class, 'destroy'])->name('keuangan.kas-kecil.destroy');
 
-        Route::get('/keuangan/pengajuan-anggaran', [App\Http\Controllers\PengajuanAnggaranController::class, 'index'])->name('keuangan.pengajuan-anggaran');
-        Route::post('/keuangan/pengajuan-anggaran', [App\Http\Controllers\PengajuanAnggaranController::class, 'store'])->name('keuangan.pengajuan-anggaran.store');
-        Route::put('/keuangan/pengajuan-anggaran/{id}', [App\Http\Controllers\PengajuanAnggaranController::class, 'update'])->name('keuangan.pengajuan-anggaran.update');
-        Route::post('/keuangan/pengajuan-anggaran/{id}/update', [App\Http\Controllers\PengajuanAnggaranController::class, 'update'])->name('keuangan.pengajuan-anggaran.update-post');
-        Route::delete('/keuangan/pengajuan-anggaran/{id}', [App\Http\Controllers\PengajuanAnggaranController::class, 'destroy'])->name('keuangan.pengajuan-anggaran.destroy');
-        Route::post('/keuangan/pengajuan-anggaran/{id}/delete', [App\Http\Controllers\PengajuanAnggaranController::class, 'destroy'])->name('keuangan.pengajuan-anggaran.delete-post');
-        Route::get('/keuangan/pengajuan-anggaran/export-pdf', [App\Http\Controllers\PengajuanAnggaranController::class, 'exportPDF'])->name('keuangan.pengajuan-anggaran.export-pdf');
-        Route::post('/keuangan/pengajuan-anggaran/{id}/status', [App\Http\Controllers\PengajuanAnggaranController::class, 'updateStatus'])->name('keuangan.pengajuan-anggaran.update-status');
-        Route::post('/keuangan/pengajuan-anggaran/{id}/upload-bukti', [App\Http\Controllers\PengajuanAnggaranController::class, 'uploadBukti'])->name('keuangan.pengajuan-anggaran.upload-bukti');
-        Route::put('/keuangan/pengajuan-anggaran/{id}/ganti-bukti/{buktiId}', [App\Http\Controllers\PengajuanAnggaranController::class, 'gantiBuktiFoto'])->name('keuangan.pengajuan-anggaran.ganti-bukti');
+        Route::get('/keuangan/pengajuan-anggaran', [PengajuanAnggaranController::class, 'index'])->name('keuangan.pengajuan-anggaran');
+        Route::post('/keuangan/pengajuan-anggaran', [PengajuanAnggaranController::class, 'store'])->name('keuangan.pengajuan-anggaran.store');
+        Route::put('/keuangan/pengajuan-anggaran/{id}', [PengajuanAnggaranController::class, 'update'])->name('keuangan.pengajuan-anggaran.update');
+        Route::post('/keuangan/pengajuan-anggaran/{id}/update', [PengajuanAnggaranController::class, 'update'])->name('keuangan.pengajuan-anggaran.update-post');
+        Route::delete('/keuangan/pengajuan-anggaran/{id}', [PengajuanAnggaranController::class, 'destroy'])->name('keuangan.pengajuan-anggaran.destroy');
+        Route::post('/keuangan/pengajuan-anggaran/{id}/delete', [PengajuanAnggaranController::class, 'destroy'])->name('keuangan.pengajuan-anggaran.delete-post');
+        Route::get('/keuangan/pengajuan-anggaran/export-pdf', [PengajuanAnggaranController::class, 'exportPDF'])->name('keuangan.pengajuan-anggaran.export-pdf');
+        Route::post('/keuangan/pengajuan-anggaran/{id}/status', [PengajuanAnggaranController::class, 'updateStatus'])->name('keuangan.pengajuan-anggaran.update-status');
+        Route::post('/keuangan/pengajuan-anggaran/{id}/upload-bukti', [PengajuanAnggaranController::class, 'uploadBukti'])->name('keuangan.pengajuan-anggaran.upload-bukti');
+        Route::put('/keuangan/pengajuan-anggaran/{id}/ganti-bukti/{buktiId}', [PengajuanAnggaranController::class, 'gantiBuktiFoto'])->name('keuangan.pengajuan-anggaran.ganti-bukti');
 
         // Monitoring & Activity
         Route::get('/operasional', [DashboardController::class, 'operasional'])->name('operasional');
-        Route::get('/operasional/dashboard', [\App\Http\Controllers\HomeController::class, 'operasionalDashboard'])->name('operasional.dashboard');
+        Route::get('/operasional/dashboard', [\App\Http\Controllers\Common\HomeController::class, 'operasionalDashboard'])->name('operasional.dashboard');
         Route::get('/dailyactivity/index', [DailyController::class, 'index'])->name('dailyactivity.index');
         Route::post('/daily-activity', [DailyController::class, 'store'])->name('daily-activity.store');
         Route::get('/daily-activity/export-pdf/{bulan}', [DailyController::class, 'exportPdf'])->name('daily-activity.exportPdf');
@@ -321,10 +327,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/activity-cs', [AdminActivityController::class, 'index'])->name('activity-cs.index');
         Route::get('/activity-cs/export-pdf-bulanan', [AdminActivityController::class, 'viewPdfBulanan'])->name('activity-cs.viewPdfBulanan');
 
-        Route::get('/penilaian-cs', [App\Http\Controllers\Admin\PenilaianCsController::class, 'index'])->name('penilaian-cs.index');
-        Route::post('/penilaian-cs', [App\Http\Controllers\Admin\PenilaianCsController::class, 'store'])->name('penilaian-cs.store');
-        Route::post('/penilaian-cs/export-pdf', [App\Http\Controllers\Admin\PenilaianCsController::class, 'exportPdf'])->name('penilaian-cs.exportPdf');
-        Route::resource('penilaian', App\Http\Controllers\Admin\PenilaianCsController::class)->except(['index'])->names('penilaian');
+        Route::get('/penilaian-cs', [PenilaianCsController::class, 'index'])->name('penilaian-cs.index');
+        Route::post('/penilaian-cs', [PenilaianCsController::class, 'store'])->name('penilaian-cs.store');
+        Route::post('/penilaian-cs/export-pdf', [PenilaianCsController::class, 'exportPdf'])->name('penilaian-cs.exportPdf');
+        Route::resource('penilaian', PenilaianCsController::class)->except(['index'])->names('penilaian');
 
         // Settings (Restricted inside group)
         Route::middleware(['role:administrator'])->group(function () {
@@ -355,13 +361,13 @@ Route::middleware(['auth'])->group(function () {
 
         // Minutes of Meeting (MoM) — semua divisi internal kecuali chapter, reseller, agen
         Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,cs-smi,operasional,hrd,produksi'])->group(function () {
-            Route::get('/mom', [App\Http\Controllers\Admin\MomController::class, 'index'])->name('mom.index');
-            Route::post('/mom', [App\Http\Controllers\Admin\MomController::class, 'store'])->name('mom.store');
-            Route::put('/mom/{id}', [App\Http\Controllers\Admin\MomController::class, 'update'])->name('mom.update');
-            Route::delete('/mom/{id}', [App\Http\Controllers\Admin\MomController::class, 'destroy'])->name('mom.destroy');
+            Route::get('/mom', [MomController::class, 'index'])->name('mom.index');
+            Route::post('/mom', [MomController::class, 'store'])->name('mom.store');
+            Route::put('/mom/{id}', [MomController::class, 'update'])->name('mom.update');
+            Route::delete('/mom/{id}', [MomController::class, 'destroy'])->name('mom.destroy');
             // Form-based input (separate from AJAX store above)
-            Route::get('/mom/form-{username}', [App\Http\Controllers\Admin\MomController::class, 'create'])->name('mom.create');
-            Route::post('/mom/form-submit', [App\Http\Controllers\Admin\MomController::class, 'submitForm'])->name('mom.formSubmit');
+            Route::get('/mom/form-{username}', [MomController::class, 'create'])->name('mom.create');
+            Route::post('/mom/form-submit', [MomController::class, 'submitForm'])->name('mom.formSubmit');
         });
 
         // Wallet Management (Admin)
@@ -418,7 +424,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Others
-    Route::get('/manager/penilaian-cs', [App\Http\Controllers\Admin\PenilaianCsController::class, 'managerIndex'])->name('manager.penilaian-cs.index');
+    Route::get('/manager/penilaian-cs', [PenilaianCsController::class, 'managerIndex'])->name('manager.penilaian-cs.index');
     Route::get('/koordinasi/{id}', [KoordinasiController::class, 'show'])->name('koordinasi.show');
     Route::post('/koordinasi/komentar', [KoordinasiController::class, 'kirimKomentar'])->name('komentar.store');
     Route::get('/pembelajaran-siswa', [PembelajaranSiswaController::class, 'index'])->name('pembelajaran.index');
@@ -459,14 +465,9 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/setting/update-reseller/{id}', [App\Http\Controllers\Reseller\SettingController::class, 'updateReseller'])->name('setting.update-reseller');
         Route::delete('/setting/destroy-reseller/{id}', [App\Http\Controllers\Reseller\SettingController::class, 'destroyReseller'])->name('setting.destroy-reseller');
     });
-});
 
-Route::get('/data/{id}/pindah-ke-salesplan', [DataController::class, 'pindahkesalesplan']);
-Route::post('/data/{id}/pindah-ke-salesplan', [DataController::class, 'pindahkesalesplan']);
-Route::get('/pindah-ke-alumni/{id}', [DataController::class, 'alumni'])->name('data.pindahKeAlumni');
-Route::get('/pindah-ke-salesplan/{id}', [DataController::class, 'pindahkesalesplan'])->name('data.pindahKeSalesPlan');
-Route::delete('/admin/database/delete/{id}', [DataController::class, 'destroy'])->name('delete-database');
-Route::post('/admin/database/no-potensi/{id}', [DataController::class, 'noPotensi'])->name('admin.database.no-potensi');
+    Route::get('/pindah-ke-salesplan/{id}', [DataController::class, 'pindahkesalesplan'])->name('data.pindahKeSalesPlan');
+});
 
 Route::get('/ongkir/provinsi', [OngkirController::class, 'getProvinsi'])->name('ongkir.provinsi');
 Route::get('/ongkir/kota', [OngkirController::class, 'getKota'])->name('ongkir.kota');

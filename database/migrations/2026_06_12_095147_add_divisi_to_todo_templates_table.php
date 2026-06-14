@@ -8,16 +8,25 @@ class AddDivisiToTodoTemplatesTable extends Migration
 {
     public function up()
     {
-        Schema::table('todo_templates', function (Blueprint $table) {
-            // Nullable so existing data is preserved; default to first tab
-            $table->string('divisi')->nullable()->default('Divisi Keuangan')->after('is_active');
-        });
+        if (!Schema::hasColumn('todo_templates', 'divisi')) {
+            Schema::table('todo_templates', function (Blueprint $table) {
+                // Nullable so existing data is preserved; default to first tab
+                $table->string('divisi')->nullable()->default('Divisi Keuangan')->after('is_active');
+            });
+        }
     }
 
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
     public function down()
     {
-        Schema::table('todo_templates', function (Blueprint $table) {
-            $table->dropColumn('divisi');
-        });
+        if (Schema::hasColumn('todo_templates', 'divisi')) {
+            Schema::table('todo_templates', function (Blueprint $table) {
+                $table->dropColumn('divisi');
+            });
+        }
     }
 }

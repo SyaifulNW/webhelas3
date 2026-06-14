@@ -52,7 +52,7 @@ class AppServiceProvider extends ServiceProvider
     {
         \Carbon\Carbon::setLocale('id');
 
-         View::composer('*', function ($view) {
+         View::composer(['layouts.masteradmin', 'layouts.app'], function ($view) {
         $view->with('kelas', \App\Models\Kelas::all());
     });
      if (config('app.env') === 'production') {

@@ -87,12 +87,17 @@ class PesertaSmi extends Model
     protected static function booted()
     {
         static::saved(function ($pesertaSmi) {
+            \Cache::forever('pending_m1t_cache_version', time());
             if ($pesertaSmi->isDirty('closing_cs_id')) {
                 if ($pesertaSmi->salesPlan) {
                     $pesertaSmi->salesPlan->created_by = $pesertaSmi->closing_cs_id;
                     $pesertaSmi->salesPlan->save();
                 }
             }
+        });
+
+        static::deleted(function ($pesertaSmi) {
+            \Cache::forever('pending_m1t_cache_version', time());
         });
     }
 }

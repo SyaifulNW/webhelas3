@@ -1,0 +1,409 @@
+@foreach($data as $key => $item)
+    <tr>
+        <td class="text-center align-middle font-weight-bold text-secondary">
+            {{ $key + 1 }}
+        </td>
+
+        {{-- Nama Peserta --}}
+        <td class="p-1 align-middle">
+            @php
+                $isManualLunas = ($item->is_lunas == 1);
+                $isAutoLunas = false;
+
+                // [USER_REQUEST] Level-based SPP nominal: Grow Up = 1.500.000, Start Up = 1.000.000
+                $itemLevel = strtolower($item->level ?? $item->salesPlan->level ?? '');
+                $levelNominal = str_contains($itemLevel, 'grow') ? 1500000 : 1000000;
+
+                // Automatic check: if at least 6 months are paid (>= level nominal each)
+                if ($item->tanggal_masuk) {
+                    $startJoin = \Carbon\Carbon::parse($item->tanggal_masuk)->startOfMonth();
+                    $countPaid = 0;
+                    // Check up to 12 months to see if they reached 6 months total
+                    for ($m = 0; $m < 12; $m++) {
+                        $checkM = $startJoin->copy()->addMonths($m);
+                        $mNum = (int) $checkM->format('n');
+                        if (($item->{"spp_$mNum"} ?? 0) >= $levelNominal) {
+                            $countPaid++;
+                        }
+                    }
+                    if ($countPaid >= 6)
+                        $isAutoLunas = true;
+                }
+
+                $biayaClosing = $item->total_pembayaran ?? $item->spp_awal;
+                if (!$biayaClosing && ($item->biaya_pendaftaran || $item->pembayaran_spp)) {
+                    $biayaClosing = (float) $item->biaya_pendaftaran + (float) $item->pembayaran_spp;
+                }
+                if (!$biayaClosing) {
+                    $biayaClosing = $item->biaya_pendaftaran;
+                }
+                $isLumpSumLunas = ($biayaClosing >= (6 * $levelNominal));
+
+                $isAllPaid = $isManualLunas || $isAutoLunas || $isLumpSumLunas;
+                $filterYear = request('filter_year', date('Y'));
+                
+                // [USER_REQUEST] Pre-calculate approval logic for usage throughout the row
+                $creatorRole = strtolower($item->closingCs->role ?? $item->createdBy->role ?? $item->salesPlan->createdBy->role ?? '');
+                $showApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
+                $userRole = strtolower(auth()->user()->role);
+                $isAdmin = (in_array($userRole, ['administrator', 'pusat', 'admin']) || auth()->user()->name === 'Linda');
+             @endphp
+            <div class="d-flex align-items-center">
+                <input form="form-update-{{ $item->id }}" type="text" name="nama"
+                    class="table-input font-weight-bold text-dark" value="{{ $item->nama ?: ($item->salesPlan->data->nama ?? $item->salesPlan->nama ?? '') }}" placeholder="Nama peserta..."
+                    onblur="quickUpdateField(this, {{ $item->id }}, 'nama')">
+            </div>
+
+            {{-- Level Selection (Linda Only) --}}
+            @if(auth()->user()->name === 'Linda')
+            <div class="mt-1 px-1 d-flex align-items-center" style="gap: 4px;">
+                <select class="form-control form-control-sm" 
+                    style="font-size: 0.65rem; height: 18px; width: 80px; padding: 0 4px; border-radius: 4px; border: 1px solid #d1d3e2; background-color: #f8f9fc; color: #4e73df; font-weight: bold;" 
+                    onchange="quickUpdateField(this, {{ $item->id }}, 'level')">
+                    <option value="" {{ !$item->level ? 'selected' : '' }}>Level</option>
+                    <option value="Grow Up" {{ $item->level == 'Grow Up' ? 'selected' : '' }}>Grow</option>
+                    <option value="Start Up" {{ $item->level == 'Start Up' ? 'selected' : '' }}>Start</option>
+                </select>
+                <button type="button" class="btn btn-outline-info btn-sm" style="font-size: 0.55rem; padding: 1px 4px; height: 18px; line-height: 1;" onclick="openDetailTransaksi({{ $item->id }}, '{{ addslashes($item->nama) }}', '{{ $item->biaya_pendaftaran }}', '{{ $item->spp_awal }}', '{{ $item->pembayaran_spp }}', '{{ $item->total_pembayaran }}')">
+                    Detail Transaksi
+                </button>
+            </div>
+            @endif
+            @if($isAllPaid)
+                <div class="px-2 py-0">
+                    <span class="badge badge-primary shadow-sm"
+                        style="font-size: 0.6rem; letter-spacing: 1px; font-weight: 800; padding: 2px 6px;">LUNAS</span>
+                </div>
+            @endif
+            <div id="wrapper-nama-2-{{ $item->id }}"
+                class="{{ $item->nama_2 || $item->nama_asli_2 ? '' : 'participant-2-hidden' }} mt-1 pt-1 border-top">
+                <input form="form-update-{{ $item->id }}" type="text" name="nama_2" class="table-input"
+                    value="{{ $item->nama_2 }}" placeholder="Nama ke-2..."
+                    onblur="quickUpdateField(this, {{ $item->id }}, 'nama_2')">
+            </div>
+            <div class="d-flex align-items-center mt-2 px-1" style="gap: 4px;">
+                @php
+                    $statusClass = 'status-aktif';
+                    if ($item->status == 'Aktif')
+                        $statusClass = 'status-aktif';
+                    elseif (in_array($item->status, ['Cuti', 'OFF', 'off']))
+                        $statusClass = 'status-cuti';
+                    elseif ($item->status == 'Lulus')
+                        $statusClass = 'status-lulus';
+                    
+                    // Use calculated is_all_paid from controller if available, fallback to manual check
+                    $isAllPaid = property_exists($item, 'is_all_paid') ? $item->is_all_paid : $isAllPaid;
+                 @endphp
+                @php
+                    // [USER_REQUEST] Hide "Aktif" badge if it needs approval but is not yet Approved
+                    $isStatusVisible = true;
+                    if ($showApproval && $item->approval_status !== 'Approved') {
+                        $isStatusVisible = false;
+                    }
+                @endphp
+                @if($isStatusVisible)
+                <select class="badge-status {{ $statusClass }}" onchange="quickUpdateField(this, {{ $item->id }}, 'status')"
+                    style="width: 70px; font-size: 0.65rem; padding: 2px 6px;">
+                    <option value="Aktif" {{ $item->status == 'Aktif' ? 'selected' : '' }} class="text-dark bg-white">Aktif</option>
+                    <option value="Lulus" {{ $item->status == 'Lulus' ? 'selected' : '' }} class="text-dark bg-white">Lulus</option>
+                    <option value="OFF" {{ (in_array($item->status, ['Cuti', 'OFF', 'off'])) ? 'selected' : '' }} class="text-dark bg-white">OFF</option>
+                </select>
+                @else
+                    <span class="badge badge-warning opacity-50" style="font-size: 0.65rem; padding: 3px 8px;">Menunggu Verifikasi</span>
+                @endif
+                
+                <input form="form-update-{{ $item->id }}" type="date" name="tanggal_masuk" id="tgl_masuk_{{ $item->id }}"
+                    class="form-control form-control-sm p-0 text-center" 
+                    style="font-size: 0.65rem; height: 18px; width: 75px; border-radius: 4px; border: 1px solid #e3e6f0; color: #4e73df; font-weight: bold;"
+                    value="{{ $item->tanggal_masuk }}"
+                    title="Ganti Tanggal Masuk"
+                    onchange="quickUpdateField(this, {{ $item->id }}, 'tanggal_masuk')">
+            </div>
+
+            @if(in_array($item->status, ['Cuti', 'OFF', 'off']))
+                <div class="mt-2 d-flex flex-column px-1" style="gap: 4px;">
+                    <a href="javascript:void(0)" onclick="focusTanggalSelesai({{ $item->id }})"
+                        class="text-secondary font-weight-bold"
+                        style="font-size: 0.65rem; border-bottom: 1px dashed #858796; text-decoration: none; width: fit-content;">
+                        <i class="fas fa-calendar-check mr-1"></i> Tgl Selesai
+                    </a>
+                </div>
+            @endif
+        </td>
+
+        {{-- Nama Peserta Asli --}}
+        <td class="p-1 align-middle d-none">
+            <input form="form-update-{{ $item->id }}" type="text" name="nama_asli" class="table-input"
+                value="{{ $item->nama_asli }}" placeholder="Nama asli..."
+                onblur="quickUpdateField(this, {{ $item->id }}, 'nama_asli')">
+            <div id="wrapper-nama-asli-2-{{ $item->id }}"
+                class="{{ $item->nama_2 || $item->nama_asli_2 ? '' : 'participant-2-hidden' }} mt-1 pt-1 border-top">
+                <input form="form-update-{{ $item->id }}" type="text" name="nama_asli_2" class="table-input"
+                    value="{{ $item->nama_asli_2 }}" placeholder="Nama asli ke-2..."
+                    onblur="quickUpdateField(this, {{ $item->id }}, 'nama_asli_2')">
+            </div>
+        </td>
+
+        {{-- Status / Level Hidden Columns --}}
+        <td class="p-1 align-middle text-center d-none"></td>
+        <td class="p-1 align-middle text-center d-none"></td>
+
+        {{-- Biaya Closing Awal --}}
+        <td class="p-1 align-middle text-center">
+            @php
+                $biayaClosing = $item->total_pembayaran ?? ((float)$item->spp_awal + (float)$item->pembayaran_spp);
+                if (!$biayaClosing) {
+                    $biayaClosing = $item->spp_awal;
+                }
+             @endphp
+            <div class="text-center h6 font-weight-bold text-dark mb-1" id="biaya_closing_display_{{ $item->id }}">
+                {{ number_format((float) $biayaClosing, 0, ',', '.') }}
+            </div>
+            
+            {{-- Approval Status Integrated Here --}}
+            @php
+                $approvalClass = 'status-pending';
+                if ($item->approval_status == 'Approved') $approvalClass = 'status-approved';
+                elseif ($item->approval_status == 'Rejected') $approvalClass = 'status-rejected';
+                $isChapterOrAgen = in_array($userRole, ['chapter', 'reseller', 'agen']);
+            @endphp
+            @if($showApproval)
+                @if($isAdmin)
+                    {{-- Admin: dropdown approve + view bukti --}}
+                    <select class="badge-status {{ $approvalClass }}" onchange="quickUpdateField(this, {{ $item->id }}, 'approval_status')"
+                        style="width: 85px; font-size: 0.75rem; padding: 2px 6px; height: 26px;">
+                        <option value="Pending" {{ ($item->approval_status == 'Pending' || !$item->approval_status) ? 'selected' : '' }} style="background-color: #f6c23e; color: white;">Pending</option>
+                        <option value="Approved" {{ $item->approval_status == 'Approved' ? 'selected' : '' }} style="background-color: #1cc88a; color: white;">Approved</option>
+                        <option value="Rejected" {{ $item->approval_status == 'Rejected' ? 'selected' : '' }} style="background-color: #e74a3b; color: white;">Rejected</option>
+                    </select>
+                    @if($item->bukti_transfer)
+                        <button type="button" class="btn btn-outline-primary mt-1"
+                            style="width: 85px; font-size: 0.75rem; padding: 2px 6px; border-radius: 50px; font-weight: 700; display: block; margin: 2px auto 0;"
+                            onclick="viewBuktiTransfer('{{ str_starts_with($item->bukti_transfer, 'uploads/') ? asset($item->bukti_transfer) : Storage::url($item->bukti_transfer) }}', '{{ addslashes($item->nama) }}')">
+                            <i class="fas fa-image"></i> Bukti
+                        </button>
+                    @else
+                        <span class="text-muted mt-1 d-block" style="font-size: 0.6rem;"><i class="fas fa-exclamation-circle mr-1"></i>Blm ada bukti</span>
+                    @endif
+                @elseif($isChapterOrAgen)
+                    {{-- Chapter/Agen: show status + upload button --}}
+                    <span class="badge-status {{ $approvalClass }}" style="width: 85px; font-size: 0.75rem; padding: 2px 6px; cursor: default; display: inline-block;">
+                        {{ $item->approval_status ?: 'Pending' }}
+                    </span>
+                    <button type="button" class="btn btn-xs btn-info mt-1 shadow-sm"
+                        style="font-size: 0.6rem; padding: 2px 6px; border-radius: 10px;"
+                        onclick="openUploadBukti({{ $item->id }}, '{{ addslashes($item->nama) }}', '{{ $item->bukti_transfer ? (str_starts_with($item->bukti_transfer, 'uploads/') ? asset($item->bukti_transfer) : Storage::url($item->bukti_transfer)) : '' }}')">
+                        <i class="fas fa-upload mr-1"></i>
+                        {{ $item->bukti_transfer ? 'Ganti Bukti' : 'Upload Bukti' }}
+                    </button>
+                @else
+                    <span class="badge-status {{ $approvalClass }}" style="width: 85px; font-size: 0.75rem; padding: 2px 6px; cursor: default; display: inline-block;">
+                        {{ $item->approval_status ?: 'Pending' }}
+                    </span>
+                @endif
+            @endif
+        </td>
+
+        {{-- CS yang Closing --}}
+        <td class="p-1 align-middle text-center">
+            <span class="text-dark font-weight-bold" style="font-size: 0.8rem;">
+                {{ $item->cs_name ?: ($item->closingCs->name ?? ($item->salesPlan ? $item->salesPlan->created_by_name : ($item->createdBy->name ?? '-'))) }}
+            </span>
+        </td>
+        @for($i = 1; $i <= 12; $i++)
+            <td class="text-center align-middle p-0 spp-col {{ $i > 1 ? 'spp-extra' : '' }}">
+                @php
+                    $isVisible = true;
+                    if (in_array($item->status, ['Cuti', 'OFF', 'off']) || $item->status == 'Lulus') {
+                        $isVisible = false;
+                    }
+                    $selectedMonths = [];
+                    $excludedMonths = [];
+                    if ($item->salesPlan) {
+                        $sel = $item->salesPlan->selected_months;
+                        if (is_array($sel)) {
+                            $selectedMonths = $sel;
+                        } else if (is_string($sel)) {
+                            $selectedMonths = json_decode($sel, true) ?? [];
+                        }
+                    }
+                    if (isset($selectedMonths['excluded_months'])) {
+                        $excludedMonths = $selectedMonths['excluded_months'];
+                        unset($selectedMonths['excluded_months']);
+                    }
+                    $isPlanChecked = false;
+                    $effectiveDate = null;
+                    if ($item->salesPlan) {
+                        if ($item->salesPlan->tanggal_closing) {
+                            $effectiveDate = \Carbon\Carbon::parse($item->salesPlan->tanggal_closing);
+                        } else {
+                            $effectiveDate = $item->tanggal_masuk ? \Carbon\Carbon::parse($item->tanggal_masuk) : $item->salesPlan->updated_at;
+                        }
+                    } else {
+                        $effectiveDate = $item->tanggal_masuk ? \Carbon\Carbon::parse($item->tanggal_masuk) : $item->created_at;
+                    }
+
+                    if ($effectiveDate && $effectiveDate->format('Y') == $filterYear && (int)$effectiveDate->format('n') == $i) {
+                        $isPlanChecked = true;
+                    }
+
+                    // Also check selected_months for other planned installments (Blue)
+                    if (isset($selectedMonths[$filterYear]) && in_array((int) $i, $selectedMonths[$filterYear])) {
+                        $isPlanChecked = true;
+                    }
+
+                    // [USER_REQUEST] Khusus tahun 2026: checklist biru mulai dari April (bulan 4)
+                    // Sembunyikan biru untuk bulan Jan/Feb/Mar 2026
+                    if ($filterYear == 2026 && $i <= 3) {
+                        $isPlanChecked = false;
+                    }
+
+                    // Exclude from plan checklist if explicitly unchecked by the user
+                    if (isset($excludedMonths[$filterYear]) && in_array((int) $i, $excludedMonths[$filterYear])) {
+                        $isPlanChecked = false;
+                    }
+                @endphp
+                @if($isVisible)
+                    @php
+                        $customSchedule = $item->spp_custom_schedule ?? [];
+                        $plannedNominal = null;
+                        $plannedDate = null;
+                        foreach ($customSchedule as $sch) {
+                            if ($sch['month'] == $i && ($sch['year'] ?? $filterYear) == $filterYear) {
+                                $plannedNominal = $sch['nominal'];
+                                $plannedDate = $sch['date'];
+                                break;
+                            }
+                        }
+                        $isPaid = ($item->{"spp_$i"} >= $levelNominal);
+                        
+                        // [USER_REQUEST] Verify if the payment year matches the currently filtered year
+                        // If payment was made in a different year, don't show it as 'paid' for this year view.
+                        if ($isPaid && $item->{"tanggal_spp_$i"}) {
+                            $paymentYear = \Carbon\Carbon::parse($item->{"tanggal_spp_$i"})->format('Y');
+                            if ($paymentYear != $filterYear) {
+                                $isPaid = false;
+                            }
+                        }
+
+                        // Arrears check for this specific month
+                        $isMenunggakThisMonth = false;
+                        if (request('filter_spp_status') === 'menunggak' && $item->status === 'Aktif' && !$isAllPaid && !$isPaid) {
+                            $joinMonth = 1;
+                            if ($item->tanggal_masuk) {
+                                try {
+                                    $joinDate = \Carbon\Carbon::parse($item->tanggal_masuk);
+                                    if ($joinDate->year == $filterYear) {
+                                        $joinMonth = (int)$joinDate->month;
+                                    }
+                                } catch (\Exception $e) {}
+                            }
+                            
+                            $activeMonthVal = request('filter_spp_month');
+                            if (!$activeMonthVal || $activeMonthVal === 'all') {
+                                $activeMonthVal = date('n');
+                            }
+                            $currentActiveMonth = (int)$activeMonthVal;
+                            
+                            if ($i >= $joinMonth && $i < $currentActiveMonth) {
+                                $isClosingInMonth = false;
+                                if ($item->salesPlan) {
+                                    $effDate = null;
+                                    if ($item->salesPlan->tanggal_closing) {
+                                        $effDate = \Carbon\Carbon::parse($item->salesPlan->tanggal_closing);
+                                    } else {
+                                        $effDate = $item->tanggal_masuk ? \Carbon\Carbon::parse($item->tanggal_masuk) : $item->salesPlan->updated_at;
+                                    }
+                                    if ($effDate && (int)$effDate->month === $i && (int)$effDate->year == $filterYear) {
+                                        $isClosingInMonth = true;
+                                    }
+                                } else {
+                                    $effDate = $item->tanggal_masuk ? \Carbon\Carbon::parse($item->tanggal_masuk) : $item->created_at;
+                                    if ($effDate && (int)$effDate->month === $i && (int)$effDate->year == $filterYear) {
+                                        $isClosingInMonth = true;
+                                    }
+                                }
+                                
+                                $isPlannedInMonth = false;
+                                foreach ((array)$customSchedule as $sch) {
+                                    if ($sch['month'] == $i && ($sch['year'] ?? $filterYear) == $filterYear) {
+                                        $isPlannedInMonth = true;
+                                        break;
+                                    }
+                                }
+                                if (!$isPlannedInMonth && $item->salesPlan) {
+                                    $selectedMonths = $item->salesPlan->selected_months;
+                                    if (is_string($selectedMonths)) {
+                                        $selectedMonths = json_decode($selectedMonths, true) ?? [];
+                                    }
+                                    if (isset($selectedMonths[$filterYear]) && is_array($selectedMonths[$filterYear])) {
+                                        if (in_array($i, $selectedMonths[$filterYear])) {
+                                            $isPlannedInMonth = true;
+                                        }
+                                    }
+                                }
+                                
+                                $isBlueInMonth = $isClosingInMonth || $isPlannedInMonth;
+                                if (!$isBlueInMonth) {
+                                    $isMenunggakThisMonth = true;
+                                }
+                            }
+                        }
+                    @endphp
+                    <div class="spp-wrapper {{ $isMenunggakThisMonth ? 'spp-menunggak-border' : '' }}">
+                        @php
+                            // [USER_REQUEST] Blue for initial plan check, Green for manual monthly check
+                            // [USER_REQUEST] All blue if status is "Lunas" (isAllPaid)
+                            $accentColor = '#1cc88a'; // Default Green (Manual)
+                            if ($isAllPaid || $isPlanChecked || $plannedNominal) {
+                                $accentColor = '#4e73df'; // Blue
+                            }
+                        @endphp
+                        @php
+                            $canCheckSpp = (auth()->user()->name === 'Linda' || strtolower(auth()->user()->role) === 'administrator');
+                        @endphp
+                        <input type="checkbox" class="spp-checkbox" data-id="{{ $item->id }}" data-month="{{ $i }}"
+                            data-planned-nominal="{{ $plannedNominal }}" data-level-nominal="{{ $levelNominal }}"
+                            {{ ($isPaid || $isPlanChecked) ? 'checked' : '' }}
+                            style="accent-color: {{ $accentColor }}; {{ !$canCheckSpp ? 'cursor: not-allowed; opacity: 0.7;' : '' }}"
+                            title="{{ $plannedNominal ? 'Rencana: Rp ' . number_format($plannedNominal, 0, ',', '.') : 'Centang jika Lunas (Rp ' . number_format($levelNominal, 0, ',', '.') . ')' }}"
+                            {!! $canCheckSpp ? 'onclick="toggleSppLunasDirectly(this)"' : 'onclick="return false;"' !!}>
+
+                        <input form="form-update-{{ $item->id }}" type="text" name="spp_{{ $i }}" id="spp_{{ $i }}_{{ $item->id }}"
+                            value="{{ $isPaid ? number_format($item->{"spp_$i"}, 0, ',', '.') : '0' }}"
+                            class="table-input input-currency spp-input-small d-none" placeholder="0"
+                            oninput="syncSppCheckbox(this, {{ $i }}, {{ $item->id }})" onclick="void(0)"
+                            onblur="quickUpdateField(this, {{ $item->id }}, 'spp_{{ $i }}')">
+
+                        @if($isPaid)
+                            <div id="date_tanggal_spp_{{ $i }}_{{ $item->id }}" class="text-muted"
+                                style="font-size: 0.6rem; color: {{ $accentColor }} !important; font-weight: bold; margin-top: 1px;">
+                                <i class="fas fa-{{ ($isAllPaid || $isPlanChecked) ? 'check-double' : 'check-circle' }}"></i>
+                                {{ $item->{"tanggal_spp_$i"} ? \Carbon\Carbon::parse($item->{"tanggal_spp_$i"})->format('d/m/y') : '' }}
+                            </div>
+                        @elseif($plannedNominal)
+                            <div class="text-primary font-weight-bold" style="font-size: 0.65rem; margin-top: 1px;">
+                                Rp {{ number_format($plannedNominal, 0, ',', '.') }}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.55rem; opacity: 0.8;">
+                                {{ $plannedDate ? \Carbon\Carbon::parse($plannedDate)->format('d/m/y') : '' }}
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <span class="text-muted small" style="font-size: 0.7rem;">-</span>
+                @endif
+            </td>
+        @endfor
+
+        {{-- Action Buttons --}}
+        <td class="text-center align-middle">
+            <div class="d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-danger btn-sm btn-icon-split shadow-sm" title="Hapus"
+                    style="padding: 2px 6px;" onclick="deletePeserta({{ $item->id }}, this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
+@endforeach

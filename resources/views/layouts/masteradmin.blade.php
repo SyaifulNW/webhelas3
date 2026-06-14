@@ -460,29 +460,32 @@
                             $nama = $userName ?? '';
                             $namaSMI = ['Latifah', 'Tursia', 'Agus Setyo'];
 
-                            $pendingM1TCount = 0;
-                            if (
-                                $userRole === 'administrator' ||
-                                stripos($userName, 'Linda') !== false ||
-                                stripos($userName, 'Yasmin') !== false ||
-                                stripos($userName, 'Shafa Zahra') !== false
-                            ) {
-                                $pendingM1TCount = \App\Models\PesertaSmi::where(function ($q) {
-                                    $q->where('approval_status', 'Pending')->orWhereNull('approval_status');
-                                })
-                                    ->where(function ($q) {
-                                        $q->whereHas('closingCs', function ($sq) {
-                                            $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
-                                        })
-                                            ->orWhereHas('createdBy', function ($sq) {
+                            $cacheVersion = \Cache::get('pending_m1t_cache_version', 1);
+                            $pendingM1TCount = \Cache::remember('pending_m1t_count_' . Auth::id() . '_v' . $cacheVersion, 3600, function () use ($userRole, $userName) {
+                                if (
+                                    $userRole === 'administrator' ||
+                                    stripos($userName, 'Linda') !== false ||
+                                    stripos($userName, 'Yasmin') !== false ||
+                                    stripos($userName, 'Shafa Zahra') !== false
+                                ) {
+                                    return \App\Models\PesertaSmi::where(function ($q) {
+                                        $q->where('approval_status', 'Pending')->orWhereNull('approval_status');
+                                    })
+                                        ->where(function ($q) {
+                                            $q->whereHas('closingCs', function ($sq) {
                                                 $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
                                             })
-                                            ->orWhereHas('salesPlan.createdBy', function ($sq) {
-                                                $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
-                                            });
-                                    })
-                                    ->count();
-                            }
+                                                ->orWhereHas('createdBy', function ($sq) {
+                                                    $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+                                                })
+                                                ->orWhereHas('salesPlan.createdBy', function ($sq) {
+                                                    $sq->whereIn('role', ['reseller', 'chapter', 'agen']);
+                                                });
+                                        })
+                                        ->count();
+                                }
+                                return 0;
+                            });
                         @endphp
 
                         <style>
