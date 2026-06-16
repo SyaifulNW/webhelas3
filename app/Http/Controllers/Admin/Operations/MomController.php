@@ -144,30 +144,27 @@ class MomController extends Controller
 
     /**
      * Show the standalone form for creating a new MoM record (Helas Corp only).
-     * URL: /admin/mom/form-{username} — username is slugified from Auth::user()->name
+     * URL: /admin/mom/form-{username} — publicly accessible, username is slugified name/username.
      */
     public function create(Request $request, string $username)
     {
-        $permissions = self::getMomPermissions();
+        $owner = \App\Models\User::get()->first(function($u) use ($username) {
+            return \Illuminate\Support\Str::slug($u->name) === $username || \Illuminate\Support\Str::slug($u->username) === $username;
+        });
 
-        if (!$permissions['canEdit']) {
-            abort(403, 'Akses ditolak.');
+        if (!$owner) {
+            abort(404, 'User tidak ditemukan.');
         }
 
-        // Verify the username slug in the URL belongs to the authenticated user
-        $expectedSlug = \Illuminate\Support\Str::slug(Auth::user()->name);
-        if ($username !== $expectedSlug) {
+        $role = strtolower(trim($owner->role ?? ''));
+        if (in_array($role, self::BLOCKED_ROLES) || str_starts_with($role, 'chapter_')) {
             abort(403, 'Akses ditolak.');
         }
 
         // Form is always for Helas Corp — no unit in URL needed
         $unit = 'Helas Corp';
 
-        if (!in_array($unit, $permissions['canAccessUnits'])) {
-            abort(403, 'Akses ditolak.');
-        }
-
-        return view('admin.Operations.mom.form-mom', compact('unit'));
+        return view('admin.Operations.mom.form-mom', compact('unit', 'owner', 'username'));
     }
 
     /**
@@ -175,9 +172,21 @@ class MomController extends Controller
      */
     public function submitForm(Request $request)
     {
-        $permissions = self::getMomPermissions();
+        $ownerUsername = $request->input('owner_username');
+        if (!$ownerUsername) {
+            return redirect()->back()->withErrors(['error' => 'Validasi error: pemilik form tidak ditentukan.']);
+        }
 
-        if (!$permissions['canEdit']) {
+        $owner = \App\Models\User::get()->first(function($u) use ($ownerUsername) {
+            return \Illuminate\Support\Str::slug($u->name) === $ownerUsername || \Illuminate\Support\Str::slug($u->username) === $ownerUsername;
+        });
+
+        if (!$owner) {
+            return redirect()->back()->withErrors(['error' => 'User tidak ditemukan.']);
+        }
+
+        $role = strtolower(trim($owner->role ?? ''));
+        if (in_array($role, self::BLOCKED_ROLES) || str_starts_with($role, 'chapter_')) {
             return redirect()->back()->withErrors(['error' => 'Akses ditolak.']);
         }
 
@@ -185,10 +194,6 @@ class MomController extends Controller
 
         if ($unit !== 'Helas Corp') {
             return redirect()->back()->withErrors(['error' => 'Form input hanya tersedia untuk MoM Helas Corp.']);
-        }
-
-        if (!in_array($unit, $permissions['canAccessUnits'])) {
-            return redirect()->back()->withErrors(['error' => 'Akses ditolak.']);
         }
 
         $validated = $request->validate([
@@ -203,12 +208,18 @@ class MomController extends Controller
 
         Mom::create(array_merge($validated, [
             'unit'       => $unit,
-            'created_by' => Auth::id(),
+            'created_by' => $owner->id,
         ]));
 
-        return redirect()
-            ->route('admin.mom.index', ['unit' => 'Helas Corp'])
-            ->with('success', 'Data MoM berhasil ditambahkan.');
+        if (Auth::check()) {
+            return redirect()
+                ->route('admin.mom.index', ['unit' => 'Helas Corp'])
+                ->with('success', 'Data MoM berhasil ditambahkan.');
+        } else {
+            return redirect()
+                ->back()
+                ->with('success', 'Data MoM berhasil dikirim.');
+        }
     }
 
     /**

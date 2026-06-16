@@ -255,6 +255,7 @@
         <form method="POST" action="{{ route('admin.mom.formSubmit') }}" novalidate>
             @csrf
             <input type="hidden" name="unit" value="{{ $unit }}">
+            <input type="hidden" name="owner_username" value="{{ $username }}">
 
             {{-- Card 1: Tanggal --}}
             <div class="field-card">
@@ -291,7 +292,7 @@
             <div class="field-card">
                 <label class="field-label" for="pic">PIC / Penanggung Jawab <span class="req">*</span></label>
                 <input type="text" id="pic" name="pic" class="field-input"
-                    value="{{ old('pic', Auth::user()->name) }}" placeholder="Nama penanggung jawab" required>
+                    value="{{ old('pic', isset($owner) ? $owner->name : (Auth::check() ? Auth::user()->name : '')) }}" placeholder="Nama penanggung jawab" required>
                 @if ($errors->has('pic'))
                     <div class="field-error">{{ $errors->first('pic') }}</div>
                 @endif
@@ -338,7 +339,11 @@
             {{-- Action buttons --}}
             <div class="action-card">
                 <button type="submit" class="btn-submit">Kirim Formulir</button>
-                <a href="{{ route('admin.mom.index', ['unit' => $unit]) }}" class="btn-cancel">Batal</a>
+                @if (Auth::check())
+                    <a href="{{ route('admin.mom.index', ['unit' => $unit]) }}" class="btn-cancel">Batal</a>
+                @else
+                    <a href="javascript:history.back()" class="btn-cancel">Batal</a>
+                @endif
             </div>
 
         </form>

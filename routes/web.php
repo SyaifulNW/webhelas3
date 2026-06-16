@@ -103,6 +103,11 @@ Route::middleware('auth')->group(function () {
 Route::get('/form-m1t/{identifier}', [DataController::class, 'formM1t'])->name('form.m1t');
 Route::post('/form-m1t/store', [DataController::class, 'storeFormM1t'])->name('form.m1t.store');
 
+// ✅ Public MoM Form Routes (Shared Links)
+Route::get('/admin/mom/form-{username}', [MomController::class, 'create'])->name('admin.mom.create');
+Route::post('/admin/mom/form-submit', [MomController::class, 'submitForm'])->name('admin.mom.formSubmit');
+
+
 // ✅ Auth Routes
 Auth::routes(['register' => false]);
 
@@ -110,13 +115,13 @@ Auth::routes(['register' => false]);
 Route::get('/profile', 'App\Http\Controllers\Common\ProfileController@index')->name('profile.index');
 Route::put('/profile/update', 'App\Http\Controllers\Common\ProfileController@update')->name('profile.update');
 // ✅ Custom Login Pages
-Route::get('/login-marketing', function () {
-    return view('auth.login-marketing');
-})->name('login.marketing');
+// Route::get('/login-marketing', function () {
+//     return view('auth.login-marketing');
+// })->name('login.marketing');
 
-Route::get('/login-smi', function () {
-    return view('auth.login-SMI');
-})->name('login.smi');
+// Route::get('/login-smi', function () {
+//     return view('auth.login-SMI');
+// })->name('login.smi');
 
 // ✅ Maintenance & Debug (Administrator Only)
 Route::middleware(['auth', 'role:administrator'])->group(function () {
@@ -365,9 +370,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/mom', [MomController::class, 'store'])->name('mom.store');
             Route::put('/mom/{id}', [MomController::class, 'update'])->name('mom.update');
             Route::delete('/mom/{id}', [MomController::class, 'destroy'])->name('mom.destroy');
-            // Form-based input (separate from AJAX store above)
-            Route::get('/mom/form-{username}', [MomController::class, 'create'])->name('mom.create');
-            Route::post('/mom/form-submit', [MomController::class, 'submitForm'])->name('mom.formSubmit');
+            // Form-based input (handled publicly outside middleware group)
         });
 
         // Wallet Management (Admin)
