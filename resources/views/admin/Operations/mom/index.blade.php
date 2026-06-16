@@ -6,7 +6,7 @@
         $isReadOnly = $permissions['isReadOnly'] ?? true;
         $seeAllData = $permissions['seeAllData'] ?? false;
         $availableUnits = $permissions['canAccessUnits'] ?? ['Helas Corp'];
-        $colCount = $canEdit ? 9 : 8;
+        $colCount = $canEdit ? 8 : 7;
     @endphp
 
     <div class="container-fluid px-4">
@@ -18,8 +18,7 @@
                     <h1 class="h3 font-weight-bold text-gray-800 mb-1">
                         <i class="fas fa-clipboard-list text-primary mr-2"></i> Minutes of Meeting (MoM)
                     </h1>
-                    <p class="text-muted small mb-0">Media pencatatan, monitoring hasil rapat, dan tindak lanjut pekerjaan
-                        tim.</p>
+                    <p class="text-muted small mb-0">Media pencatatan, monitoring hasil rapat, dan tindak lanjut pekerjaan tim.</p>
                 </div>
                 <div class="ml-auto d-flex align-items-center" style="gap:6px;">
                     @if ($isReadOnly)
@@ -59,20 +58,21 @@
             {{-- Toolbar --}}
             <div class="row mb-3 align-items-center px-1 pt-3">
                 <div class="col-md-8 d-flex align-items-center flex-wrap" style="gap:8px;">
-                    <label for="filter-status" class="mb-0 text-muted font-weight-bold text-uppercase"
-                        style="font-size:.68rem;letter-spacing:.5px;white-space:nowrap;">Filter Status:</label>
-                    <select id="filter-status" class="border rounded px-2 py-1 text-dark font-weight-bold"
-                        style="font-size:.8rem;outline:none;cursor:pointer;background:#fff;height:32px;min-width:130px;">
-                        <option value="all">Semua Status</option>
-                        <option value="Progress">Progress</option>
-                        <option value="Done">Done</option>
-                        <option value="Overdue">Overdue</option>
-                    </select>
-                    <button id="btn-refresh"
+                    <label for="filter-deadline" class="mb-0 text-muted font-weight-bold text-uppercase"
+                        style="font-size:.68rem;letter-spacing:.5px;white-space:nowrap;">Filter Deadline:</label>
+                    <div class="d-flex align-items-center" style="gap:4px;">
+                        <input type="date" id="filter-deadline" class="border rounded px-2 py-1 text-dark font-weight-bold"
+                            style="font-size:.8rem;outline:none;cursor:pointer;background:#fff;height:32px;min-width:180px;">
+                        <button type="button" id="btn-clear-deadline" class="btn btn-light border d-flex align-items-center justify-content-center"
+                            style="height:32px;width:32px;padding:0;display:none;" title="Bersihkan filter">
+                            <i class="fas fa-times text-secondary" style="font-size:.8rem;"></i>
+                        </button>
+                    </div>
+                    <!-- <button id="btn-refresh"
                         class="btn btn-light border shadow-sm d-flex align-items-center justify-content-center"
                         style="height:32px;width:32px;padding:0;" title="Refresh">
                         <i class="fas fa-sync-alt text-secondary" style="font-size:.8rem;"></i>
-                    </button>
+                    </button> -->
                     <span id="active-unit-badge" class="badge badge-pill px-3 py-2 font-weight-bold"
                         style="font-size:.72rem;">
                         <i class="fas fa-building mr-1"></i>
@@ -108,12 +108,11 @@
                                 $creatorName = $creator->name ?? '(User dihapus)';
                                 $creatorRole = $creator->role ?? '';
                                 $creatorDivisi = $creator->divisi ?? '';
-                                // Label: pakai divisi jika ada, fallback ke role
                                 $divisiLabel = $creatorDivisi ?: $creatorRole;
                             @endphp
 
                             <div class="mom-user-group mb-4" data-creator="{{ $creatorId }}">
-                                {{-- Header indikator divisi --}}
+                                {{-- Header divisi --}}
                                 <div class="mom-user-header">
                                     <i class="fas fa-user mr-2"></i>
                                     <span class="mom-user-name">{{ $creatorName }}</span>
@@ -134,8 +133,7 @@
                                                             style="width:40px;">No</th>
                                                         <th class="py-2 text-uppercase small align-middle"
                                                             style="width:105px;">Tanggal</th>
-                                                        <th class="py-2 text-uppercase small align-middle">Keterangan / Poin
-                                                        </th>
+                                                        <th class="py-2 text-uppercase small align-middle">ToDoList / Task</th>
                                                         <th class="py-2 text-uppercase small align-middle"
                                                             style="width:105px;">Deadline</th>
                                                         <th class="py-2 text-uppercase small align-middle"
@@ -143,9 +141,18 @@
                                                         <th class="py-2 text-uppercase small align-middle"
                                                             style="width:155px;">Target</th>
                                                         <th class="py-2 text-uppercase small align-middle"
-                                                            style="width:155px;">Hasil</th>
-                                                        <th class="py-2 text-uppercase small align-middle"
-                                                            style="width:115px;">Status</th>
+                                                            style="min-width:180px;">
+                                                            <div class="d-flex flex-column align-items-center" style="gap:4px;">
+                                                                <span>Realisasi & Status</span>
+                                                                <select class="filter-status-table border rounded px-1 py-0 text-white font-weight-bold" 
+                                                                    style="font-size:.7rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:22px; width:120px;">
+                                                                    <option value="all" style="color:#333;">Semua Status</option>
+                                                                    <option value="Progress" style="color:#333;">Progress</option>
+                                                                    <option value="Done" style="color:#333;">Done</option>
+                                                                    <option value="Overdue" style="color:#333;">Overdue</option>
+                                                                </select>
+                                                            </div>
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody class="bg-white">
@@ -159,20 +166,19 @@
                                                                         : 'bg-status-progress');
                                                         @endphp
                                                         <tr>
-                                                            <td
-                                                                class="text-center font-weight-bold text-muted align-middle small">
-                                                                {{ $idx + 1 }}</td>
-                                                            <td class="text-center align-middle small">
+                                                            <td class="text-center font-weight-bold text-muted align-middle small">
+                                                                {{ $idx + 1 }}
+                                                            </td>
+                                                            <td class="text-center align-middle small text-muted font-weight-bold">
                                                                 {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
                                                             </td>
                                                             <td class="p-0 align-middle tc-cell readonly-cell"
-                                                                data-label="Keterangan / Poin">
+                                                                data-label="ToDoList / Task">
                                                                 <div class="tc-view">
-                                                                    <div class="tc-text">{{ $item->keterangan ?: '' }}
-                                                                    </div>
+                                                                    <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
                                                                     @if ($item->keterangan)
                                                                         <button class="btn-lihat"
-                                                                            onclick="showPopup('Keterangan / Poin', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                            onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('.tc-text').textContent)">
                                                                             <i class="fas fa-eye"></i> Lihat
                                                                         </button>
                                                                     @endif
@@ -182,7 +188,8 @@
                                                                 {{ $item->deadline ? \Carbon\Carbon::parse($item->deadline)->format('d/m/Y') : '-' }}
                                                             </td>
                                                             <td class="align-middle small" style="padding:5px 7px;">
-                                                                {{ $item->pic ?: '-' }}</td>
+                                                                {{ $item->pic ?: '-' }}
+                                                            </td>
                                                             <td class="p-0 align-middle tc-cell readonly-cell"
                                                                 data-label="Target">
                                                                 <div class="tc-view">
@@ -197,25 +204,22 @@
                                                                     @endif
                                                                 </div>
                                                             </td>
-                                                            <td class="p-0 align-middle tc-cell readonly-cell"
-                                                                data-label="Hasil">
-                                                                <div class="tc-view">
-                                                                    <div class="tc-text"
-                                                                        data-placeholder="Hasil tindak lanjut...">
+                                                            <td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
+                                                                <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                                                    <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
                                                                         {{ $item->hasil ?: '' }}</div>
-                                                                    @if ($item->hasil)
-                                                                        <button class="btn-lihat"
-                                                                            onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)">
-                                                                            <i class="fas fa-eye"></i> Lihat
-                                                                        </button>
-                                                                    @endif
+                                                                    <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                                                        @if ($item->hasil)
+                                                                            <button class="btn-lihat" style="margin-top:0;"
+                                                                                onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                                <i class="fas fa-eye"></i> Lihat
+                                                                            </button>
+                                                                        @endif
+                                                                        <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                                            {{ $item->status ?: '-' }}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
-                                                            </td>
-                                                            <td class="text-center align-middle p-1">
-                                                                <span class="{{ $sc }}"
-                                                                    style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 1px 3px rgba(0,0,0,.12);">
-                                                                    {{ $item->status ?: '-' }}
-                                                                </span>
                                                             </td>
                                                         </tr>
                                                     @endforeach
@@ -241,22 +245,25 @@
                                     <thead class="text-white text-center" id="mom-thead">
                                         <tr>
                                             <th class="py-3 text-uppercase small align-middle" style="width:50px;">No</th>
-                                            <th class="py-3 text-uppercase small align-middle" style="width:120px;">
-                                                Tanggal</th>
-                                            <th class="py-3 text-uppercase small align-middle">Keterangan / Poin</th>
-                                            <th class="py-3 text-uppercase small align-middle" style="width:120px;">
-                                                Deadline</th>
-                                            <th class="py-3 text-uppercase small align-middle" style="width:130px;">PIC
-                                            </th>
-                                            <th class="py-3 text-uppercase small align-middle" style="width:170px;">Target
-                                            </th>
-                                            <th class="py-3 text-uppercase small align-middle" style="width:170px;">Hasil
-                                            </th>
-                                            <th class="py-3 text-uppercase small align-middle" style="width:130px;">Status
+                                            <th class="py-3 text-uppercase small align-middle" style="width:120px;">Tanggal</th>
+                                            <th class="py-3 text-uppercase small align-middle">ToDoList / Task</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:120px;">Deadline</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:130px;">PIC</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:170px;">Target</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="min-width:200px;">
+                                                <div class="d-flex flex-column align-items-center" style="gap:5px;">
+                                                    <span>Realisasi & Status</span>
+                                                    <select id="filter-status-table" class="border rounded px-2 py-1 text-white font-weight-bold" 
+                                                        style="font-size:.75rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:26px; width:130px;">
+                                                        <option value="all" style="color:#333;">Semua Status</option>
+                                                        <option value="Progress" style="color:#333;">Progress</option>
+                                                        <option value="Done" style="color:#333;">Done</option>
+                                                        <option value="Overdue" style="color:#333;">Overdue</option>
+                                                    </select>
+                                                </div>
                                             </th>
                                             @if ($canEdit)
-                                                <th class="py-3 text-uppercase small align-middle" style="width:55px;">
-                                                    Aksi</th>
+                                                <th class="py-3 text-uppercase small align-middle" style="width:55px;">Aksi</th>
                                             @endif
                                         </tr>
                                     </thead>
@@ -272,20 +279,18 @@
                                             @endphp
                                             <tr data-id="{{ $item->id }}">
                                                 <td class="text-center font-weight-bold text-muted no-col align-middle">
-                                                    {{ $index + 1 }}</td>
-
-                                                <td class="p-1 align-middle">
-                                                    <input type="date"
-                                                        class="form-control-inline text-center live-field"
-                                                        data-field="tanggal" value="{{ $item->tanggal }}">
+                                                    {{ $index + 1 }}
+                                                </td>
+                                                <td class="text-center align-middle small text-muted font-weight-bold">
+                                                    {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
                                                 </td>
 
-                                                <td class="p-0 align-middle tc-cell" data-label="Keterangan / Poin">
+                                                <td class="p-0 align-middle tc-cell" data-label="ToDoList / Task">
                                                     <div class="tc-view">
                                                         <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
                                                         @if ($item->keterangan)
                                                             <button class="btn-lihat"
-                                                                onclick="showPopup('Keterangan / Poin', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('textarea, .tc-text').textContent)">
                                                                 <i class="fas fa-eye"></i> Lihat
                                                             </button>
                                                         @endif
@@ -300,8 +305,14 @@
                                                 </td>
 
                                                 <td class="p-1 align-middle">
-                                                    <textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1"
-                                                        placeholder="Nama PIC ...">{{ $item->pic }}</textarea>
+                                                    <select class="form-control-inline live-field" data-field="pic">
+                                                        <option value="">Pilih PIC</option>
+                                                        @foreach ($pics as $pic)
+                                                            <option value="{{ $pic->name }}" {{ $item->pic === $pic->name ? 'selected' : '' }}>
+                                                                {{ $pic->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </td>
 
                                                 <td class="p-0 align-middle tc-cell" data-label="Target">
@@ -318,44 +329,40 @@
                                                     <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan...">{{ $item->target }}</textarea>
                                                 </td>
 
-                                                <td class="p-0 align-middle tc-cell" data-label="Hasil">
-                                                    <div class="tc-view">
-                                                        <div class="tc-text" data-placeholder="Hasil tindak lanjut...">
+                                                <td class="p-0 align-middle tc-cell" data-label="Hasil & Status">
+                                                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
                                                             {{ $item->hasil ?: '' }}</div>
-                                                        @if ($item->hasil)
-                                                            <button class="btn-lihat"
-                                                                onclick="showPopup('Hasil', this.closest('td').querySelector('textarea, .tc-text').textContent)">
-                                                                <i class="fas fa-eye"></i> Lihat
-                                                            </button>
-                                                        @endif
+                                                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                                            @if ($item->hasil)
+                                                                <button class="btn-lihat" style="margin-top:0;"
+                                                                    onclick="showPopup('Hasil', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                    <i class="fas fa-eye"></i> Lihat
+                                                                </button>
+                                                            @endif
+                                                            <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                                {{ $item->status }}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut...">{{ $item->hasil }}</textarea>
+                                                    <div class="tc-edit-wrapper" style="display:none; padding:6px 8px;">
+                                                        <textarea class="tc-textarea live-field mb-2" data-field="hasil" placeholder="Hasil tindak lanjut..." style="display:block; width:100%;">{{ $item->hasil }}</textarea>
+                                                        <select class="form-control-inline live-field status-select {{ $sc }}" data-field="status" style="width:100% !important;">
+                                                            <option value="Progress" {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
+                                                            <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>Done</option>
+                                                            <option value="Overdue" {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
+                                                        </select>
+                                                    </div>
                                                 </td>
 
-                                                <td class="text-center align-middle p-1">
-                                                    <select
-                                                        class="form-control-inline live-field status-select {{ $sc }}"
-                                                        data-field="status">
-                                                        <option value="" disabled
-                                                            {{ !$item->status ? 'selected' : '' }}>Pilih status</option>
-                                                        <option value="Progress"
-                                                            {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress
-                                                        </option>
-                                                        <option value="Done"
-                                                            {{ $item->status === 'Done' ? 'selected' : '' }}>Done
-                                                        </option>
-                                                        <option value="Overdue"
-                                                            {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue
-                                                        </option>
-                                                    </select>
-                                                </td>
-
-                                                <td class="text-center align-middle p-1">
-                                                    <button class="btn btn-link text-danger p-0 btn-delete"
-                                                        data-id="{{ $item->id }}" title="Hapus">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
+                                                @if ($canEdit)
+                                                    <td class="text-center align-middle p-1">
+                                                        <button class="btn btn-link text-danger p-0 btn-delete"
+                                                            data-id="{{ $item->id }}" title="Hapus">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </td>
+                                                @endif
                                             </tr>
                                         @empty
                                             <tr class="empty-row">
@@ -553,7 +560,7 @@
             letter-spacing: .5px !important;
             text-align: center !important;
             text-align-last: center !important;
-            width: 108px !important;
+            width: 100% !important;
             cursor: pointer !important;
             border: none !important;
             -webkit-appearance: none !important;
@@ -561,22 +568,26 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, .12) !important;
         }
 
-        .bg-status-progress {
+        .bg-status-progress,
+        .badge.bg-status-progress {
             background: #fff176 !important;
             color: #6d5000 !important;
         }
 
-        .bg-status-done {
+        .bg-status-done,
+        .badge.bg-status-done {
             background: #c8f5d8 !important;
             color: #155724 !important;
         }
 
-        .bg-status-overdue {
+        .bg-status-overdue,
+        .badge.bg-status-overdue {
             background: #ffd6d6 !important;
             color: #721c24 !important;
         }
 
-        .bg-status-none {
+        .bg-status-none,
+        .badge.bg-status-none {
             background: #f0f0f0 !important;
             color: #888 !important;
         }
@@ -656,6 +667,10 @@
 
         .tc-cell.editing .tc-textarea {
             display: block;
+        }
+
+        .tc-cell.editing .tc-edit-wrapper {
+            display: block !important;
         }
 
         .tc-cell:not(.editing):not(.readonly-cell):hover .tc-view {
@@ -768,6 +783,7 @@
             const CAN_EDIT = {{ $canEdit ? 'true' : 'false' }};
             const SEE_ALL = {{ $seeAllData ? 'true' : 'false' }};
             const COL_COUNT = {{ $colCount }};
+            const PICS = @json($pics);
 
             let activeUnit = "{{ $unit }}";
 
@@ -777,9 +793,10 @@
                 return s === 'Done' ? 'bg-status-done' : s === 'Overdue' ? 'bg-status-overdue' : 'bg-status-progress';
             }
 
+            window.statusClass = statusClass; // expose to window for html access if needed
+
             function applyUnitTheme(unit) {
                 const clinic = unit === 'Helas Aesthetic Clinic';
-                // thead — apply to ALL thead elements (grouped tables + single table)
                 $('#mom-thead, .mom-group-thead')
                     .removeClass('thead-corp thead-clinic')
                     .addClass(clinic ? 'thead-clinic' : 'thead-corp');
@@ -824,6 +841,15 @@
             }
 
             function emptyRow() {
+                const dl = $('#filter-deadline').val();
+                if (dl) {
+                    return `<tr class="empty-row">
+                    <td colspan="${COL_COUNT}" class="text-center py-5 text-muted">
+                        <i class="fas fa-calendar-times fa-2x d-block mb-2" style="opacity:.3;"></i>
+                        <strong>Tidak ada data MoM pada tanggal deadline tersebut (${fmtDate(dl)})</strong>
+                    </td>
+                </tr>`;
+                }
                 return `<tr class="empty-row">
                 <td colspan="${COL_COUNT}" class="text-center py-5 text-muted">
                     <i class="fas fa-folder-open fa-2x d-block mb-2" style="opacity:.3;"></i>
@@ -840,7 +866,7 @@
                     loadUnit(activeUnit, false);
                     return;
                 }
-                const f = $('#filter-status').val();
+                const f = $('#filter-status-table').val();
                 $('.filtered-empty').remove();
                 let vis = 0;
                 $('#mom-table-body tr').not('.empty-row').each(function() {
@@ -879,6 +905,15 @@
                 return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : val;
             }
 
+            function buildPicSelect(selectedPic) {
+                let options = `<option value="">Pilih PIC</option>`;
+                PICS.forEach(pic => {
+                    const sel = pic.name === selectedPic ? 'selected' : '';
+                    options += `<option value="${escHtml(pic.name)}" ${sel}>${escHtml(pic.name)}</option>`;
+                });
+                return `<select class="form-control-inline live-field" data-field="pic">${options}</select>`;
+            }
+
             // ── Row builders (non-admin) ──────────────────────────────────────────────
 
             function buildTcCell(item, field, label, placeholder) {
@@ -894,26 +929,47 @@
             </td>`;
             }
 
+            function buildHasilCell(item) {
+                const hasilVal = item.hasil || '';
+                const statusVal = item.status || 'Progress';
+                const sc = statusClass(statusVal);
+                
+                const lihat = hasilVal ?
+                    `<button class="btn-lihat" style="margin-top:0;" onclick="showPopup('Hasil', this.closest('td').querySelector('textarea,.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
+                    '';
+                
+                return `<td class="p-0 align-middle tc-cell" data-label="Hasil & Status">
+                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">${escHtml(hasilVal)}</div>
+                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                            ${lihat}
+                            <span class="badge ${sc} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                ${statusVal}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="tc-edit-wrapper" style="display:none; padding:6px 8px;">
+                        <textarea class="tc-textarea live-field mb-2" data-field="hasil" placeholder="Hasil tindak lanjut..." style="display:block; width:100%;">${escHtml(hasilVal)}</textarea>
+                        <select class="form-control-inline live-field status-select ${sc}" data-field="status" style="width:100% !important;">
+                            <option value="Progress" ${statusVal==='Progress'?'selected':''}>Progress</option>
+                            <option value="Done"     ${statusVal==='Done'    ?'selected':''}>Done</option>
+                            <option value="Overdue"  ${statusVal==='Overdue' ?'selected':''}>Overdue</option>
+                        </select>
+                    </div>
+                </td>`;
+            }
+
             function buildRowsHtml(moms) {
                 if (!moms || moms.length === 0) return emptyRow();
                 return moms.map((item, i) => {
-                    const sc = statusClass(item.status);
                     return `<tr data-id="${item.id}">
                     <td class="text-center font-weight-bold text-muted no-col align-middle">${i + 1}</td>
-                    <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="tanggal" value="${escHtml(item.tanggal||'')}"></td>
-                    ${buildTcCell(item,'keterangan','Keterangan / Poin','Tulis keterangan/poin rapat...')}
+                    <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
+                    ${buildTcCell(item,'keterangan','ToDoList / Task','Tulis keterangan/poin rapat...')}
                     <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value="${escHtml(item.deadline||'')}"></td>
-                    <td class="p-1 align-middle"><textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1" placeholder="Nama PIC ...">${escHtml(item.pic||'')}</textarea></td>
+                    <td class="p-1 align-middle">${buildPicSelect(item.pic)}</td>
                     ${buildTcCell(item,'target','Target','Target pekerjaan...')}
-                    ${buildTcCell(item,'hasil','Hasil','Hasil tindak lanjut...')}
-                    <td class="text-center align-middle p-1">
-                        <select class="form-control-inline live-field status-select ${sc}" data-field="status">
-                            <option value="" disabled>Pilih status</option>
-                            <option value="Progress" ${item.status==='Progress'?'selected':''}>Progress</option>
-                            <option value="Done"     ${item.status==='Done'    ?'selected':''}>Done</option>
-                            <option value="Overdue"  ${item.status==='Overdue' ?'selected':''}>Overdue</option>
-                        </select>
-                    </td>
+                    ${buildHasilCell(item)}
                     <td class="text-center align-middle p-1">
                         <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>
                     </td>
@@ -924,29 +980,18 @@
             function buildNewRow(item) {
                 return `<tr data-id="${item.id}">
                 <td class="text-center font-weight-bold text-muted no-col align-middle">1</td>
-                <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="tanggal" value="${item.tanggal||''}"></td>
-                <td class="p-0 align-middle tc-cell editing" data-label="Keterangan / Poin">
+                <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
+                <td class="p-0 align-middle tc-cell editing" data-label="ToDoList / Task">
                     <div class="tc-view"><div class="tc-text"></div></div>
                     <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat..."></textarea>
                 </td>
                 <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value=""></td>
-                <td class="p-1 align-middle"><textarea class="form-control-inline live-field auto-resize" data-field="pic" rows="1" placeholder="PIC..."></textarea></td>
+                <td class="p-1 align-middle">${buildPicSelect(item.pic)}</td>
                 <td class="p-0 align-middle tc-cell" data-label="Target">
                     <div class="tc-view"><div class="tc-text" data-placeholder="Target pekerjaan..."></div></div>
                     <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan..."></textarea>
                 </td>
-                <td class="p-0 align-middle tc-cell" data-label="Hasil">
-                    <div class="tc-view"><div class="tc-text" data-placeholder="Hasil tindak lanjut..."></div></div>
-                    <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut..."></textarea>
-                </td>
-                <td class="text-center align-middle p-1">
-                    <select class="form-control-inline live-field status-select bg-status-none" data-field="status">
-                        <option value="" disabled selected>Pilih status</option>
-                        <option value="Progress">Progress</option>
-                        <option value="Done">Done</option>
-                        <option value="Overdue">Overdue</option>
-                    </select>
-                </td>
+                ${buildHasilCell(item)}
                 <td class="text-center align-middle p-1">
                     <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>
                 </td>
@@ -957,9 +1002,11 @@
 
             function buildGroupedHtml(moms) {
                 if (!moms || moms.length === 0) {
+                    const dl = $('#filter-deadline').val();
+                    const msg = dl ? `Tidak ada data MoM pada tanggal deadline tersebut (${fmtDate(dl)})` : 'Belum Ada Data MoM';
                     return `<div class="text-center py-5 text-muted">
                     <i class="fas fa-folder-open fa-2x mb-2 d-block" style="opacity:.3;"></i>
-                    <strong>Belum Ada Data MoM</strong>
+                    <strong>${msg}</strong>
                 </div>`;
                 }
 
@@ -985,9 +1032,8 @@
                     const count = group.rows.length;
 
                     const rows = group.rows.map((item, i) => {
-                        const sc = statusClass(item.status);
                         const keterangan = item.keterangan || '';
-                        const target = item.hasil || '';
+                        const target = item.target || '';
                         const hasil = item.hasil || '';
 
                         const tcReadonly = (val, label, placeholder) => {
@@ -1001,19 +1047,32 @@
                         </td>`;
                         };
 
+                        const tcReadonlyHasil = (val, status) => {
+                            const sc = statusClass(status);
+                            const lihat = val ?
+                                `<button class="btn-lihat" style="margin-top:0;" onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
+                                '';
+                            return `<td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
+                                <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                    <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">${escHtml(val)}</div>
+                                    <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                        ${lihat}
+                                        <span class="badge ${sc} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                            ${escHtml(status||'-')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>`;
+                        };
+
                         return `<tr>
                         <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
-                        <td class="text-center align-middle small">${fmtDate(item.tanggal)}</td>
-                        ${tcReadonly(keterangan, 'Keterangan / Poin', 'Tulis keterangan/poin rapat...')}
+                        <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
+                        ${tcReadonly(keterangan, 'ToDoList / Task', 'Tulis keterangan/poin rapat...')}
                         <td class="text-center align-middle small">${fmtDate(item.deadline)}</td>
                         <td class="align-middle small" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>
-                        ${tcReadonly(item.target||'', 'Target', 'Target pekerjaan...')}
-                        ${tcReadonly(item.hasil||'', 'Hasil', 'Hasil tindak lanjut...')}
-                        <td class="text-center align-middle p-1">
-                            <span class="${sc}" style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 1px 3px rgba(0,0,0,.12);">
-                                ${escHtml(item.status||'-')}
-                            </span>
-                        </td>
+                        ${tcReadonly(target, 'Target', 'Target pekerjaan...')}
+                        ${tcReadonlyHasil(hasil, item.status)}
                     </tr>`;
                     }).join('');
 
@@ -1031,12 +1090,22 @@
                                         <tr>
                                             <th class="py-2 text-uppercase small align-middle" style="width:40px;">No</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:105px;">Tanggal</th>
-                                            <th class="py-2 text-uppercase small align-middle">Keterangan / Poin</th>
+                                            <th class="py-2 text-uppercase small align-middle">ToDoList / Task</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:105px;">Deadline</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:120px;">PIC</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:155px;">Target</th>
-                                            <th class="py-2 text-uppercase small align-middle" style="width:155px;">Hasil</th>
-                                            <th class="py-2 text-uppercase small align-middle" style="width:115px;">Status</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="min-width:180px;">
+                                                <div class="d-flex flex-column align-items-center" style="gap:4px;">
+                                                    <span>Hasil & Status</span>
+                                                    <select class="filter-status-table border rounded px-1 py-0 text-white font-weight-bold" 
+                                                        style="font-size:.7rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:22px; width:120px;">
+                                                        <option value="all">Semua Status</option>
+                                                        <option value="Progress">Progress</option>
+                                                        <option value="Done">Done</option>
+                                                        <option value="Overdue">Overdue</option>
+                                                    </select>
+                                                </div>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white">${rows}</tbody>
@@ -1064,9 +1133,6 @@
                     success(res) {
                         if ($el) $el.css('opacity', '');
                         if (field === 'status') {
-                            $el.removeClass(
-                                    'bg-status-progress bg-status-done bg-status-overdue bg-status-none')
-                                .addClass(statusClass(value));
                             applyFilter();
                         }
                         toast('Tersimpan', 'success', 700);
@@ -1083,13 +1149,25 @@
             function loadUnit(unit, resetFilter) {
                 activeUnit = unit;
                 applyUnitTheme(unit);
-                if (resetFilter) $('#filter-status').val('all');
+                if (resetFilter) {
+                    $('#filter-status-table, .filter-status-table').val('all');
+                    $('#filter-deadline').val('');
+                    $('#btn-clear-deadline').hide();
+                }
 
                 const params = {
                     unit
                 };
-                const f = $('#filter-status').val();
+                const f = $('#filter-status-table').val() || $('.filter-status-table').val();
                 if (f && f !== 'all') params.status = f;
+
+                const dl = $('#filter-deadline').val();
+                if (dl) {
+                    params.deadline_filter = dl;
+                    $('#btn-clear-deadline').show();
+                } else {
+                    $('#btn-clear-deadline').hide();
+                }
 
                 const $icon = $('#btn-refresh').find('i').addClass('fa-spin');
 
@@ -1138,32 +1216,57 @@
                 loadUnit(unit, true);
             });
 
-            // ── Non-admin edit events ────────────────────────────────────────────────
+            // ── Non-admin edit events (Click outside handler) ─────────────────────────
 
             if (CAN_EDIT) {
-                $(document).on('click', '.tc-cell:not(.editing):not(.readonly-cell)', function(e) {
-                    if ($(e.target).closest('.btn-lihat').length) return;
-                    $(this).addClass('editing');
-                    const $ta = $(this).find('.tc-textarea');
-                    autoResize($ta[0]);
-                    $ta.focus();
+                $(document).on('click', function(e) {
+                    const $clickedCell = $(e.target).closest('.tc-cell:not(.editing):not(.readonly-cell)');
+                    if ($clickedCell.length) {
+                        if ($(e.target).closest('.btn-lihat, select, input, textarea').length) return;
+                        
+                        closeAllEditingCells();
+                        
+                        $clickedCell.addClass('editing');
+                        const $ta = $clickedCell.find('.tc-textarea');
+                        if ($ta.length) {
+                            autoResize($ta[0]);
+                            $ta.focus();
+                        }
+                        return;
+                    }
+
+                    // Click outside to close and save
+                    $('.tc-cell.editing').each(function() {
+                        const $td = $(this);
+                        if (!$td.is(e.target) && $td.has(e.target).length === 0) {
+                            saveCellData($td);
+                        }
+                    });
                 });
 
-                $(document).on('blur', '.tc-textarea.live-field', function() {
-                    const $ta = $(this);
-                    const $td = $ta.closest('.tc-cell');
+                function saveCellData($td) {
                     const id = $td.closest('tr').data('id');
+                    const $ta = $td.find('.tc-textarea');
+                    if (!$ta.length) {
+                        $td.removeClass('editing');
+                        return;
+                    }
                     const field = $ta.data('field');
                     const val = $ta.val().trim();
                     const orig = $ta.data('orig') ?? '';
                     const $text = $td.find('.tc-text');
-
+                    
                     $text.text(val);
+                    
                     let $btn = $td.find('.tc-view .btn-lihat');
                     if (val) {
                         if (!$btn.length) {
                             $btn = $(`<button class="btn-lihat"><i class="fas fa-eye"></i> Lihat</button>`);
-                            $td.find('.tc-view').append($btn);
+                            if (field === 'hasil') {
+                                $td.find('.tc-view .d-flex').prepend($btn);
+                            } else {
+                                $td.find('.tc-view').append($btn);
+                            }
                         }
                         $btn.attr('onclick',
                             `showPopup('${$td.data('label')}', this.closest('td').querySelector('textarea,.tc-text').textContent)`
@@ -1177,7 +1280,13 @@
                         $ta.data('orig', val);
                         saveField(id, field, val, $ta);
                     }
-                });
+                }
+
+                function closeAllEditingCells() {
+                    $('.tc-cell.editing').each(function() {
+                        saveCellData($(this));
+                    });
+                }
 
                 $(document).on('focus', '.tc-textarea.live-field', function() {
                     if ($(this).data('orig') === undefined) $(this).data('orig', $(this).val().trim());
@@ -1187,14 +1296,31 @@
                     autoResize(this);
                 });
 
-                $(document).on('change', 'input.live-field, select.live-field, textarea.form-control-inline.live-field',
-                    function() {
-                        const $el = $(this);
-                        const id = $el.closest('tr').data('id');
-                        const field = $el.data('field');
-                        if (!id || !field) return;
-                        saveField(id, field, $el.val(), $el);
-                    });
+                $(document).on('change', 'input.live-field, select.live-field:not([data-field="status"]), textarea.form-control-inline.live-field', function() {
+                    const $el = $(this);
+                    const id = $el.closest('tr').data('id');
+                    const field = $el.data('field');
+                    if (!id || !field) return;
+                    saveField(id, field, $el.val(), $el);
+                });
+
+                $(document).on('change', 'select[data-field="status"]', function() {
+                    const $select = $(this);
+                    const id = $select.closest('tr').data('id');
+                    const val = $select.val();
+                    if (!id) return;
+                    
+                    saveField(id, 'status', val, $select);
+                    
+                    const $td = $select.closest('.tc-cell');
+                    const $badge = $td.find('.tc-view .badge');
+                    $badge.removeClass('bg-status-progress bg-status-done bg-status-overdue bg-status-none')
+                          .addClass(statusClass(val))
+                          .text(val);
+                    
+                    $select.removeClass('bg-status-progress bg-status-done bg-status-overdue bg-status-none')
+                           .addClass(statusClass(val));
+                });
 
                 $(document).on('input', '.auto-resize', function() {
                     autoResize(this);
@@ -1254,7 +1380,7 @@
                             data: {
                                 _token: CSRF,
                                 _method: 'DELETE'
-                            },
+                              },
                             success() {
                                 $tr.fadeOut(350, function() {
                                     $tr.remove();
@@ -1272,9 +1398,24 @@
                 });
             }
 
-            // ── Filter & Refresh ─────────────────────────────────────────────────────
+            // ── Filter & Sort Events ──────────────────────────────────────────────────
 
-            $('#filter-status').on('change', applyFilter);
+            $(document).on('change', '#filter-status-table, .filter-status-table', function() {
+                const val = $(this).val();
+                $('#filter-status-table, .filter-status-table').val(val);
+                applyFilter();
+            });
+
+            $('#filter-deadline').on('change', function() {
+                loadUnit(activeUnit, false);
+            });
+
+            $('#btn-clear-deadline').on('click', function() {
+                $('#filter-deadline').val('');
+                $(this).hide();
+                loadUnit(activeUnit, false);
+            });
+
             $('#btn-refresh').on('click', function() {
                 loadUnit(activeUnit, false);
             });
