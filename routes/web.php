@@ -110,13 +110,13 @@ Auth::routes(['register' => false]);
 Route::get('/profile', 'App\Http\Controllers\Common\ProfileController@index')->name('profile.index');
 Route::put('/profile/update', 'App\Http\Controllers\Common\ProfileController@update')->name('profile.update');
 // ✅ Custom Login Pages
-Route::get('/login-marketing', function () {
-    return view('auth.login-marketing');
-})->name('login.marketing');
+// Route::get('/login-marketing', function () {
+//     return view('auth.login-marketing');
+// })->name('login.marketing');
 
-Route::get('/login-smi', function () {
-    return view('auth.login-SMI');
-})->name('login.smi');
+// Route::get('/login-smi', function () {
+//     return view('auth.login-SMI');
+// })->name('login.smi');
 
 // ✅ Maintenance & Debug (Administrator Only)
 Route::middleware(['auth', 'role:administrator'])->group(function () {

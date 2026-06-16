@@ -44,6 +44,9 @@ class MomController extends Controller
     {
         $user = Auth::user();
         $role = strtolower(trim($user->role ?? ''));
+        $username = strtolower(trim($user->username ?? ''));
+        $name = strtolower(trim($user->name ?? ''));
+        $isYasmin = ($username === 'yasmin' || $name === 'yasmin');
 
         // Blocked roles – should never reach here if route middleware is applied
         if (in_array($role, self::BLOCKED_ROLES) || str_starts_with($role, 'chapter_')) {
@@ -68,12 +71,12 @@ class MomController extends Controller
         // CS roles – full edit, own data only
         // Clinic panel only for users listed in CLINIC_UNIT_NAMES (e.g. Yasmin)
         if (in_array($role, self::MULTI_UNIT_ROLES)) {
-            $canAccessClinic = in_array($user->name, self::CLINIC_UNIT_NAMES);
+            $canAccessClinic = in_array($user->name, self::CLINIC_UNIT_NAMES) || $isYasmin;
             return [
                 'canAccessUnits' => $canAccessClinic ? self::UNITS : ['Helas Corp'],
                 'canEdit'        => true,
                 'isReadOnly'     => false,
-                'seeAllData'     => false,
+                'seeAllData'     => $isYasmin ? true : false,
             ];
         }
 
@@ -82,7 +85,7 @@ class MomController extends Controller
             'canAccessUnits' => ['Helas Corp'],
             'canEdit'        => true,
             'isReadOnly'     => false,
-            'seeAllData'     => false,
+            'seeAllData'     => $isYasmin ? true : false,
         ];
     }
 
@@ -104,6 +107,13 @@ class MomController extends Controller
             $unit = $permissions['canAccessUnits'][0];
         }
 
+        // Auto-update overdue records for this unit
+        Mom::where('unit', $unit)
+            ->where('status', '!=', 'Done')
+            ->whereNotNull('deadline')
+            ->where('deadline', '<', now()->toDateString())
+            ->update(['status' => 'Overdue']);
+
         $query = Mom::where('unit', $unit);
 
         // Non-admin users only see their own data
@@ -116,20 +126,39 @@ class MomController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Optional deadline filter
+        if ($request->filled('deadline_filter')) {
+            $query->whereDate('deadline', $request->deadline_filter);
+        }
+
         // For admin: eager-load creator and group by user
         if ($permissions['seeAllData']) {
             $query->with('creator');
         }
 
-        $moms = $query->orderBy('tanggal', 'desc')
-                      ->orderBy('created_at', 'desc')
-                      ->get();
+        // Sort by deadline (default to asc: closest deadline first)
+        $sortDeadline = $request->get('sort_deadline', 'asc');
+        if ($sortDeadline === 'asc') {
+            $query->orderByRaw('CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline asc');
+        } elseif ($sortDeadline === 'desc') {
+            $query->orderByRaw('CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline desc');
+        } else {
+            $query->orderBy('tanggal', 'desc')
+                  ->orderBy('created_at', 'desc');
+        }
+
+        $moms = $query->get();
 
         // Group by creator for admin view
         $groupedMoms = null;
         if ($permissions['seeAllData']) {
             $groupedMoms = $moms->groupBy('created_by');
         }
+
+        $pics = \App\Models\User::where('kategori', 'Pusat')
+            ->where('is_active', 1)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name']);
 
         if ($request->ajax()) {
             return response()->json([
@@ -139,7 +168,7 @@ class MomController extends Controller
             ]);
         }
 
-        return view('admin.Operations.mom.index', compact('moms', 'unit', 'permissions', 'groupedMoms'));
+        return view('admin.Operations.mom.index', compact('moms', 'unit', 'permissions', 'groupedMoms', 'pics'));
     }
 
     /**
@@ -192,23 +221,27 @@ class MomController extends Controller
         }
 
         $validated = $request->validate([
-            'tanggal'    => 'required|date',
-            'keterangan' => 'required|string',
-            'deadline'   => 'nullable|date',
-            'pic'        => 'required|string|max:255',
-            'target'     => 'required|string',
-            'hasil'      => 'nullable|string',
-            'status'     => 'required|in:Progress,Done,Overdue',
+            'points'              => 'required|array|min:1',
+            'points.*.keterangan' => 'required|string',
+            'points.*.deadline'   => 'nullable|date',
         ]);
 
-        Mom::create(array_merge($validated, [
-            'unit'       => $unit,
-            'created_by' => Auth::id(),
-        ]));
+        foreach ($validated['points'] as $point) {
+            Mom::create([
+                'tanggal'    => now()->toDateString(),
+                'pic'        => Auth::user()->name,
+                'target'     => '',
+                'keterangan' => $point['keterangan'],
+                'deadline'   => $point['deadline'] ?? null,
+                'status'     => 'Progress',
+                'unit'       => $unit,
+                'created_by' => Auth::id(),
+            ]);
+        }
 
         return redirect()
-            ->route('admin.mom.index', ['unit' => 'Helas Corp'])
-            ->with('success', 'Data MoM berhasil ditambahkan.');
+            ->route('admin.mom.create', ['username' => \Illuminate\Support\Str::slug(Auth::user()->name)])
+            ->with('success', 'Data MoM berhasil disimpan.');
     }
 
     /**
