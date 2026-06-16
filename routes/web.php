@@ -377,6 +377,7 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('wallet')->name('wallet.')->group(function () {
             Route::get('/', [AdminWalletController::class, 'index'])->name('index');
             Route::get('/transactions', [AdminWalletController::class, 'transactions'])->name('transactions');
+            Route::get('/earnings/{userId}', [AdminWalletController::class, 'earnings'])->name('earnings');
             Route::post('/withdrawal/{id}/process', [AdminWalletController::class, 'processWithdrawal'])->name('withdrawal.process');
             Route::delete('/transaction/{id}', [AdminWalletController::class, 'destroyTransaction'])->name('transaction.destroy');
         });

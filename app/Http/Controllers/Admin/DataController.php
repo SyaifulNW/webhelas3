@@ -423,10 +423,10 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             } else {
                 // Belum Pernah Ikut
                 if (!empty($daftarKelasFilter)) {
-                    // Belum pernah ikut kelas spesifik
-                    $query->whereDoesntHave('salesplan', function($q) use ($daftarKelasFilter) {
-                        $q->where('status', 'sudah_transfer')
-                          ->where('kelas_id', $daftarKelasFilter);
+                    // Belum pernah ikut kelas spesifik (harus terdaftar di salesplan untuk kelas tersebut dengan status bukan sudah_transfer)
+                    $query->whereHas('salesplan', function($q) use ($daftarKelasFilter) {
+                        $q->where('kelas_id', $daftarKelasFilter)
+                          ->where('status', '!=', 'sudah_transfer');
                     });
                 } else {
                     // Belum pernah ikut kelas APAPUN
@@ -1495,64 +1495,422 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         ini_set('memory_limit', '512M');
         set_time_limit(300);
 
-        $bulan = $request->input('bulan');
-        if (!$bulan) {
-            $bulan = (int) date('m');
-        }
-        $tahun = $request->input('tahun', date('Y'));
-        $csName = $request->input('cs_name');
+        $query = $this->getFilteredQuery($request);
 
-        $user = Auth::user();
-        // If regular CS (not admin/manager/marketing) and no filter selected, use their own name
-        if (!$csName && !in_array(strtolower($user->role), ['administrator', 'manager', 'marketing'])) {
-            $csName = $user->name;
-        }
+        // Fetch inputs for follow up period filtering
+        $bulanFilter = $request->input('bulan');
+        $tahunFilter = $request->input('tahun');
 
-        $query = Data::with(['salesplan' => function($q) {
-                $q->orderBy('updated_at', 'desc');
-            }])
-            ->whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan']);
+        // Display values for PDF header
+        $displayBulan = $bulanFilter ?: (int) date('m');
+        $displayTahun = $tahunFilter ?: (int) date('Y');
 
-        if ($bulan && $tahun) {
-            $query->where(function($q) use ($bulan, $tahun) {
+        $daftarKelasFilter = $request->input('daftar_kelas');
+        $prospekKelasId = $request->input('prospek_kelas_id');
+        $kelasIdFilter = $request->input('kelas_id');
+        $kelasFilter = $request->input('kelas');
+        $targetKelasId = $daftarKelasFilter ?: ($prospekKelasId ?: ($kelasIdFilter ?: $kelasFilter));
+
+        // --- FILTER HANYAN YANG SUDAH DI FOLLOW UP ---
+        $query->where(function($q) use ($bulanFilter, $tahunFilter, $targetKelasId) {
+            if (!empty($bulanFilter) && !empty($tahunFilter)) {
                 // Check in data table
-                $q->where(function($subq) use ($bulan, $tahun) {
+                $q->where(function($subq) use ($bulanFilter, $tahunFilter) {
                     for($i=1; $i<=10; $i++) {
-                        $subq->orWhere(function($subq2) use ($i, $bulan, $tahun) {
-                            $subq2->whereMonth("fu{$i}_at", $bulan)
-                                  ->whereYear("fu{$i}_at", $tahun);
+                        $subq->orWhere(function($subq2) use ($i, $bulanFilter, $tahunFilter) {
+                            $subq2->whereMonth("fu{$i}_at", $bulanFilter)
+                                  ->whereYear("fu{$i}_at", $tahunFilter);
                         });
                     }
                 })
                 // OR check in salesplans table
-                ->orWhereHas('salesplan', function($subq) use ($bulan, $tahun) {
-                    $subq->where(function($subq2) use ($bulan, $tahun) {
+                ->orWhereHas('salesplan', function($subq) use ($bulanFilter, $tahunFilter, $targetKelasId) {
+                    if (!empty($targetKelasId) && $targetKelasId !== 'all') {
+                        $subq->where('kelas_id', $targetKelasId);
+                    }
+                    $subq->where(function($subq2) use ($bulanFilter, $tahunFilter) {
                         for($i=1; $i<=10; $i++) {
-                            $subq2->orWhere(function($subq3) use ($i, $bulan, $tahun) {
-                                $subq3->whereMonth("fu{$i}_at", $bulan)
-                                      ->whereYear("fu{$i}_at", $tahun);
+                            $subq2->orWhere(function($subq3) use ($i, $bulanFilter, $tahunFilter) {
+                                $subq3->whereMonth("fu{$i}_at", $bulanFilter)
+                                      ->whereYear("fu{$i}_at", $tahunFilter);
                             });
                         }
                     });
                 });
-            });
-        }
+            } else {
+                // Check in data table for any follow-up
+                $q->where(function($subq) {
+                    for($i=1; $i<=10; $i++) {
+                        $subq->orWhereNotNull("fu{$i}_at")
+                              ->orWhere("fu{$i}_hasil", '!=', '')
+                              ->orWhereNotNull("fu{$i}_hasil")
+                              ->orWhere("fu{$i}_tindak_lanjut", '!=', '')
+                              ->orWhereNotNull("fu{$i}_tindak_lanjut")
+                              ->orWhere("fu{$i}_wa", 1)
+                              ->orWhere("fu{$i}_telp", 1);
+                    }
+                })
+                // OR check in salesplans table for any follow-up
+                ->orWhereHas('salesplan', function($subq) use ($targetKelasId) {
+                    if (!empty($targetKelasId) && $targetKelasId !== 'all') {
+                        $subq->where('kelas_id', $targetKelasId);
+                    }
+                    $subq->where(function($subq2) {
+                        for($i=1; $i<=10; $i++) {
+                            $subq2->orWhereNotNull("fu{$i}_at")
+                                  ->orWhere("fu{$i}_hasil", '!=', '')
+                                  ->orWhereNotNull("fu{$i}_hasil")
+                                  ->orWhere("fu{$i}_tindak_lanjut", '!=', '')
+                                  ->orWhereNotNull("fu{$i}_tindak_lanjut")
+                                  ->orWhere("fu{$i}_wa", 1)
+                                  ->orWhere("fu{$i}_telp", 1);
+                        }
+                    });
+                });
+            }
+        });
 
-        if ($csName) {
-            $query->where('created_by', $csName);
+        // Sorting
+        $sortByParam = $request->input('sort_by', 'created_at');
+        if ($sortByParam === 'follow_up') {
+            $kelasCond = '';
+            if (!empty($targetKelasId) && $targetKelasId !== 'all') {
+                $kelasCond = "AND salesplans.kelas_id = " . intval($targetKelasId);
+            }
+
+            $followUpCountSql = "(SELECT (
+                CASE WHEN fu1_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu2_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu3_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu4_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu5_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu6_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu7_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu8_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu9_at IS NOT NULL THEN 1 ELSE 0 END +
+                CASE WHEN fu10_at IS NOT NULL THEN 1 ELSE 0 END
+            ) FROM salesplans WHERE salesplans.data_id = data.id AND salesplans.deleted_at IS NULL {$kelasCond} ORDER BY salesplans.id DESC LIMIT 1)";
+            
+            $query->select('data.*');
+            $query->selectSub($followUpCountSql, 'fu_count_sort');
+            $query->orderBy('is_no_potensi', 'asc')
+                  ->orderBy('fu_count_sort', 'desc')
+                  ->orderBy('data.id', 'desc');
+        } else {
+            $query->orderBy('data.id', 'desc');
         }
 
         $items = $query->get();
 
-        $pdf = Pdf::loadView('admin.database.pdf-interaksi', [
+        // Get class name if filtered
+        $kelasName = null;
+        if (!empty($targetKelasId) && $targetKelasId !== 'all') {
+            $kelasObj = Kelas::find($targetKelasId);
+            if ($kelasObj) {
+                $kelasName = str_contains($kelasObj->nama_kelas, 'Muslim Indonesia') ? 'M1T' : $kelasObj->nama_kelas;
+            }
+        }
+
+        // Get status name if filtered
+        $statusFilter = $request->input('status');
+        $statusName = null;
+        if (!empty($statusFilter) && $statusFilter !== 'total_database') {
+            $statusName = ucfirst(str_replace('_', ' ', $statusFilter));
+        }
+
+        // Get CS name
+        $csFilter = $request->input('cs_name');
+        $user = Auth::user();
+        $userRole = strtolower($user->role);
+        if (!$csFilter && !in_array($userRole, ['administrator', 'manager', 'marketing'])) {
+            $csFilter = $user->name;
+        }
+
+        $pdf = Pdf::loadView('admin.Sales.database.pdf-interaksi', [
             'items' => $items,
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'csName' => $csName ?: 'Semua CS'
+            'bulan' => $displayBulan,
+            'tahun' => $displayTahun,
+            'csName' => $csFilter ?: 'Semua CS',
+            'kelasName' => $kelasName,
+            'statusName' => $statusName
         ])->setPaper('a4', 'landscape');
 
-        $fileName = 'Rekap_Interaksi_' . ($csName ?: 'Semua') . '_' . ($bulan ?: 'Semua') . '_' . $tahun . '.pdf';
+        $fileName = 'Rekap_Interaksi_' . ($csFilter ?: 'Semua') . '_' . ($displayBulan ?: 'Semua') . '_' . $displayTahun . '.pdf';
         return $pdf->download($fileName);
+    }
+
+    private function getFilteredQuery(Request $request)
+    {
+        $user = Auth::user();
+        $userRole = strtolower($user->role);
+
+        // Fetch inputs
+        $kelasFilter = $request->input('kelas');
+        $csFilter    = $request->input('cs_name');
+        $chapterFilter = $request->input('chapter_id');
+        $bulanFilter = $request->input('bulan');
+        $tahunFilter = $request->input('tahun');
+        $statusFilter = $request->input('status');
+        $potensiFilter = $request->input('potensi');
+        $kelasIdFilter = $request->input('kelas_id');
+        $searchFilter = $request->input('search');
+        
+        $ikutKelasFilter = $request->input('ikut_kelas');
+        $daftarKelasFilter = $request->input('daftar_kelas');
+        $zoomFilter = $request->input('zoom');
+        $bantFilter = $request->input('bant');
+        $sumberFilter = $request->input('sumber');
+        $kotaFilter = $request->input('kota');
+        $provinsiFilter = $request->input('provinsi');
+        $spinFilter = $request->input('filter_spin');
+        $prospekKelasId = $request->input('prospek_kelas_id');
+
+        // If regular CS (not admin/manager/marketing) and no filter selected, use their own name
+        if (!$csFilter && !in_array($userRole, ['administrator', 'manager', 'marketing'])) {
+            $csFilter = $user->name;
+        }
+
+        // Base Query
+        $query = Data::with(['kelas', 'salesplan' => function($q) use ($daftarKelasFilter, $prospekKelasId, $kelasIdFilter, $kelasFilter) {
+                $targetKelasId = $daftarKelasFilter ?: ($prospekKelasId ?: ($kelasIdFilter ?: $kelasFilter));
+                if (!empty($targetKelasId) && $targetKelasId !== 'all') {
+                    $q->where('kelas_id', $targetKelasId);
+                }
+                $q->orderBy('updated_at', 'desc');
+            }, 'salesplan.kelas', 'createdBy'])
+            ->whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan']);
+
+        $viewType = $request->input('view_type');
+        if (empty($viewType) && $userRole === 'administrator') {
+            $viewType = 'cs';
+        }
+        if ($userRole === 'operasional') {
+            $viewType = 'chapter';
+        }
+
+        if ($viewType === 'cs') {
+            $query->where('created_by_role', 'cs-mbc');
+        } elseif ($viewType === 'chapter') {
+            if (empty($csFilter) && empty($chapterFilter)) {
+                $query->where(function($q) {
+                    $q->whereIn('created_by_role', ['chapter', 'reseller', 'agen'])
+                      ->orWhere('created_by_role', 'operasional')
+                      ->orWhereIn('status_data', ['ADD OPS', 'EDIT OPS']);
+                });
+            }
+        } elseif ($userRole === 'cs-mbc') {
+            $query->whereNotIn('created_by_role', ['chapter', 'reseller', 'agen', 'operasional']);
+        }
+
+        // CS biasa -> hanya datanya sendiri
+        $forceMyData = $request->input('view') === 'me';
+        if ($userRole === 'marketing') {
+            if (stripos($user->name, 'Felmi') !== false) {
+                $query->whereIn('leads', ['Event', 'Open House']);
+            } elseif (stripos($user->name, 'Nisa') !== false) {
+                $query->whereIn('leads', ['Online', 'Sosmed']);
+            } else {
+                $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
+            }
+            $query->where('created_by_role', 'cs-mbc');
+        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && $user->name !== 'Agus Setyo') {
+            $query->where('created_by', $user->name);
+        }
+
+        // Manager
+        if ($userRole === 'manager') {
+            $query->whereIn('created_by', ['Latifah', 'Tursia']);
+        }
+
+        // Filter User
+        if (!empty($csFilter)) {
+            $query->where('created_by', $csFilter);
+        }
+
+        // Filter Chapter
+        if (!empty($chapterFilter)) {
+            $selectedChapter = User::find($chapterFilter);
+            if ($selectedChapter) {
+                $query->where('created_by', $selectedChapter->name);
+            }
+        }
+
+        // Filter Kelas & Bulan & Tahun (Created At)
+        if (!empty($kelasFilter)) {
+            $query->where('kelas_id', $kelasFilter);
+        }
+        if (!empty($bulanFilter)) {
+            $query->whereMonth('created_at', $bulanFilter);
+        }
+        if (!empty($tahunFilter)) {
+            $query->whereYear('created_at', $tahunFilter);
+        }
+
+        // Filter Potensi Kelas
+        if (!empty($potensiFilter)) {
+            $query->where('potensi', $potensiFilter);
+        }
+
+        // Filter Nama Kelas (dari dropdown dinamis MBC)
+        if (!empty($kelasIdFilter)) {
+            $query->where('kelas_id', $kelasIdFilter);
+        }
+
+        // Filter Search
+        if (!empty($searchFilter)) {
+            $query->where(function($q) use ($searchFilter) {
+                $q->where('nama', 'LIKE', '%'.$searchFilter.'%')
+                ->orWhere('leads', 'LIKE', '%'.$searchFilter.'%')
+                ->orWhere('nama_bisnis', 'LIKE', '%'.$searchFilter.'%')
+                ->orWhere('no_wa', 'LIKE', '%'.$searchFilter.'%')
+                ->orWhere('keterangan_spin', 'LIKE', '%'.$searchFilter.'%');
+            });
+        }
+
+        // Filter Sumber, Kota, Provinsi
+        if (!empty($sumberFilter)) {
+            $query->where('leads', $sumberFilter);
+        }
+        if (!empty($kotaFilter)) {
+            $query->where('kota_nama', $kotaFilter);
+        }
+        if (!empty($provinsiFilter)) {
+            $query->where('provinsi_nama', $provinsiFilter);
+        }
+
+        // Filter Spin
+        if (!empty($spinFilter)) {
+            if ($spinFilter === 'ALL') {
+                $query->where('bant_budget', 1)
+                      ->where('bant_authority', 1)
+                      ->where('bant_time', 1);
+            } elseif ($spinFilter === 'NOT_ALL') {
+                $query->where(function($q) {
+                    $q->where('bant_budget', '!=', 1)
+                      ->orWhereNull('bant_budget')
+                      ->orWhere('bant_authority', '!=', 1)
+                      ->orWhereNull('bant_authority')
+                      ->orWhere('bant_time', '!=', 1)
+                      ->orWhereNull('bant_time');
+                });
+            }
+        }
+
+        // Filter Zoom
+        if ($zoomFilter !== null && $zoomFilter !== '') {
+            $query->where('ikut_zoom', $zoomFilter);
+        }
+
+        // Filter Ikut Kelas (SalesPlan)
+        if ($ikutKelasFilter !== null && $ikutKelasFilter !== '') {
+            if ($ikutKelasFilter == '1') {
+                $query->whereHas('salesplan', function($q) use ($daftarKelasFilter) {
+                    $q->where('status', 'sudah_transfer');
+                    if (!empty($daftarKelasFilter)) {
+                        $q->where('kelas_id', $daftarKelasFilter);
+                    }
+                });
+            } else {
+                if (!empty($daftarKelasFilter)) {
+                    $query->whereHas('salesplan', function($q) use ($daftarKelasFilter) {
+                        $q->where('kelas_id', $daftarKelasFilter)
+                          ->where('status', '!=', 'sudah_transfer');
+                    });
+                } else {
+                    $query->whereDoesntHave('salesplan', function($q) {
+                        $q->where('status', 'sudah_transfer');
+                    });
+                }
+            }
+        }
+
+        // Filter BANT
+        if ($bantFilter !== null && $bantFilter !== '') {
+            $query->where('bant', $bantFilter);
+        }
+
+        // Filter Potensi
+        $potensiVal = $request->input('potensi');
+        $potensiKelasVal = $request->input('potensi_kelas_id');
+        if (!empty($potensiVal) && $potensiVal !== 'all') {
+            if (in_array(strtoupper($potensiVal), ['MBC', 'SMI'])) {
+                $query->where('potensi', strtoupper($potensiVal));
+                if (!empty($potensiKelasVal)) {
+                    $query->where('kelas_id', $potensiKelasVal);
+                }
+            } else {
+                $query->where(function($q) use ($potensiVal) {
+                    $q->where('potensi', $potensiVal)
+                      ->orWhere('potensi', strtolower($potensiVal))
+                      ->orWhere('potensi', strtoupper($potensiVal))
+                      ->orWhere('situasi_bisnis', 'like', '%Kategori: ' . strtoupper($potensiVal) . '%');
+                });
+            }
+        }
+
+        // Filter Prospek by Class
+        if (!empty($prospekKelasId) && $prospekKelasId !== 'all') {
+            $query->whereHas('salesplan', function($q) use ($prospekKelasId) {
+                $q->where('kelas_id', $prospekKelasId);
+            });
+        }
+
+        // Chapter Role
+        if ($userRole === 'chapter') {
+            $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+            $query->where(function($q) use ($user, $excludeNames) {
+                $q->where('created_by', $user->name)
+                  ->orWhere(function($subQ) use ($user, $excludeNames) {
+                      $subQ->where('kota_nama', 'like', '%' . $user->chapter . '%')
+                           ->whereNotIn('created_by', $excludeNames)
+                           ->where('created_by_role', '!=', 'cs-mbc');
+                  });
+            });
+        } elseif (in_array($userRole, ['reseller', 'agen'])) {
+            $downlineNames = User::where('created_by', $user->id)->pluck('name')->toArray();
+            $viewNames = array_merge([$user->name], $downlineNames);
+            if ($user->name === 'Tim Chapter Depok') {
+                $viewNames[] = 'AGUNG H. WIBOWO';
+            }
+            $query->whereIn('created_by', $viewNames);
+        }
+
+        // Khusus Agus Setyo
+        if ($user->name === 'Agus Setyo') {
+            $query->whereHas('kelas', function($q) {
+                $q->where('nama_kelas', 'Start-Up Muda Indonesia')
+                ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
+            });
+        }
+
+        // Filter Status (Legend Status)
+        if (!empty($statusFilter)) {
+            if ($statusFilter === 'total_database') {
+                // No status filter
+            } elseif ($statusFilter === 'database_baru') {
+                $now = \Carbon\Carbon::now();
+                $statsYear = $request->input('tahun', $now->year);
+                $statsMonth = $request->input('bulan', $now->month);
+                $query->whereYear('created_at', $statsYear)
+                      ->whereMonth('created_at', $statsMonth);
+            } elseif ($statusFilter === 'potensi') {
+                $query->whereHas('salesplan', function($q) use ($daftarKelasFilter) {
+                    $q->whereIn('status', ['cold', 'tertarik', 'mau_transfer']);
+                    if (!empty($daftarKelasFilter)) {
+                        $q->where('kelas_id', $daftarKelasFilter);
+                    }
+                });
+            } else {
+                $query->whereHas('salesplan', function($q) use ($statusFilter, $daftarKelasFilter) {
+                    $q->where('status', $statusFilter);
+                    if (!empty($daftarKelasFilter)) {
+                        $q->where('kelas_id', $daftarKelasFilter);
+                    }
+                });
+            }
+        }
+
+        return $query;
     }
 
     public function toggleNoPotensi($id)
