@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container-fluid">
-        <h3 class="fw-bold mb-4">Pengaturan Administrator</h3>
+        <h3 class="fw-bold mb-4">{{ $isOperasional ? 'Pengaturan Operasional (Chapter & Agen)' : 'Pengaturan Administrator' }}</h3>
 
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -24,10 +24,11 @@
             <li class="nav-item">
                 <a class="nav-link active" id="users-tab" data-toggle="tab" href="#users" role="tab">Users & Roles</a>
             </li>
+            @if (!$isOperasional)
             <li class="nav-item">
                 <a class="nav-link" id="target-tab" data-toggle="tab" href="#target" role="tab">Target Omset</a>
             </li>
-
+            @endif
         </ul>
 
         <div class="tab-content" id="settingTabContent">
@@ -38,7 +39,8 @@
                     <i class="fas fa-plus"></i> Tambah User Baru
                 </button>
 
-                {{-- Table Pusat Helas --}}
+                @if (!$isOperasional)
+                {{-- Table Pusat Helas (Administrator only) --}}
                 <div class="card mb-4 shadow-sm">
                     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                         <h6 class="mb-0 font-weight-bold"><i class="fas fa-building mr-2"></i>Pusat Helas</h6>
@@ -110,11 +112,12 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 {{-- Table Cabang Helas --}}
                 <div class="card shadow-sm">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 font-weight-bold"><i class="fas fa-store mr-2"></i>Cabang Helas (Chapter & Reseller)
+                        <h6 class="mb-0 font-weight-bold"><i class="fas fa-store mr-2"></i>{{ $isOperasional ? 'Cabang Helas (Chapter & Agen)' : 'Cabang Helas (Chapter & Reseller)' }}
                         </h6>
                     </div>
                     <div class="card-body p-0">
@@ -127,7 +130,9 @@
                                         <th>Email</th>
                                         <th>Role & Jumlah Agen</th>
                                         <th>Status</th>
+                                        @if (!$isOperasional)
                                         <th class="text-center">Transfer Database</th>
+                                        @endif
                                         <th class="text-right">Aksi</th>
                                     </tr>
                                 </thead>
@@ -138,7 +143,8 @@
                                     @foreach ($groupedCabang as $chapterName => $members)
                                         @php
                                             $leader = $members->where('role', 'chapter')->first();
-                                            $staff = $members->where('role', 'reseller');
+                                            // Include both reseller and agen as subordinates
+                                            $staff = $members->whereIn('role', ['reseller', 'agen']);
                                             $chapterId = Str::slug($chapterName ?: 'no-chapter');
                                         @endphp
 
@@ -188,6 +194,7 @@
                                                     </div>
                                                 @endif
                                             </td>
+                                            @if (!$isOperasional)
                                             <td class="text-center">
                                                 @if ($leader)
                                                     <button class="btn btn-sm btn-indigo shadow-sm btn-transfer-db"
@@ -196,6 +203,7 @@
                                                     </button>
                                                 @endif
                                             </td>
+                                            @endif
                                             <td class="text-right">
                                                 @if ($leader)
                                                     <button class="btn btn-sm btn-warning shadow-sm" data-toggle="modal"
@@ -260,6 +268,7 @@
                                                                             </label>
                                                                         </div>
                                                                     </td>
+                                                                    @if (!$isOperasional)
                                                                     <td class="text-center">
                                                                         <button
                                                                             class="btn btn-xs btn-outline-indigo btn-transfer-db"
@@ -269,6 +278,7 @@
                                                                             Transfer
                                                                         </button>
                                                                     </td>
+                                                                    @endif
                                                                     <td class="text-right">
                                                                         <button class="btn btn-sm btn-outline-warning"
                                                                             data-toggle="modal"
@@ -314,7 +324,8 @@
                 </div>
             </div>
 
-            {{-- TAB 2: TARGET OMSET --}}
+            @if (!$isOperasional)
+            {{-- TAB 2: TARGET OMSET (Administrator only) --}}
             <div class="tab-pane fade p-3 bg-white border border-top-0" id="target" role="tabpanel">
                 <form action="{{ route('admin.settings.target.update') }}" method="POST" class="col-md-6">
                     @csrf
@@ -335,6 +346,7 @@
                     <button type="submit" class="btn btn-primary">Simpan Target</button>
                 </form>
             </div>
+            @endif
 
 
 
@@ -551,7 +563,7 @@
             let currentChapter = chapterSelect.data('current');
             let takenList = @json($takenChapters);
 
-            if (role === 'chapter' || role === 'reseller') {
+            if (role === 'chapter' || role === 'reseller' || role === 'agen') {
                 container.slideDown();
                 chapterSelect.attr('required', true);
 
@@ -568,7 +580,7 @@
                             $(this).prop('disabled', false).text(val).css('background-color', '').show();
                         }
                     } else {
-                        // If role is reseller, clean view
+                        // If role is reseller or agen, clean view
                         $(this).prop('disabled', false).text(val).css('background-color', '').show();
                     }
                 });

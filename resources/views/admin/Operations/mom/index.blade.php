@@ -3,10 +3,12 @@
 @section('content')
     @php
         $canEdit = $permissions['canEdit'] ?? false;
+        $canDelete = $permissions['canDelete'] ?? false;
         $isReadOnly = $permissions['isReadOnly'] ?? true;
         $seeAllData = $permissions['seeAllData'] ?? false;
         $availableUnits = $permissions['canAccessUnits'] ?? ['Helas Corp'];
-        $colCount = $canEdit ? 8 : 7;
+        // Tampil kolom Aksi jika bisa edit ATAU bisa hapus (misal Yasmin)
+        $colCount = ($canEdit || $canDelete) ? 8 : 7;
     @endphp
 
     <div class="container-fluid px-4">
@@ -100,7 +102,7 @@
             <div id="mom-content-area">
 
                 @if ($seeAllData)
-                    {{-- ── ADMIN VIEW: grouped per user ── --}}
+                    {{-- ── ADMIN/SUPER VIEW: grouped per user ── --}}
                     @if ($groupedMoms && $groupedMoms->isNotEmpty())
                         @foreach ($groupedMoms as $creatorId => $rows)
                             @php
@@ -109,6 +111,8 @@
                                 $creatorRole = $creator->role ?? '';
                                 $creatorDivisi = $creator->divisi ?? '';
                                 $divisiLabel = $creatorDivisi ?: $creatorRole;
+                                $isOwnerGroup = (int)$creatorId === (int)Auth::id();
+                                $groupColCount = ($isOwnerGroup && ($canEdit || $canDelete)) ? 8 : 7;
                             @endphp
 
                             <div class="mom-user-group mb-4" data-creator="{{ $creatorId }}">
@@ -153,6 +157,9 @@
                                                                 </select>
                                                             </div>
                                                         </th>
+                                                        @if ($isOwnerGroup && ($canEdit || $canDelete))
+                                                            <th class="py-2 text-uppercase small align-middle" style="width:55px;">Aksi</th>
+                                                        @endif
                                                     </tr>
                                                 </thead>
                                                 <tbody class="bg-white">
@@ -165,62 +172,156 @@
                                                                         ? 'bg-status-overdue'
                                                                         : 'bg-status-progress');
                                                         @endphp
-                                                        <tr>
+                                                        <tr data-id="{{ $item->id }}">
                                                             <td class="text-center font-weight-bold text-muted align-middle small">
                                                                 {{ $idx + 1 }}
                                                             </td>
                                                             <td class="text-center align-middle small text-muted font-weight-bold">
                                                                 {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
                                                             </td>
-                                                            <td class="p-0 align-middle tc-cell readonly-cell"
-                                                                data-label="ToDoList / Task">
-                                                                <div class="tc-view">
-                                                                    <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
-                                                                    @if ($item->keterangan)
-                                                                        <button class="btn-lihat"
-                                                                            onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('.tc-text').textContent)">
-                                                                            <i class="fas fa-eye"></i> Lihat
-                                                                        </button>
-                                                                    @endif
-                                                                </div>
-                                                            </td>
-                                                            <td class="text-center align-middle small">
-                                                                {{ $item->deadline ? \Carbon\Carbon::parse($item->deadline)->format('d/m/Y') : '-' }}
-                                                            </td>
-                                                            <td class="align-middle small" style="padding:5px 7px;">
-                                                                {{ $item->pic ?: '-' }}
-                                                            </td>
-                                                            <td class="p-0 align-middle tc-cell readonly-cell"
-                                                                data-label="Target">
-                                                                <div class="tc-view">
-                                                                    <div class="tc-text"
-                                                                        data-placeholder="Target pekerjaan...">
-                                                                        {{ $item->target ?: '' }}</div>
-                                                                    @if ($item->target)
-                                                                        <button class="btn-lihat"
-                                                                            onclick="showPopup('Target', this.closest('td').querySelector('.tc-text').textContent)">
-                                                                            <i class="fas fa-eye"></i> Lihat
-                                                                        </button>
-                                                                    @endif
-                                                                </div>
-                                                            </td>
-                                                            <td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
-                                                                <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                                                    <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
-                                                                        {{ $item->hasil ?: '' }}</div>
-                                                                    <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                                                        @if ($item->hasil)
-                                                                            <button class="btn-lihat" style="margin-top:0;"
-                                                                                onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)">
+
+                                                            @if ($isOwnerGroup && $canEdit)
+                                                                <td class="p-0 align-middle tc-cell" data-label="ToDoList / Task">
+                                                                    <div class="tc-view">
+                                                                        <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
+                                                                        @if ($item->keterangan)
+                                                                            <button class="btn-lihat"
+                                                                                onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('textarea, .tc-text').textContent)">
                                                                                 <i class="fas fa-eye"></i> Lihat
                                                                             </button>
                                                                         @endif
-                                                                        <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                                                            {{ $item->status ?: '-' }}
-                                                                        </span>
                                                                     </div>
-                                                                </div>
-                                                            </td>
+                                                                    <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat...">{{ $item->keterangan }}</textarea>
+                                                                </td>
+                                                            @else
+                                                                <td class="p-0 align-middle tc-cell readonly-cell"
+                                                                    data-label="ToDoList / Task">
+                                                                    <div class="tc-view">
+                                                                        <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
+                                                                        @if ($item->keterangan)
+                                                                            <button class="btn-lihat"
+                                                                                onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                                <i class="fas fa-eye"></i> Lihat
+                                                                            </button>
+                                                                        @endif
+                                                                    </div>
+                                                                </td>
+                                                            @endif
+
+                                                            @if ($isOwnerGroup && $canEdit)
+                                                                <td class="p-1 align-middle">
+                                                                    <input type="date"
+                                                                        class="form-control-inline text-center live-field"
+                                                                        data-field="deadline" value="{{ $item->deadline }}">
+                                                                </td>
+                                                            @else
+                                                                <td class="text-center align-middle small">
+                                                                    {{ $item->deadline ? \Carbon\Carbon::parse($item->deadline)->format('d/m/Y') : '-' }}
+                                                                </td>
+                                                            @endif
+
+                                                            @if ($isOwnerGroup && $canEdit)
+                                                                <td class="p-1 align-middle">
+                                                                    <select class="form-control-inline live-field" data-field="pic">
+                                                                        <option value="">Pilih PIC</option>
+                                                                        @foreach ($pics as $pic)
+                                                                            <option value="{{ $pic->name }}" {{ $item->pic === $pic->name ? 'selected' : '' }}>
+                                                                                {{ $pic->name }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </td>
+                                                            @else
+                                                                <td class="align-middle small" style="padding:5px 7px;">
+                                                                    {{ $item->pic ?: '-' }}
+                                                                </td>
+                                                            @endif
+
+                                                            @if ($isOwnerGroup && $canEdit)
+                                                                <td class="p-0 align-middle tc-cell" data-label="Target">
+                                                                    <div class="tc-view">
+                                                                        <div class="tc-text" data-placeholder="Target pekerjaan...">
+                                                                            {{ $item->target ?: '' }}</div>
+                                                                        @if ($item->target)
+                                                                            <button class="btn-lihat"
+                                                                                onclick="showPopup('Target', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                                <i class="fas fa-eye"></i> Lihat
+                                                                            </button>
+                                                                        @endif
+                                                                    </div>
+                                                                    <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan...">{{ $item->target }}</textarea>
+                                                                </td>
+                                                            @else
+                                                                <td class="p-0 align-middle tc-cell readonly-cell"
+                                                                    data-label="Target">
+                                                                    <div class="tc-view">
+                                                                        <div class="tc-text"
+                                                                            data-placeholder="Target pekerjaan...">
+                                                                            {{ $item->target ?: '' }}</div>
+                                                                        @if ($item->target)
+                                                                            <button class="btn-lihat"
+                                                                                onclick="showPopup('Target', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                                <i class="fas fa-eye"></i> Lihat
+                                                                            </button>
+                                                                        @endif
+                                                                    </div>
+                                                                </td>
+                                                            @endif
+
+                                                            @if ($isOwnerGroup && $canEdit)
+                                                                <td class="p-0 align-middle tc-cell" data-label="Hasil & Status">
+                                                                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                                                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
+                                                                            {{ $item->hasil ?: '' }}</div>
+                                                                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                                                            @if ($item->hasil)
+                                                                                <button class="btn-lihat" style="margin-top:0;"
+                                                                                    onclick="showPopup('Hasil', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                                    <i class="fas fa-eye"></i> Lihat
+                                                                                </button>
+                                                                            @endif
+                                                                            <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                                                {{ $item->status }}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="tc-edit-wrapper" style="display:none; padding:6px 8px;">
+                                                                        <textarea class="tc-textarea live-field mb-2" data-field="hasil" placeholder="Hasil tindak lanjut..." style="display:block; width:100%;">{{ $item->hasil }}</textarea>
+                                                                        <select class="form-control-inline live-field status-select {{ $sc }}" data-field="status" style="width:100% !important;">
+                                                                            <option value="Progress" {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
+                                                                            <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>Done</option>
+                                                                            <option value="Overdue" {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </td>
+                                                            @else
+                                                                <td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
+                                                                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                                                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
+                                                                            {{ $item->hasil ?: '' }}</div>
+                                                                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                                                            @if ($item->hasil)
+                                                                                <button class="btn-lihat" style="margin-top:0;"
+                                                                                    onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                                    <i class="fas fa-eye"></i> Lihat
+                                                                                </button>
+                                                                            @endif
+                                                                            <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                                                {{ $item->status ?: '-' }}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            @endif
+
+                                                            @if ($isOwnerGroup && ($canEdit || $canDelete))
+                                                                <td class="text-center align-middle p-1">
+                                                                    <button class="btn btn-link text-danger p-0 btn-delete"
+                                                                        data-id="{{ $item->id }}" title="Hapus">
+                                                                        <i class="fas fa-trash-alt"></i>
+                                                                    </button>
+                                                                </td>
+                                                            @endif
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
@@ -262,7 +363,7 @@
                                                     </select>
                                                 </div>
                                             </th>
-                                            @if ($canEdit)
+                                            @if ($canEdit || $canDelete)
                                                 <th class="py-3 text-uppercase small align-middle" style="width:55px;">Aksi</th>
                                             @endif
                                         </tr>
@@ -276,6 +377,7 @@
                                                         : ($item->status === 'Overdue'
                                                             ? 'bg-status-overdue'
                                                             : 'bg-status-progress');
+                                                $isOwner = (int)$item->created_by === (int)Auth::id();
                                             @endphp
                                             <tr data-id="{{ $item->id }}">
                                                 <td class="text-center font-weight-bold text-muted no-col align-middle">
@@ -285,82 +387,145 @@
                                                     {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
                                                 </td>
 
-                                                <td class="p-0 align-middle tc-cell" data-label="ToDoList / Task">
-                                                    <div class="tc-view">
-                                                        <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
-                                                        @if ($item->keterangan)
-                                                            <button class="btn-lihat"
-                                                                onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('textarea, .tc-text').textContent)">
-                                                                <i class="fas fa-eye"></i> Lihat
-                                                            </button>
-                                                        @endif
-                                                    </div>
-                                                    <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat...">{{ $item->keterangan }}</textarea>
-                                                </td>
-
-                                                <td class="p-1 align-middle">
-                                                    <input type="date"
-                                                        class="form-control-inline text-center live-field"
-                                                        data-field="deadline" value="{{ $item->deadline }}">
-                                                </td>
-
-                                                <td class="p-1 align-middle">
-                                                    <select class="form-control-inline live-field" data-field="pic">
-                                                        <option value="">Pilih PIC</option>
-                                                        @foreach ($pics as $pic)
-                                                            <option value="{{ $pic->name }}" {{ $item->pic === $pic->name ? 'selected' : '' }}>
-                                                                {{ $pic->name }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </td>
-
-                                                <td class="p-0 align-middle tc-cell" data-label="Target">
-                                                    <div class="tc-view">
-                                                        <div class="tc-text" data-placeholder="Target pekerjaan...">
-                                                            {{ $item->target ?: '' }}</div>
-                                                        @if ($item->target)
-                                                            <button class="btn-lihat"
-                                                                onclick="showPopup('Target', this.closest('td').querySelector('textarea, .tc-text').textContent)">
-                                                                <i class="fas fa-eye"></i> Lihat
-                                                            </button>
-                                                        @endif
-                                                    </div>
-                                                    <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan...">{{ $item->target }}</textarea>
-                                                </td>
-
-                                                <td class="p-0 align-middle tc-cell" data-label="Hasil & Status">
-                                                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
-                                                            {{ $item->hasil ?: '' }}</div>
-                                                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                                            @if ($item->hasil)
-                                                                <button class="btn-lihat" style="margin-top:0;"
-                                                                    onclick="showPopup('Hasil', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                @if ($isOwner)
+                                                    <td class="p-0 align-middle tc-cell" data-label="ToDoList / Task">
+                                                        <div class="tc-view">
+                                                            <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
+                                                            @if ($item->keterangan)
+                                                                <button class="btn-lihat"
+                                                                    onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('textarea, .tc-text').textContent)">
                                                                     <i class="fas fa-eye"></i> Lihat
                                                                 </button>
                                                             @endif
-                                                            <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                                                {{ $item->status }}
-                                                            </span>
                                                         </div>
-                                                    </div>
-                                                    <div class="tc-edit-wrapper" style="display:none; padding:6px 8px;">
-                                                        <textarea class="tc-textarea live-field mb-2" data-field="hasil" placeholder="Hasil tindak lanjut..." style="display:block; width:100%;">{{ $item->hasil }}</textarea>
-                                                        <select class="form-control-inline live-field status-select {{ $sc }}" data-field="status" style="width:100% !important;">
-                                                            <option value="Progress" {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
-                                                            <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>Done</option>
-                                                            <option value="Overdue" {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
-                                                        </select>
-                                                    </div>
-                                                </td>
+                                                        <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat...">{{ $item->keterangan }}</textarea>
+                                                    </td>
+                                                @else
+                                                    <td class="p-0 align-middle tc-cell readonly-cell" data-label="ToDoList / Task">
+                                                        <div class="tc-view">
+                                                            <div class="tc-text">{{ $item->keterangan ?: '' }}</div>
+                                                            @if ($item->keterangan)
+                                                                <button class="btn-lihat"
+                                                                    onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                    <i class="fas fa-eye"></i> Lihat
+                                                                </button>
+                                                            @endif
+                                                        </div>
+                                                    </td>
+                                                @endif
 
-                                                @if ($canEdit)
+                                                @if ($isOwner)
+                                                    <td class="p-1 align-middle">
+                                                        <input type="date"
+                                                            class="form-control-inline text-center live-field"
+                                                            data-field="deadline" value="{{ $item->deadline }}">
+                                                    </td>
+                                                @else
+                                                    <td class="text-center align-middle small">
+                                                        {{ $item->deadline ? \Carbon\Carbon::parse($item->deadline)->format('d/m/Y') : '-' }}
+                                                    </td>
+                                                @endif
+
+                                                @if ($isOwner)
+                                                    <td class="p-1 align-middle">
+                                                        <select class="form-control-inline live-field" data-field="pic">
+                                                            <option value="">Pilih PIC</option>
+                                                            @foreach ($pics as $pic)
+                                                                <option value="{{ $pic->name }}" {{ $item->pic === $pic->name ? 'selected' : '' }}>
+                                                                    {{ $pic->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                @else
+                                                    <td class="align-middle small" style="padding:5px 7px;">
+                                                        {{ $item->pic ?: '-' }}
+                                                    </td>
+                                                @endif
+
+                                                @if ($isOwner)
+                                                    <td class="p-0 align-middle tc-cell" data-label="Target">
+                                                        <div class="tc-view">
+                                                            <div class="tc-text" data-placeholder="Target pekerjaan...">
+                                                                {{ $item->target ?: '' }}</div>
+                                                            @if ($item->target)
+                                                                <button class="btn-lihat"
+                                                                    onclick="showPopup('Target', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                    <i class="fas fa-eye"></i> Lihat
+                                                                </button>
+                                                            @endif
+                                                        </div>
+                                                        <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan...">{{ $item->target }}</textarea>
+                                                    </td>
+                                                @else
+                                                    <td class="p-0 align-middle tc-cell readonly-cell" data-label="Target">
+                                                        <div class="tc-view">
+                                                            <div class="tc-text" data-placeholder="Target pekerjaan...">
+                                                                {{ $item->target ?: '' }}</div>
+                                                            @if ($item->target)
+                                                                <button class="btn-lihat"
+                                                                    onclick="showPopup('Target', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                    <i class="fas fa-eye"></i> Lihat
+                                                                </button>
+                                                            @endif
+                                                        </div>
+                                                    </td>
+                                                @endif
+
+                                                @if ($isOwner)
+                                                    <td class="p-0 align-middle tc-cell" data-label="Hasil & Status">
+                                                        <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                                            <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
+                                                                    {{ $item->hasil ?: '' }}</div>
+                                                            <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                                                @if ($item->hasil)
+                                                                    <button class="btn-lihat" style="margin-top:0;"
+                                                                        onclick="showPopup('Hasil', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                        <i class="fas fa-eye"></i> Lihat
+                                                                    </button>
+                                                                @endif
+                                                                <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                                    {{ $item->status }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="tc-edit-wrapper" style="display:none; padding:6px 8px;">
+                                                            <textarea class="tc-textarea live-field mb-2" data-field="hasil" placeholder="Hasil tindak lanjut..." style="display:block; width:100%;">{{ $item->hasil }}</textarea>
+                                                            <select class="form-control-inline live-field status-select {{ $sc }}" data-field="status" style="width:100% !important;">
+                                                                <option value="Progress" {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
+                                                                <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>Done</option>
+                                                                <option value="Overdue" {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
+                                                            </select>
+                                                        </div>
+                                                    </td>
+                                                @else
+                                                    <td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
+                                                        <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                                            <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
+                                                                {{ $item->hasil ?: '' }}</div>
+                                                            <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                                                @if ($item->hasil)
+                                                                    <button class="btn-lihat" style="margin-top:0;"
+                                                                        onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                        <i class="fas fa-eye"></i> Lihat
+                                                                    </button>
+                                                                @endif
+                                                                <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                                    {{ $item->status }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                @endif
+
+                                                @if ($canEdit || $canDelete)
                                                     <td class="text-center align-middle p-1">
-                                                        <button class="btn btn-link text-danger p-0 btn-delete"
-                                                            data-id="{{ $item->id }}" title="Hapus">
-                                                            <i class="fas fa-trash-alt"></i>
-                                                        </button>
+                                                        @if ($isOwner)
+                                                            <button class="btn btn-link text-danger p-0 btn-delete"
+                                                                data-id="{{ $item->id }}" title="Hapus">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                        @endif
                                                     </td>
                                                 @endif
                                             </tr>
@@ -781,6 +946,9 @@
             const ROUTE_STORE = "{{ route('admin.mom.store') }}";
             const ROUTE_INDEX = "{{ route('admin.mom.index') }}";
             const CAN_EDIT = {{ $canEdit ? 'true' : 'false' }};
+            const CAN_DELETE = {{ $canDelete ? 'true' : 'false' }};
+            const USER_ID = {{ Auth::id() }};
+            // SEE_ALL: gunakan grouped view hanya jika seeAllData=true
             const SEE_ALL = {{ $seeAllData ? 'true' : 'false' }};
             const COL_COUNT = {{ $colCount }};
             const PICS = @json($pics);
@@ -962,17 +1130,63 @@
             function buildRowsHtml(moms) {
                 if (!moms || moms.length === 0) return emptyRow();
                 return moms.map((item, i) => {
+                    const isOwner = Number(item.created_by) === Number(USER_ID);
+                    
+                    const keteranganCell = isOwner 
+                        ? buildTcCell(item,'keterangan','ToDoList / Task','Tulis keterangan/poin rapat...')
+                        : `<td class="p-0 align-middle tc-cell readonly-cell" data-label="ToDoList / Task">
+                            <div class="tc-view">
+                                <div class="tc-text">${escHtml(item.keterangan || '')}</div>
+                                ${item.keterangan ? `<button class="btn-lihat" onclick="showPopup('ToDoList / Task', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` : ''}
+                            </div>
+                           </td>`;
+
+                    const deadlineCell = isOwner
+                        ? `<td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value="${escHtml(item.deadline||'')}"></td>`
+                        : `<td class="text-center align-middle small">${fmtDate(item.deadline)}</td>`;
+
+                    const picCell = isOwner
+                        ? `<td class="p-1 align-middle">${buildPicSelect(item.pic)}</td>`
+                        : `<td class="align-middle small" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>`;
+
+                    const targetCell = isOwner
+                        ? buildTcCell(item,'target','Target','Target pekerjaan...')
+                        : `<td class="p-0 align-middle tc-cell readonly-cell" data-label="Target">
+                            <div class="tc-view">
+                                <div class="tc-text" data-placeholder="Target pekerjaan...">${escHtml(item.target||'')}</div>
+                                ${item.target ? `<button class="btn-lihat" onclick="showPopup('Target', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` : ''}
+                            </div>
+                           </td>`;
+
+                    const hasilCell = isOwner
+                        ? buildHasilCell(item)
+                        : `<td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
+                            <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">${escHtml(item.hasil || '')}</div>
+                                <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                    ${item.hasil ? `<button class="btn-lihat" style="margin-top:0;" onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` : ''}
+                                    <span class="badge ${statusClass(item.status)} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                        ${escHtml(item.status || '-')}
+                                    </span>
+                                </div>
+                            </div>
+                           </td>`;
+
+                    const actionCell = (CAN_EDIT || CAN_DELETE)
+                        ? `<td class="text-center align-middle p-1">
+                            ${isOwner ? `<button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>` : ''}
+                           </td>`
+                        : '';
+
                     return `<tr data-id="${item.id}">
                     <td class="text-center font-weight-bold text-muted no-col align-middle">${i + 1}</td>
                     <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
-                    ${buildTcCell(item,'keterangan','ToDoList / Task','Tulis keterangan/poin rapat...')}
-                    <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value="${escHtml(item.deadline||'')}"></td>
-                    <td class="p-1 align-middle">${buildPicSelect(item.pic)}</td>
-                    ${buildTcCell(item,'target','Target','Target pekerjaan...')}
-                    ${buildHasilCell(item)}
-                    <td class="text-center align-middle p-1">
-                        <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>
-                    </td>
+                    ${keteranganCell}
+                    ${deadlineCell}
+                    ${picCell}
+                    ${targetCell}
+                    ${hasilCell}
+                    ${actionCell}
                 </tr>`;
                 }).join('');
             }
@@ -1024,7 +1238,8 @@
                 const clinic = activeUnit === 'Helas Aesthetic Clinic';
                 const theadClass = clinic ? 'thead-clinic' : 'thead-corp';
 
-                return Object.values(groups).map(group => {
+                return Object.entries(groups).map(([key, group]) => {
+                    const isOwnerGroup = Number(key) === Number(USER_ID);
                     const name = group.creator?.name || '(User dihapus)';
                     const divisi = group.creator?.divisi || group.creator?.role || '';
                     const divisiHtml = divisi ? ` <span class="mom-user-divisi"> — ${escHtml(divisi)}</span>` :
@@ -1032,51 +1247,80 @@
                     const count = group.rows.length;
 
                     const rows = group.rows.map((item, i) => {
-                        const keterangan = item.keterangan || '';
-                        const target = item.target || '';
-                        const hasil = item.hasil || '';
+                        if (isOwnerGroup && CAN_EDIT) {
+                            const keteranganCell = buildTcCell(item,'keterangan','ToDoList / Task','Tulis keterangan/poin rapat...');
+                            const deadlineCell = `<td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value="${escHtml(item.deadline||'')}"></td>`;
+                            const picCell = `<td class="p-1 align-middle">${buildPicSelect(item.pic)}</td>`;
+                            const targetCell = buildTcCell(item,'target','Target','Target pekerjaan...');
+                            const hasilCell = buildHasilCell(item);
+                            const actionCell = (CAN_EDIT || CAN_DELETE)
+                                ? `<td class="text-center align-middle p-1">
+                                    <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>
+                                   </td>`
+                                : '';
 
-                        const tcReadonly = (val, label, placeholder) => {
-                            const lihat = val ?
-                                `<button class="btn-lihat" onclick="showPopup('${label}', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
-                                '';
-                            return `<td class="p-0 align-middle tc-cell readonly-cell" data-label="${label}">
-                            <div class="tc-view">
-                                <div class="tc-text" data-placeholder="${placeholder}">${escHtml(val)}</div>${lihat}
-                            </div>
-                        </td>`;
-                        };
+                            return `<tr data-id="${item.id}">
+                                <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
+                                <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
+                                ${keteranganCell}
+                                ${deadlineCell}
+                                ${picCell}
+                                ${targetCell}
+                                ${hasilCell}
+                                ${actionCell}
+                            </tr>`;
+                        } else {
+                            // Read-only view (for others, or if user cannot edit)
+                            const keterangan = item.keterangan || '';
+                            const target = item.target || '';
+                            const hasil = item.hasil || '';
 
-                        const tcReadonlyHasil = (val, status) => {
-                            const sc = statusClass(status);
-                            const lihat = val ?
-                                `<button class="btn-lihat" style="margin-top:0;" onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
-                                '';
-                            return `<td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
-                                <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                    <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">${escHtml(val)}</div>
-                                    <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                        ${lihat}
-                                        <span class="badge ${sc} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                            ${escHtml(status||'-')}
-                                        </span>
-                                    </div>
+                            const tcReadonly = (val, label, placeholder) => {
+                                const lihat = val ?
+                                    `<button class="btn-lihat" onclick="showPopup('${label}', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
+                                    '';
+                                return `<td class="p-0 align-middle tc-cell readonly-cell" data-label="${label}">
+                                <div class="tc-view">
+                                    <div class="tc-text" data-placeholder="${placeholder}">${escHtml(val)}</div>${lihat}
                                 </div>
                             </td>`;
-                        };
+                            };
 
-                        return `<tr>
-                        <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
-                        <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
-                        ${tcReadonly(keterangan, 'ToDoList / Task', 'Tulis keterangan/poin rapat...')}
-                        <td class="text-center align-middle small">${fmtDate(item.deadline)}</td>
-                        <td class="align-middle small" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>
-                        ${tcReadonly(target, 'Target', 'Target pekerjaan...')}
-                        ${tcReadonlyHasil(hasil, item.status)}
-                    </tr>`;
+                            const tcReadonlyHasil = (val, status) => {
+                                const sc = statusClass(status);
+                                const lihat = val ?
+                                    `<button class="btn-lihat" style="margin-top:0;" onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
+                                    '';
+                                return `<td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
+                                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
+                                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">${escHtml(val)}</div>
+                                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
+                                            ${lihat}
+                                            <span class="badge ${sc} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                ${escHtml(status||'-')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>`;
+                            };
+
+                            return `<tr>
+                                <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
+                                <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
+                                ${tcReadonly(keterangan, 'ToDoList / Task', 'Tulis keterangan/poin rapat...')}
+                                <td class="text-center align-middle small">${fmtDate(item.deadline)}</td>
+                                <td class="align-middle small" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>
+                                ${tcReadonly(target, 'Target', 'Target pekerjaan...')}
+                                ${tcReadonlyHasil(hasil, item.status)}
+                            </tr>`;
+                        }
                     }).join('');
 
-                    return `<div class="mom-user-group mb-4">
+                    const actionHeader = (isOwnerGroup && (CAN_EDIT || CAN_DELETE))
+                        ? `<th class="py-2 text-uppercase small align-middle" style="width:55px;">Aksi</th>`
+                        : '';
+
+                    return `<div class="mom-user-group mb-4" data-creator="${escHtml(key)}">
                     <div class="mom-user-header">
                         <i class="fas fa-user mr-2"></i>
                         <span class="mom-user-name">${escHtml(name)}</span>${divisiHtml}
@@ -1106,6 +1350,7 @@
                                                     </select>
                                                 </div>
                                             </th>
+                                            ${actionHeader}
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white">${rows}</tbody>
@@ -1340,6 +1585,11 @@
                         success(res) {
                             $btn.prop('disabled', false).html(
                                 '<i class="fas fa-plus mr-1"></i> Tambah MoM');
+                            if (SEE_ALL) {
+                                loadUnit(activeUnit, false);
+                                toast('Data MoM baru berhasil dibuat.', 'success');
+                                return;
+                            }
                             $('.empty-row').remove();
                             const $row = $(buildNewRow(res.data));
                             $('#mom-table-body').prepend($row);
@@ -1359,7 +1609,10 @@
                     });
                 });
 
-                // Hapus
+            }  // end if (CAN_EDIT)
+
+            // ── Hapus — tersedia untuk CAN_EDIT maupun CAN_DELETE (misal Yasmin) ──────
+            if (CAN_EDIT || CAN_DELETE) {
                 $(document).on('click', '.btn-delete', function() {
                     const $tr = $(this).closest('tr');
                     const id = $(this).data('id');

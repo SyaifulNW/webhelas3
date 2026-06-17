@@ -895,6 +895,16 @@
                         </a>
                     </li>
 
+                    {{-- Setting for Operasional (chapter & agen management only) --}}
+                    @if (\App\Models\Menu::isActive('settings'))
+                        <li class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.settings.index') }}" title="SETTING">
+                                <i class="fas fa-fw fa-cog"></i>
+                                <span><strong>SETTING</strong></span>
+                            </a>
+                        </li>
+                    @endif
+
                     <!-- <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.kelas.index') }}">
                                 <i class="fas fa-fw fa-calendar-alt"></i>

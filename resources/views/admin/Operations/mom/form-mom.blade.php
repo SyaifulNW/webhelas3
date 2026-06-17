@@ -399,11 +399,6 @@
                     <a href="{{ route('admin.mom.create', ['username' => $username]) }}" style="color: #673ab7; font-size: 14px; text-decoration: none; font-weight: 500; cursor: pointer;">
                         Kirim jawaban lain
                     </a>
-                    @if (Auth::check())
-                        <a href="{{ route('admin.mom.index', ['unit' => $unit]) }}" style="color: #673ab7; font-size: 14px; text-decoration: none; font-weight: 500; cursor: pointer;">
-                            Kembali ke Dashboard MoM
-                        </a>
-                    @endif
                 </div>
             </div>
         @else

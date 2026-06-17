@@ -59,11 +59,13 @@ class MomController extends Controller
         }
 
         // Administrator – all units, read-only, sees ALL data across all users
+        // Exception: Yasmin (CS) always gets full delete access across all units
         if ($role === 'administrator') {
             return [
                 'canAccessUnits' => self::UNITS,
                 'canEdit'        => false,
-                'isReadOnly'     => true,
+                'canDelete'      => $isYasmin, // Yasmin can delete even if admin
+                'isReadOnly'     => !$isYasmin,
                 'seeAllData'     => true,
             ];
         }
@@ -75,15 +77,18 @@ class MomController extends Controller
             return [
                 'canAccessUnits' => $canAccessClinic ? self::UNITS : ['Helas Corp'],
                 'canEdit'        => true,
+                'canDelete'      => true,
                 'isReadOnly'     => false,
                 'seeAllData'     => $isYasmin ? true : false,
             ];
         }
 
-        // All other internal staff – Helas Corp only, full edit, own data only
+        // All other internal staff – full edit, own data only
+        // Yasmin gets access to all units and can delete any record
         return [
-            'canAccessUnits' => ['Helas Corp'],
+            'canAccessUnits' => $isYasmin ? self::UNITS : ['Helas Corp'],
             'canEdit'        => true,
+            'canDelete'      => $isYasmin, // Yasmin can delete records she doesn't own
             'isReadOnly'     => false,
             'seeAllData'     => $isYasmin ? true : false,
         ];
@@ -303,8 +308,10 @@ class MomController extends Controller
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
-        // Non-admin may only edit their own records
-        if (!$permissions['seeAllData'] && $mom->created_by !== Auth::id()) {
+        // Non-administrators may only edit their own records
+        $user = Auth::user();
+        $isAdmin = strtolower(trim($user->role ?? '')) === 'administrator';
+        if (!$isAdmin && (int)$mom->created_by !== (int)$user->id) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
@@ -339,7 +346,10 @@ class MomController extends Controller
     {
         $permissions = self::getMomPermissions();
 
-        if (!$permissions['canEdit']) {
+        // canDelete overrides canEdit — Yasmin always has delete rights
+        $hasDeleteAccess = ($permissions['canEdit'] ?? false) || ($permissions['canDelete'] ?? false);
+
+        if (!$hasDeleteAccess) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
@@ -350,8 +360,10 @@ class MomController extends Controller
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
-        // Non-admin may only delete their own records
-        if (!$permissions['seeAllData'] && $mom->created_by !== Auth::id()) {
+        // Non-administrators may only delete their own records
+        $user = Auth::user();
+        $isAdmin = strtolower(trim($user->role ?? '')) === 'administrator';
+        if (!$isAdmin && (int)$mom->created_by !== (int)$user->id) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 

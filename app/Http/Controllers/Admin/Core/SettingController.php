@@ -37,11 +37,38 @@ class SettingController extends Controller
             }
         }
 
-        $usersPusat = \App\Models\User::whereNotIn('role', ['chapter', 'reseller'])->get();
-        $usersCabang = \App\Models\User::whereIn('role', ['chapter', 'reseller'])->get();
-        $menus = \App\Models\Menu::all();
-        $targetOmset = \App\Models\Setting::where('key', 'target_omset')->value('value');
-        $targetOmsetSmi = \App\Models\Setting::where('key', 'target_omset_smi')->value('value');
+        $isOperasional = strtolower(trim(\Illuminate\Support\Facades\Auth::user()->role)) === 'operasional';
+
+        // Cabang roles that Operasional is allowed to manage
+        $cabangRoles = ['chapter', 'reseller', 'agen'];
+
+        if ($isOperasional) {
+            // Operasional sees only cabang users, no Pusat Helas list
+            $usersPusat  = collect();
+            $usersCabang = \App\Models\User::whereIn('role', $cabangRoles)->get();
+            $menus       = collect();
+            $targetOmset    = null;
+            $targetOmsetSmi = null;
+            $roles = $cabangRoles;
+        } else {
+            $usersPusat  = \App\Models\User::whereNotIn('role', ['chapter', 'reseller'])->get();
+            $usersCabang = \App\Models\User::whereIn('role', ['chapter', 'reseller'])->get();
+            $menus          = \App\Models\Menu::all();
+            $targetOmset    = \App\Models\Setting::where('key', 'target_omset')->value('value');
+            $targetOmsetSmi = \App\Models\Setting::where('key', 'target_omset_smi')->value('value');
+            $roles = [
+                'administrator',
+                'marketing',
+                'cs-mbc',
+                'operasional',
+                'manager',
+                'hrd',
+                'produksi',
+                'advertising',
+                'reseller',
+                'chapter'
+            ];
+        }
 
         // Chapters taken by 'chapter' role users
         $takenChapters = \App\Models\User::where('role', 'chapter')
@@ -52,46 +79,41 @@ class SettingController extends Controller
             ->values()
             ->toArray();
 
-        // Define roles
-        $roles = [
-            'administrator',
-            'marketing',
-            'cs-mbc',
-            'operasional',
-            'manager',
-            'hrd',
-            'produksi',
-            'advertising',
-            'reseller',
-            'chapter'
-        ];
-
         return view('admin.Core.settings.index', [
-            'usersPusat' => $usersPusat,
-            'usersCabang' => $usersCabang,
-            'menus' => $menus,
-            'targetOmset' => $targetOmset,
+            'usersPusat'     => $usersPusat,
+            'usersCabang'    => $usersCabang,
+            'menus'          => $menus,
+            'targetOmset'    => $targetOmset,
             'targetOmsetSmi' => $targetOmsetSmi,
-            'roles' => $roles,
-            'takenChapters' => $takenChapters
+            'roles'          => $roles,
+            'takenChapters'  => $takenChapters,
+            'isOperasional'  => $isOperasional,
         ]);
     }
 
     // --- USERS ---
     public function storeUser(Request $request)
     {
+        $isOperasional = strtolower(trim(\Illuminate\Support\Facades\Auth::user()->role)) === 'operasional';
+        $allowedRoles  = $isOperasional ? ['chapter', 'reseller', 'agen'] : null;
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'role' => 'required|string',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'role'     => 'required|string',
             'password' => 'required|string|min:6',
         ]);
 
+        // Guard: operasional cannot create users with unauthorized roles
+        if ($allowedRoles && !in_array($validated['role'], $allowedRoles)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membuat user dengan role ini.');
+        }
+
         \App\Models\User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'role' => $validated['role'],
-            'chapter' => $request->chapter,
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'role'     => $validated['role'],
+            'chapter'  => $request->chapter,
             'kategori' => $request->kategori ?? 'Pusat',
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
@@ -103,18 +125,31 @@ class SettingController extends Controller
     {
         $user = \App\Models\User::findOrFail($id);
 
+        $isOperasional = strtolower(trim(\Illuminate\Support\Facades\Auth::user()->role)) === 'operasional';
+        $allowedRoles  = $isOperasional ? ['chapter', 'reseller', 'agen'] : null;
+
+        // Guard: operasional cannot edit users outside cabang roles
+        if ($allowedRoles && !in_array(strtolower($user->role), $allowedRoles)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengubah user ini.');
+        }
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'role' => 'required|string',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email,' . $id,
+            'role'     => 'required|string',
             'password' => 'nullable|string|min:6',
         ]);
 
+        // Guard: operasional cannot change role to unauthorized value
+        if ($allowedRoles && !in_array($validated['role'], $allowedRoles)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menggunakan role ini.');
+        }
+
         $data = [
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'role' => $validated['role'],
-            'chapter' => $request->chapter,
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'role'     => $validated['role'],
+            'chapter'  => $request->chapter,
             'kategori' => $request->kategori ?? 'Pusat',
         ];
 
@@ -133,6 +168,15 @@ class SettingController extends Controller
         if ($user->id === auth()->id()) {
             return redirect()->back()->with('error', 'Tidak dapat menghapus akun sendiri!');
         }
+
+        $isOperasional = strtolower(trim(\Illuminate\Support\Facades\Auth::user()->role)) === 'operasional';
+        $allowedRoles  = $isOperasional ? ['chapter', 'reseller', 'agen'] : null;
+
+        // Guard: operasional cannot delete users outside cabang roles
+        if ($allowedRoles && !in_array(strtolower($user->role), $allowedRoles)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menghapus user ini.');
+        }
+
         $user->delete();
         return redirect()->back()->with('success', 'User berhasil dihapus.');
     }

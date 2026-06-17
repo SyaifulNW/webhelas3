@@ -338,14 +338,17 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('penilaian', PenilaianCsController::class)->except(['index'])->names('penilaian');
 
         // Settings (Restricted inside group)
-        Route::middleware(['role:administrator'])->group(function () {
+        // Operasional can access user management (chapter & agen only); admin-only actions stay restricted
+        Route::middleware(['role:administrator,operasional'])->group(function () {
             Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
             Route::post('/settings/users', [SettingController::class, 'storeUser'])->name('settings.users.store');
             Route::put('/settings/users/{id}', [SettingController::class, 'updateUser'])->name('settings.users.update');
             Route::delete('/settings/users/{id}', [SettingController::class, 'destroyUser'])->name('settings.users.destroy');
+            Route::post('/settings/users/toggle', [SettingController::class, 'toggleUserStatus'])->name('settings.users.toggle');
+        });
+        Route::middleware(['role:administrator'])->group(function () {
             Route::post('/settings/target', [SettingController::class, 'updateTarget'])->name('settings.target.update');
             Route::post('/settings/menus/toggle', [SettingController::class, 'toggleMenu'])->name('settings.menus.toggle');
-            Route::post('/settings/users/toggle', [SettingController::class, 'toggleUserStatus'])->name('settings.users.toggle');
             Route::post('/settings/users/transfer', [SettingController::class, 'transferUserDatabase'])->name('settings.users.transfer');
             Route::post('/settings/role-menus/update', [SettingController::class, 'updateRoleMenu'])->name('settings.role-menus.update');
         });

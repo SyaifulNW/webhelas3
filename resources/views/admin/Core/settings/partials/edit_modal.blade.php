@@ -43,7 +43,7 @@
                         </select>
                     </div>
                     <div class="form-group chapter-field-container font-weight-bold"
-                        style="display: {{ in_array($u->role, ['chapter', 'reseller']) ? 'block' : 'none' }};">
+                        style="display: {{ in_array($u->role, ['chapter', 'reseller', 'agen']) ? 'block' : 'none' }};">
 
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="mb-0">Pilih Chapter</label>
