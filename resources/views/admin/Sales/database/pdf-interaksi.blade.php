@@ -187,6 +187,12 @@
                     <p class="meta-info">
                         <strong>CS:</strong> {{ $csName }} &nbsp;|&nbsp; 
                         <strong>Periode:</strong> {{ $bulan ? \Carbon\Carbon::create()->month($bulan)->isoFormat('MMMM') : 'Semua Bulan' }} {{ $tahun }}
+                        @if(!empty($kelasName))
+                            &nbsp;|&nbsp; <strong>Kelas:</strong> {{ $kelasName }}
+                        @endif
+                        @if(!empty($statusName))
+                            &nbsp;|&nbsp; <strong>Status:</strong> {{ $statusName }}
+                        @endif
                     </p>
                 </td>
             </tr>

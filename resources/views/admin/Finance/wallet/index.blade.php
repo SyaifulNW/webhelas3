@@ -75,9 +75,10 @@
                         <tr>
                             <th class="border-0">User</th>
                             <th class="border-0">Chapter</th>
-                            <th class="border-0">ID Wallet</th>
+                            <th class="border-0 text-right">Total Penghasilan</th>
+                            <th class="border-0 text-right">Sudah Ditarik</th>
                             <th class="border-0 text-right">Saldo Tersedia</th>
-                            <th class="border-0 text-right">Saldo Tertahan</th>
+                            <th class="border-0 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,12 +89,19 @@
                                 <div class="text-xs text-muted">{{ $w->user->role }}</div>
                             </td>
                             <td class="align-middle text-dark font-weight-bold">{{ $w->user->chapter }}</td>
-                            <td class="align-middle"><span class="badge badge-light border">{{ $w->wallet_id }}</span></td>
                             <td class="align-middle text-right font-weight-bold text-success">
+                                Rp {{ number_format($w->balance + ($w->transactions()->where('type','withdrawal')->where('status','success')->sum('amount')), 0, ',', '.') }}
+                            </td>
+                            <td class="align-middle text-right text-danger">
+                                Rp {{ number_format($w->transactions()->where('type','withdrawal')->where('status','success')->sum('amount'), 0, ',', '.') }}
+                            </td>
+                            <td class="align-middle text-right font-weight-bold text-primary">
                                 Rp {{ number_format($w->balance, 0, ',', '.') }}
                             </td>
-                            <td class="align-middle text-right font-weight-bold text-warning">
-                                Rp {{ number_format($w->pending_balance, 0, ',', '.') }}
+                            <td class="align-middle text-center">
+                                <a href="{{ route('admin.wallet.earnings', $w->user_id) }}" class="btn btn-sm btn-outline-primary font-weight-bold">
+                                    <i class="fas fa-search-dollar"></i> Detail
+                                </a>
                             </td>
                         </tr>
                         @endforeach
