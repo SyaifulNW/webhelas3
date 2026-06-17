@@ -572,8 +572,8 @@
 
                     {{-- 7. MONITORING CHAPTER --}}
                     <li
-                        class="nav-item {{ request()->routeIs('gantt.index') && request('view_role') == 'chapter' ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('gantt.index', ['view_role' => 'chapter']) }}"
+                        class="nav-item {{ request()->routeIs('admin.monitoring-chapter') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.monitoring-chapter') }}"
                             title="MONITORING CHAPTER">
                             <i class="fas fa-fw fa-project-diagram"></i>
                             <span><strong>MONITORING CHAPTER</strong></span>
@@ -892,6 +892,13 @@
                         <a class="nav-link" href="{{ route('programkerja.index') }}">
                             <i class="fas fa-fw fa-tasks"></i>
                             <span><strong>PROGRAM KERJA</strong></span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item {{ request()->routeIs('admin.monitoring-chapter') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.monitoring-chapter') }}" title="MONITORING CHAPTER">
+                            <i class="fas fa-fw fa-project-diagram"></i>
+                            <span><strong>MONITORING CHAPTER</strong></span>
                         </a>
                     </li>
 

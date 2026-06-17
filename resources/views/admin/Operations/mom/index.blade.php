@@ -6,6 +6,7 @@
         $canDelete = $permissions['canDelete'] ?? false;
         $isReadOnly = $permissions['isReadOnly'] ?? true;
         $seeAllData = $permissions['seeAllData'] ?? false;
+        $groupView = $groupView ?? false;
         $availableUnits = $permissions['canAccessUnits'] ?? ['Helas Corp'];
         // Tampil kolom Aksi jika bisa edit ATAU bisa hapus (misal Yasmin)
         $colCount = ($canEdit || $canDelete) ? 8 : 7;
@@ -59,38 +60,47 @@
 
             {{-- Toolbar --}}
             <div class="row mb-3 align-items-center px-1 pt-3">
-                <div class="col-md-8 d-flex align-items-center flex-wrap" style="gap:8px;">
-                    <label for="filter-deadline" class="mb-0 text-muted font-weight-bold text-uppercase"
-                        style="font-size:.68rem;letter-spacing:.5px;white-space:nowrap;">Filter Deadline:</label>
-                    <div class="d-flex align-items-center" style="gap:4px;">
-                        <input type="date" id="filter-deadline" class="border rounded px-2 py-1 text-dark font-weight-bold"
-                            style="font-size:.8rem;outline:none;cursor:pointer;background:#fff;height:32px;min-width:180px;">
-                        <button type="button" id="btn-clear-deadline" class="btn btn-light border d-flex align-items-center justify-content-center"
-                            style="height:32px;width:32px;padding:0;display:none;" title="Bersihkan filter">
-                            <i class="fas fa-times text-secondary" style="font-size:.8rem;"></i>
-                        </button>
+                <div class="col-lg-8 col-md-7 d-flex align-items-center flex-wrap" style="gap:10px;">
+                    <div class="d-none">
+                        <label for="filter-deadline" class="mb-0 text-muted font-weight-bold text-uppercase"
+                            style="font-size:.68rem;letter-spacing:.5px;white-space:nowrap;">Filter Deadline:</label>
+                        <div class="d-flex align-items-center" style="gap:4px;">
+                            <input type="date" id="filter-deadline" class="border rounded px-2 py-1 text-dark font-weight-bold"
+                                style="font-size:.8rem;outline:none;cursor:pointer;background:#fff;height:32px;min-width:180px;">
+                            <button type="button" id="btn-clear-deadline" class="btn btn-light border d-flex align-items-center justify-content-center"
+                                style="height:32px;width:32px;padding:0;display:none;" title="Bersihkan filter">
+                                <i class="fas fa-times text-secondary" style="font-size:.8rem;"></i>
+                            </button>
+                        </div>
                     </div>
-                    <!-- <button id="btn-refresh"
-                        class="btn btn-light border shadow-sm d-flex align-items-center justify-content-center"
-                        style="height:32px;width:32px;padding:0;" title="Refresh">
-                        <i class="fas fa-sync-alt text-secondary" style="font-size:.8rem;"></i>
-                    </button> -->
-                    <span id="active-unit-badge" class="badge badge-pill px-3 py-2 font-weight-bold"
+                    <span id="active-unit-badge" class="badge badge-pill px-3 py-2 font-weight-bold shadow-sm"
                         style="font-size:.72rem;">
                         <i class="fas fa-building mr-1"></i>
                         <span id="active-unit-label">{{ $unit }}</span>
                     </span>
+                    {{-- Filter PIC --}}
+                    <div class="d-flex align-items-center filter-pic-container" style="gap:8px;">
+                        <label for="filter-pic" class="mb-0 text-muted font-weight-bold text-uppercase"
+                            style="font-size:.68rem;letter-spacing:.5px;white-space:nowrap;">Filter PIC:</label>
+                        <select id="filter-pic" class="border rounded px-2 py-1 text-dark font-weight-bold shadow-sm"
+                            style="font-size:.8rem;outline:none;cursor:pointer;background:#fff;height:32px;min-width:150px;">
+                            <option value="all">Semua PIC</option>
+                            @foreach ($pics as $p)
+                                <option value="{{ $p->name }}">{{ $p->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-4 d-flex justify-content-md-end align-items-center mt-2 mt-md-0" style="gap:8px;">
+                <div class="col-lg-4 col-md-5 d-flex justify-content-md-end justify-content-start align-items-center mt-3 mt-md-0 flex-wrap" style="gap:8px;">
                     @if ($canEdit && $unit === 'Helas Corp')
                         <a href="{{ route('admin.mom.create', ['username' => \Illuminate\Support\Str::slug(Auth::user()->name)]) }}"
-                            class="btn btn-primary px-3 shadow-sm font-weight-bold"
-                            style="height:38px;line-height:26px;white-space:nowrap;">
+                            class="btn btn-primary px-3 shadow-sm font-weight-bold d-inline-flex align-items-center justify-content-center btn-responsive"
+                            style="height:38px;white-space:nowrap;">
                             <i class="fas fa-link mr-1"></i> Tambah via Link
                         </a>
                     @endif
                     @if ($canEdit)
-                        <button id="btn-add-mom" class="btn btn-primary px-4 shadow-sm font-weight-bold"
+                        <button id="btn-add-mom" class="btn btn-primary px-4 shadow-sm font-weight-bold d-inline-flex align-items-center justify-content-center btn-responsive"
                             style="height:38px;">
                             <i class="fas fa-plus mr-1"></i> Tambah MoM
                         </button>
@@ -101,8 +111,8 @@
             {{-- ===== KONTEN TABEL ===== --}}
             <div id="mom-content-area">
 
-                @if ($seeAllData)
-                    {{-- ── ADMIN/SUPER VIEW: grouped per user ── --}}
+                @if ($groupView)
+                    {{-- ── GROUPED VIEW (Yasmin): grouped per user ── --}}
                     @if ($groupedMoms && $groupedMoms->isNotEmpty())
                         @foreach ($groupedMoms as $creatorId => $rows)
                             @php
@@ -135,13 +145,13 @@
                                                     <tr>
                                                         <th class="py-2 text-uppercase small align-middle"
                                                             style="width:40px;">No</th>
-                                                        <th class="py-2 text-uppercase small align-middle"
-                                                            style="width:105px;">Tanggal</th>
                                                         <th class="py-2 text-uppercase small align-middle">ToDoList / Task</th>
                                                         <th class="py-2 text-uppercase small align-middle"
                                                             style="width:105px;">Deadline</th>
                                                         <th class="py-2 text-uppercase small align-middle"
                                                             style="width:120px;">PIC</th>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:120px;">Requester</th>
                                                         <th class="py-2 text-uppercase small align-middle"
                                                             style="width:155px;">Target</th>
                                                         <th class="py-2 text-uppercase small align-middle"
@@ -175,9 +185,6 @@
                                                         <tr data-id="{{ $item->id }}">
                                                             <td class="text-center font-weight-bold text-muted align-middle small">
                                                                 {{ $idx + 1 }}
-                                                            </td>
-                                                            <td class="text-center align-middle small text-muted font-weight-bold">
-                                                                {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
                                                             </td>
 
                                                             @if ($isOwnerGroup && $canEdit)
@@ -221,7 +228,7 @@
                                                             @endif
 
                                                             @if ($isOwnerGroup && $canEdit)
-                                                                <td class="p-1 align-middle">
+                                                                <td class="p-1 align-middle pic-cell">
                                                                     <select class="form-control-inline live-field" data-field="pic">
                                                                         <option value="">Pilih PIC</option>
                                                                         @foreach ($pics as $pic)
@@ -232,8 +239,25 @@
                                                                     </select>
                                                                 </td>
                                                             @else
-                                                                <td class="align-middle small" style="padding:5px 7px;">
+                                                                <td class="align-middle small pic-cell" style="padding:5px 7px;">
                                                                     {{ $item->pic ?: '-' }}
+                                                                </td>
+                                                            @endif
+
+                                                            @if ($isOwnerGroup && $canEdit)
+                                                                <td class="p-1 align-middle">
+                                                                    <select class="form-control-inline live-field" data-field="requester">
+                                                                        <option value="">Pilih Requester</option>
+                                                                        @foreach ($pics as $pic)
+                                                                            <option value="{{ $pic->name }}" {{ $item->requester === $pic->name ? 'selected' : '' }}>
+                                                                                {{ $pic->name }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </td>
+                                                            @else
+                                                                <td class="align-middle small" style="padding:5px 7px;">
+                                                                    {{ $item->requester ?: '-' }}
                                                                 </td>
                                                             @endif
 
@@ -346,10 +370,10 @@
                                     <thead class="text-white text-center" id="mom-thead">
                                         <tr>
                                             <th class="py-3 text-uppercase small align-middle" style="width:50px;">No</th>
-                                            <th class="py-3 text-uppercase small align-middle" style="width:120px;">Tanggal</th>
                                             <th class="py-3 text-uppercase small align-middle">ToDoList / Task</th>
                                             <th class="py-3 text-uppercase small align-middle" style="width:120px;">Deadline</th>
                                             <th class="py-3 text-uppercase small align-middle" style="width:130px;">PIC</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:130px;">Requester</th>
                                             <th class="py-3 text-uppercase small align-middle" style="width:170px;">Target</th>
                                             <th class="py-3 text-uppercase small align-middle" style="min-width:200px;">
                                                 <div class="d-flex flex-column align-items-center" style="gap:5px;">
@@ -382,9 +406,6 @@
                                             <tr data-id="{{ $item->id }}">
                                                 <td class="text-center font-weight-bold text-muted no-col align-middle">
                                                     {{ $index + 1 }}
-                                                </td>
-                                                <td class="text-center align-middle small text-muted font-weight-bold">
-                                                    {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
                                                 </td>
 
                                                 @if ($isOwner)
@@ -427,7 +448,7 @@
                                                 @endif
 
                                                 @if ($isOwner)
-                                                    <td class="p-1 align-middle">
+                                                    <td class="p-1 align-middle pic-cell">
                                                         <select class="form-control-inline live-field" data-field="pic">
                                                             <option value="">Pilih PIC</option>
                                                             @foreach ($pics as $pic)
@@ -438,8 +459,25 @@
                                                         </select>
                                                     </td>
                                                 @else
-                                                    <td class="align-middle small" style="padding:5px 7px;">
+                                                    <td class="align-middle small pic-cell" style="padding:5px 7px;">
                                                         {{ $item->pic ?: '-' }}
+                                                    </td>
+                                                @endif
+
+                                                @if ($isOwner)
+                                                    <td class="p-1 align-middle">
+                                                        <select class="form-control-inline live-field" data-field="requester">
+                                                            <option value="">Pilih Requester</option>
+                                                            @foreach ($pics as $pic)
+                                                                <option value="{{ $pic->name }}" {{ $item->requester === $pic->name ? 'selected' : '' }}>
+                                                                    {{ $pic->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                @else
+                                                    <td class="align-middle small" style="padding:5px 7px;">
+                                                        {{ $item->requester ?: '-' }}
                                                     </td>
                                                 @endif
 
@@ -935,6 +973,40 @@
             max-height: 62vh;
             overflow-y: auto;
         }
+
+        /* ── Responsive Overrides ───────────────────────────── */
+        @media (max-width: 767.98px) {
+            .container-fluid {
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+            }
+            .tab-panel-wrapper {
+                padding: 0 10px 10px !important;
+            }
+            .mom-tabs .nav-link {
+                padding: 8px 12px !important;
+                font-size: .78rem !important;
+            }
+            /* Make buttons take full width and stack side-by-side cleanly on mobile */
+            .col-lg-4.col-md-5.d-flex {
+                width: 100% !important;
+                flex-direction: row !important;
+                justify-content: stretch !important;
+                gap: 8px !important;
+                margin-top: 15px !important;
+            }
+            .btn-responsive {
+                flex: 1 1 0% !important;
+                width: auto !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                font-size: .8rem !important;
+                text-align: center !important;
+            }
+            .filter-pic-container {
+                margin-top: 5px !important;
+            }
+        }
     </style>
 
     {{-- ===== JAVASCRIPT ===== --}}
@@ -948,8 +1020,8 @@
             const CAN_EDIT = {{ $canEdit ? 'true' : 'false' }};
             const CAN_DELETE = {{ $canDelete ? 'true' : 'false' }};
             const USER_ID = {{ Auth::id() }};
-            // SEE_ALL: gunakan grouped view hanya jika seeAllData=true
-            const SEE_ALL = {{ $seeAllData ? 'true' : 'false' }};
+            // GROUP_VIEW: gunakan grouped view
+            const GROUP_VIEW = {{ $groupView ? 'true' : 'false' }};
             const COL_COUNT = {{ $colCount }};
             const PICS = @json($pics);
 
@@ -1030,19 +1102,33 @@
             // ── Filter (non-admin only — admin reloads from server) ───────────────────
 
             function applyFilter() {
-                if (SEE_ALL) {
+                if (GROUP_VIEW) {
                     loadUnit(activeUnit, false);
                     return;
                 }
                 const f = $('#filter-status-table').val();
+                const picVal = $('#filter-pic').val();
                 $('.filtered-empty').remove();
                 let vis = 0;
                 $('#mom-table-body tr').not('.empty-row').each(function() {
                     const s = $(this).find('[data-field="status"]').val() || '';
-                    if (f === 'all' || s === f) {
+                    
+                    const $picCell = $(this).find('.pic-cell');
+                    let picText = '';
+                    if ($picCell.length) {
+                        const $picSelect = $picCell.find('select');
+                        picText = $picSelect.length ? ($picSelect.val() || '') : $picCell.text().trim();
+                    }
+
+                    const matchStatus = (f === 'all' || s === f);
+                    const matchPic = (picVal === 'all' || picText === picVal);
+
+                    if (matchStatus && matchPic) {
                         $(this).show();
                         vis++;
-                    } else $(this).hide();
+                    } else {
+                        $(this).hide();
+                    }
                 });
                 reindex();
                 const total = $('#mom-table-body tr').not('.empty-row,.filtered-empty').length;
@@ -1050,7 +1136,7 @@
                     $('#mom-table-body').append(`<tr class="filtered-empty">
                     <td colspan="${COL_COUNT}" class="text-center py-5 text-muted">
                         <i class="fas fa-filter fa-lg d-block mb-2" style="opacity:.3;"></i>
-                        Tidak ada data dengan status "<strong>${f}</strong>".
+                        Tidak ada data yang cocok dengan kriteria filter.
                     </td>
                 </tr>`);
                 }
@@ -1080,6 +1166,15 @@
                     options += `<option value="${escHtml(pic.name)}" ${sel}>${escHtml(pic.name)}</option>`;
                 });
                 return `<select class="form-control-inline live-field" data-field="pic">${options}</select>`;
+            }
+
+            function buildRequesterSelect(selectedRequester) {
+                let options = `<option value="">Pilih Requester</option>`;
+                PICS.forEach(pic => {
+                    const sel = pic.name === selectedRequester ? 'selected' : '';
+                    options += `<option value="${escHtml(pic.name)}" ${sel}>${escHtml(pic.name)}</option>`;
+                });
+                return `<select class="form-control-inline live-field" data-field="requester">${options}</select>`;
             }
 
             // ── Row builders (non-admin) ──────────────────────────────────────────────
@@ -1146,8 +1241,12 @@
                         : `<td class="text-center align-middle small">${fmtDate(item.deadline)}</td>`;
 
                     const picCell = isOwner
-                        ? `<td class="p-1 align-middle">${buildPicSelect(item.pic)}</td>`
-                        : `<td class="align-middle small" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>`;
+                        ? `<td class="p-1 align-middle pic-cell">${buildPicSelect(item.pic)}</td>`
+                        : `<td class="align-middle small pic-cell" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>`;
+
+                    const requesterCell = isOwner
+                        ? `<td class="p-1 align-middle">${buildRequesterSelect(item.requester)}</td>`
+                        : `<td class="align-middle small" style="padding:5px 7px;">${escHtml(item.requester||'-')}</td>`;
 
                     const targetCell = isOwner
                         ? buildTcCell(item,'target','Target','Target pekerjaan...')
@@ -1180,10 +1279,10 @@
 
                     return `<tr data-id="${item.id}">
                     <td class="text-center font-weight-bold text-muted no-col align-middle">${i + 1}</td>
-                    <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
                     ${keteranganCell}
                     ${deadlineCell}
                     ${picCell}
+                    ${requesterCell}
                     ${targetCell}
                     ${hasilCell}
                     ${actionCell}
@@ -1194,13 +1293,13 @@
             function buildNewRow(item) {
                 return `<tr data-id="${item.id}">
                 <td class="text-center font-weight-bold text-muted no-col align-middle">1</td>
-                <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
                 <td class="p-0 align-middle tc-cell editing" data-label="ToDoList / Task">
                     <div class="tc-view"><div class="tc-text"></div></div>
                     <textarea class="tc-textarea live-field" data-field="keterangan" placeholder="Tulis keterangan/poin rapat..."></textarea>
                 </td>
                 <td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value=""></td>
-                <td class="p-1 align-middle">${buildPicSelect(item.pic)}</td>
+                <td class="p-1 align-middle pic-cell">${buildPicSelect(item.pic)}</td>
+                <td class="p-1 align-middle">${buildRequesterSelect(item.requester)}</td>
                 <td class="p-0 align-middle tc-cell" data-label="Target">
                     <div class="tc-view"><div class="tc-text" data-placeholder="Target pekerjaan..."></div></div>
                     <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan..."></textarea>
@@ -1238,8 +1337,17 @@
                 const clinic = activeUnit === 'Helas Aesthetic Clinic';
                 const theadClass = clinic ? 'thead-clinic' : 'thead-corp';
 
-                return Object.entries(groups).map(([key, group]) => {
-                    const isOwnerGroup = Number(key) === Number(USER_ID);
+                return Object.entries(groups)
+                    .sort(([keyA], [keyB]) => {
+                        const idA = Number(keyA);
+                        const idB = Number(keyB);
+                        const userId = Number(USER_ID);
+                        if (idA === userId) return -1;
+                        if (idB === userId) return 1;
+                        return 0;
+                    })
+                    .map(([key, group]) => {
+                        const isOwnerGroup = Number(key) === Number(USER_ID);
                     const name = group.creator?.name || '(User dihapus)';
                     const divisi = group.creator?.divisi || group.creator?.role || '';
                     const divisiHtml = divisi ? ` <span class="mom-user-divisi"> — ${escHtml(divisi)}</span>` :
@@ -1250,7 +1358,8 @@
                         if (isOwnerGroup && CAN_EDIT) {
                             const keteranganCell = buildTcCell(item,'keterangan','ToDoList / Task','Tulis keterangan/poin rapat...');
                             const deadlineCell = `<td class="p-1 align-middle"><input type="date" class="form-control-inline text-center live-field" data-field="deadline" value="${escHtml(item.deadline||'')}"></td>`;
-                            const picCell = `<td class="p-1 align-middle">${buildPicSelect(item.pic)}</td>`;
+                            const picCell = `<td class="p-1 align-middle pic-cell">${buildPicSelect(item.pic)}</td>`;
+                            const requesterCell = `<td class="p-1 align-middle">${buildRequesterSelect(item.requester)}</td>`;
                             const targetCell = buildTcCell(item,'target','Target','Target pekerjaan...');
                             const hasilCell = buildHasilCell(item);
                             const actionCell = (CAN_EDIT || CAN_DELETE)
@@ -1261,10 +1370,10 @@
 
                             return `<tr data-id="${item.id}">
                                 <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
-                                <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
                                 ${keteranganCell}
                                 ${deadlineCell}
                                 ${picCell}
+                                ${requesterCell}
                                 ${targetCell}
                                 ${hasilCell}
                                 ${actionCell}
@@ -1306,10 +1415,10 @@
 
                             return `<tr>
                                 <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
-                                <td class="text-center align-middle small text-muted font-weight-bold">${fmtDate(item.tanggal)}</td>
                                 ${tcReadonly(keterangan, 'ToDoList / Task', 'Tulis keterangan/poin rapat...')}
                                 <td class="text-center align-middle small">${fmtDate(item.deadline)}</td>
-                                <td class="align-middle small" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>
+                                <td class="align-middle small pic-cell" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>
+                                <td class="align-middle small" style="padding:5px 7px;">${escHtml(item.requester||'-')}</td>
                                 ${tcReadonly(target, 'Target', 'Target pekerjaan...')}
                                 ${tcReadonlyHasil(hasil, item.status)}
                             </tr>`;
@@ -1333,10 +1442,10 @@
                                     <thead class="text-white text-center mom-group-thead ${theadClass}">
                                         <tr>
                                             <th class="py-2 text-uppercase small align-middle" style="width:40px;">No</th>
-                                            <th class="py-2 text-uppercase small align-middle" style="width:105px;">Tanggal</th>
                                             <th class="py-2 text-uppercase small align-middle">ToDoList / Task</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:105px;">Deadline</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:120px;">PIC</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:120px;">Requester</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:155px;">Target</th>
                                             <th class="py-2 text-uppercase small align-middle" style="min-width:180px;">
                                                 <div class="d-flex flex-column align-items-center" style="gap:4px;">
@@ -1396,6 +1505,7 @@
                 applyUnitTheme(unit);
                 if (resetFilter) {
                     $('#filter-status-table, .filter-status-table').val('all');
+                    $('#filter-pic').val('all');
                     $('#filter-deadline').val('');
                     $('#btn-clear-deadline').hide();
                 }
@@ -1405,6 +1515,9 @@
                 };
                 const f = $('#filter-status-table').val() || $('.filter-status-table').val();
                 if (f && f !== 'all') params.status = f;
+
+                const picVal = $('#filter-pic').val();
+                if (picVal && picVal !== 'all') params.pic_filter = picVal;
 
                 const dl = $('#filter-deadline').val();
                 if (dl) {
@@ -1428,8 +1541,8 @@
                             return;
                         }
 
-                        if (SEE_ALL) {
-                            // Admin: rebuild grouped view
+                        if (res.grouped) {
+                            // Rebuild grouped view
                             $('#mom-content-area').html(buildGroupedHtml(res.data));
                         } else {
                             // Non-admin: rebuild flat table
@@ -1585,7 +1698,7 @@
                         success(res) {
                             $btn.prop('disabled', false).html(
                                 '<i class="fas fa-plus mr-1"></i> Tambah MoM');
-                            if (SEE_ALL) {
+                            if (GROUP_VIEW) {
                                 loadUnit(activeUnit, false);
                                 toast('Data MoM baru berhasil dibuat.', 'success');
                                 return;
@@ -1656,6 +1769,10 @@
             $(document).on('change', '#filter-status-table, .filter-status-table', function() {
                 const val = $(this).val();
                 $('#filter-status-table, .filter-status-table').val(val);
+                applyFilter();
+            });
+
+            $(document).on('change', '#filter-pic', function() {
                 applyFilter();
             });
 

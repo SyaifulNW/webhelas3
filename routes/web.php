@@ -345,6 +345,8 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/settings/users/{id}', [SettingController::class, 'updateUser'])->name('settings.users.update');
             Route::delete('/settings/users/{id}', [SettingController::class, 'destroyUser'])->name('settings.users.destroy');
             Route::post('/settings/users/toggle', [SettingController::class, 'toggleUserStatus'])->name('settings.users.toggle');
+            Route::post('/settings/target-event', [SettingController::class, 'updateTargetEvent'])->name('settings.target-event.update');
+            Route::get('/monitoring-chapter', [\App\Http\Controllers\Operasional\MonitoringChapterController::class, 'index'])->name('monitoring-chapter');
         });
         Route::middleware(['role:administrator'])->group(function () {
             Route::post('/settings/target', [SettingController::class, 'updateTarget'])->name('settings.target.update');
