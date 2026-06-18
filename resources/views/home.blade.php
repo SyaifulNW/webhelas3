@@ -386,7 +386,7 @@
 
     <div class="container-fluid px-4">
 
-        @if(isset($role) && in_array($role, ['chapter', 'reseller']))
+        @if(isset($role) && in_array($role, ['chapter', 'reseller', 'agen']))
             <!-- ======================= 📊 DASHBOARD AGENT (CHAPTER & RESELLER) ======================= -->
             <h1 class="h3 mb-4 text-gray-800">Dashboard</h1>
 
@@ -471,7 +471,7 @@
                         </div>
                     </div>
  
-                    @if($role === 'chapter')
+                    @if($role === 'chapter' || ($role === 'agen' && auth()->user()->kategori === 'Agen Pusat'))
                         <!-- Direct Fee -->
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="card border-left-primary shadow h-100 py-2 border-0 bg-white" style="border-radius: 12px; border-left: 4px solid #4e73df !important;">
@@ -634,8 +634,9 @@
 
                 <!-- Recent Transactions Table -->
                 <div class="card shadow mb-4" style="border-radius: 15px;">
-                    <div class="card-header py-3 bg-white border-0" style="border-radius: 15px 15px 0 0;">
+                    <div class="card-header py-3 bg-white border-0 d-flex justify-content-between align-items-center" style="border-radius: 15px 15px 0 0;">
                         <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history mr-1"></i> Riwayat Transaksi</h6>
+                        <a href="{{ route('wallet.history') }}" class="btn btn-sm btn-link font-weight-bold">Lihat Semua</a>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -1215,7 +1216,7 @@
                         <i class="fas fa-tachometer-alt"></i> Dashboard Panel 1
                     </button>
                 </li>
-                @if($role !== 'chapter' && $role !== 'reseller')
+                @if($role !== 'chapter' && $role !== 'reseller' && $role !== 'agen')
                     <li class="nav-item" role="presentation">
                         <button class="nav-link premium-tab color-success" id="performance-tab-link" data-toggle="tab"
                             data-target="#performance-tab" type="button" role="tab" aria-controls="performance-tab"
@@ -1240,11 +1241,11 @@
                                 <thead class="table-primary">
                                     <tr>
                                         <th>Nama Kelas</th>
-                                        @if($role !== 'reseller')
+                                        @if($role !== 'reseller' && $role !== 'agen')
                                             <th>Tanggal</th>
                                         @endif
                                         <th>Omset</th>
-                                        @if($role === 'reseller')
+                                        @if($role === 'reseller' || $role === 'agen')
                                             <th>Royalti</th>
                                             <th>Komisi</th>
                                             <th>Bonus Pribadi</th>
@@ -1265,7 +1266,7 @@
                                             <td class="fw-semibold">
                                                 {{ $k['nama_kelas'] == 'Start-Up Muslim Indonesia' ? 'M1T' : $k['nama_kelas'] }}
                                             </td>
-                                            @if($role !== 'reseller')
+                                            @if($role !== 'reseller' && $role !== 'agen')
                                                 <td>{{ $jadwalKelas[$k['nama_kelas']] ?? '-' }}</td>
                                             @endif
                                             <td class="text-success font-weight-bold">
@@ -1290,7 +1291,7 @@
                                                     Rp {{ number_format($k['omset'], 0, ',', '.') }}
                                                 @endif
                                             </td>
-                                            @if($role === 'reseller')
+                                            @if($role === 'reseller' || $role === 'agen')
                                                 <td class="text-info fw-bold">Rp {{ number_format($k['royalti'] ?? 0, 0, ',', '.') }}
                                                 </td>
                                                 <td class="text-primary fw-bold">Rp {{ number_format($k['komisi'] ?? 0, 0, ',', '.') }}
@@ -1346,7 +1347,7 @@
                                 @endphp
 
                                 <tfoot>
-                                    @if($role !== 'reseller')
+                                    @if($role !== 'reseller' && $role !== 'agen')
                                         <tr class="bg-light fw-bold">
                                             <td colspan="3" class="text-end text-dark">Total Omset</td>
                                             <td colspan="3" class="text-start text-success">
@@ -1388,7 +1389,7 @@
                     </div>
 
                     {{-- ================== CARD DATABASE & KOMISI ================== --}}
-                    @if($role !== 'chapter' && $role !== 'reseller')
+                    @if($role !== 'chapter' && $role !== 'reseller' && $role !== 'agen')
                         @php
                             $namaUserData = isset($user) && $readonly ? $user->name : auth()->user()->name;
                             $target = 50;
@@ -1486,7 +1487,7 @@
 
 
                     {{-- ================== KPI BULANAN ================== --}}
-                    @if($role !== 'chapter' && $role !== 'reseller')
+                    @if($role !== 'chapter' && $role !== 'reseller' && $role !== 'agen')
                         <div class="card shadow-lg border-0 mt-5 mb-5">
                             <div class="card-header bg-primary text-white text-center fw-bold fs-5">
                                 PENILAIAN AKTIVITAS (CS MBC)
@@ -1528,7 +1529,7 @@
                 </div>
 
                 <!-- ================== TAB 2: PENILAIAN KINERJA SAYA ================== -->
-                @if($role !== 'chapter' && $role !== 'reseller')
+                @if($role !== 'chapter' && $role !== 'reseller' && $role !== 'agen')
                     <div class="tab-pane fade" id="performance-tab" role="tabpanel" aria-labelledby="performance-tab-link">
 
 

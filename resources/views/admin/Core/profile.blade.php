@@ -263,7 +263,12 @@
                             @if($user->chapter || $user->role == 'chapter')
                                 <div class="mb-4">
                                     <span class="text-danger font-weight-bold">
-                                        <i class="fas fa-map-marker-alt mr-1"></i> Chapter {{ $user->chapter ?? 'Belum Diatur' }}
+                                        <i class="fas fa-map-marker-alt mr-1"></i> 
+                                        @if ($user->kategori === 'Agen Pusat')
+                                            Kota {{ $user->chapter ?? 'Belum Diatur' }}
+                                        @else
+                                            Chapter {{ $user->chapter ?? 'Belum Diatur' }}
+                                        @endif
                                     </span>
                                 </div>
                             @endif

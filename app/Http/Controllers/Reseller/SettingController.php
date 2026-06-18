@@ -13,7 +13,7 @@ class SettingController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'role:reseller']);
+        $this->middleware(['auth', 'role:reseller,agen']);
     }
 
     public function index()
@@ -21,7 +21,7 @@ class SettingController extends Controller
         $user = Auth::user();
         $chapter = $user->chapter;
         
-        $downlines = User::where('role', 'reseller')
+        $downlines = User::whereIn('role', ['reseller', 'agen'])
             ->where('created_by', $user->id)
             ->withCount(['salesplans as total_closing' => function ($query) {
                 $query->where('status', 'sudah_transfer');
@@ -41,7 +41,7 @@ class SettingController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $reseller = User::where('role', 'reseller')
+        $reseller = User::whereIn('role', ['reseller', 'agen'])
             ->where('created_by', $user->id)
             ->findOrFail($id);
 
@@ -68,7 +68,7 @@ class SettingController extends Controller
             'email' => $request->email,
             'wa' => $request->wa,
             'chapter' => Auth::user()->chapter,
-            'role' => 'reseller',
+            'role' => Auth::user()->role === 'agen' ? 'agen' : 'reseller',
             'created_by' => Auth::id(),
             'password' => Hash::make($request->password),
         ]);
@@ -78,7 +78,7 @@ class SettingController extends Controller
 
     public function updateReseller(Request $request, $id)
     {
-        $user = User::where('role', 'reseller')
+        $user = User::whereIn('role', ['reseller', 'agen'])
             ->where('created_by', Auth::id())
             ->findOrFail($id);
 
@@ -107,7 +107,7 @@ class SettingController extends Controller
 
     public function destroyReseller($id)
     {
-        $user = User::where('role', 'reseller')
+        $user = User::whereIn('role', ['reseller', 'agen'])
             ->where('created_by', Auth::id())
             ->findOrFail($id);
 

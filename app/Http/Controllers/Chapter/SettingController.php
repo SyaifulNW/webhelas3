@@ -18,7 +18,7 @@ class SettingController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $downlines = User::where('role', 'reseller')
+        $downlines = User::whereIn('role', ['reseller', 'agen'])
             ->where('chapter', $user->chapter)
             ->get();
         return view('chapter.setting.index', compact('user', 'downlines'));
@@ -48,7 +48,7 @@ class SettingController extends Controller
 
     public function updateReseller(Request $request, $id)
     {
-        $user = User::where('role', 'reseller')
+        $user = User::whereIn('role', ['reseller', 'agen'])
             ->where('chapter', Auth::user()->chapter)
             ->findOrFail($id);
 

@@ -168,6 +168,47 @@
             </div>
         </div>
     </div>
+
+    {{-- Riwayat Transaksi Pendapatan --}}
+    <div class="card shadow mb-4" style="border-radius: 15px; border: none;">
+        <div class="card-header py-3 bg-white d-flex align-items-center justify-content-between" style="border-radius: 15px 15px 0 0;">
+            <h6 class="m-0 font-weight-bold text-success">
+                <i class="fas fa-coins mr-2"></i>Rincian Transaksi Pendapatan
+                <span class="badge badge-success ml-2">{{ $dynamicIncomes->count() }} transaksi</span>
+            </h6>
+            <a href="{{ route('wallet.history', ['type' => 'income']) }}" class="btn btn-sm btn-link font-weight-bold text-success">
+                Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-2">Tanggal</th>
+                            <th class="py-2">Sumber</th>
+                            <th class="py-2">Keterangan</th>
+                            <th class="py-2 text-right">Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($dynamicIncomes->take(10) as $inc)
+                        <tr>
+                            <td class="text-muted small">{{ \Carbon\Carbon::parse($inc['created_at'])->format('d/m/Y') }}</td>
+                            <td class="font-weight-bold text-dark">{{ $inc['source'] }}</td>
+                            <td class="text-muted small">{{ $inc['description'] }}</td>
+                            <td class="text-right font-weight-bold text-success">Rp {{ number_format($inc['amount'], 0, ',', '.') }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">Belum ada transaksi pendapatan</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>

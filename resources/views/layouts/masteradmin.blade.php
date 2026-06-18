@@ -941,7 +941,7 @@
                         </li>
                     @endif
 
-                    @if (\App\Models\Menu::isActive('daily_activity') && !in_array($userRole, ['reseller', 'chapter']))
+                    @if (\App\Models\Menu::isActive('daily_activity') && !in_array($userRole, ['reseller', 'chapter', 'agen']))
                         <li
                             class="nav-item {{ request()->routeIs('admin.dailyactivity.index') || request()->routeIs('manager.penilaian-cs.index') ? 'active' : '' }}">
                             <a class="nav-link"
@@ -965,8 +965,8 @@
                         @endif
                     @endif
 
-                    {{-- Menu Khusus Chapter & Reseller --}}
-                    @if ($userRole === 'chapter' || $userRole === 'reseller')
+                    {{-- Menu Khusus Chapter, Reseller & Agen --}}
+                    @if ($userRole === 'chapter' || $userRole === 'reseller' || $userRole === 'agen')
 
                         <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="SPP Peserta M1T">
@@ -1023,7 +1023,7 @@
                         @else
                             {{-- SALES PLAN MBC (LAINNYA) --}}
                             @if (
-                                !in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional', 'cs-mbc']) &&
+                                !in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional', 'cs-mbc', 'agen']) &&
                                     !in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo']))
                                 @if ($userRole === 'cs-mbc')
                                     {{-- Simple link for CS-MBC (same as administrator) --}}
@@ -1470,7 +1470,7 @@
                 @if (strtolower(auth()->user()->role) !== 'administrator' &&
                         strtolower(auth()->user()->role) !== 'produksi' &&
                         strtolower(auth()->user()->role) !== 'operasional' &&
-                        !in_array($userRole, ['reseller', 'chapter']) &&
+                        !in_array($userRole, ['reseller', 'chapter', 'agen']) &&
                         stripos(auth()->user()->name, 'Linda') === false)
                     <li
                         class="nav-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}">
@@ -1718,7 +1718,11 @@
                                         @if (Auth::user()->chapter)
                                             <span class="badge badge-light border shadow-sm px-2 py-1 mr-2"
                                                 style="font-size: 10px; color: #5a5c69; font-weight: 700;">
-                                                CHAPTER {{ strtoupper(Auth::user()->chapter) }}
+                                                @if (Auth::user()->kategori === 'Agen Pusat')
+                                                    KOTA {{ strtoupper(Auth::user()->chapter) }}
+                                                @else
+                                                    CHAPTER {{ strtoupper(Auth::user()->chapter) }}
+                                                @endif
                                             </span>
                                         @endif
                                         <span

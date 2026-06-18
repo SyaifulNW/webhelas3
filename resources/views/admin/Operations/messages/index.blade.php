@@ -53,7 +53,7 @@
         </div>
 
         <div class="mt-3">
-            {{ $messages->links() }}
+            {{ $messages->appends(request()->query())->links('pagination::bootstrap-4') }}
         </div>
     @else
         <div class="alert alert-info text-center">

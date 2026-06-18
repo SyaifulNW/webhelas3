@@ -21,7 +21,7 @@ class ResellerController extends Controller
         $chapter = Auth::user()->chapter;
         
         // Only show resellers personally recruited by this Chapter leader
-        $resellers = User::where('role', 'reseller')
+        $resellers = User::whereIn('role', ['reseller', 'agen'])
             ->where('created_by', Auth::id())
             ->withCount(['salesplans as total_closing' => function ($query) {
                 $query->where('status', 'sudah_transfer');
@@ -78,7 +78,7 @@ class ResellerController extends Controller
 
     public function update(Request $request, $id)
     {
-        $reseller = User::where('role', 'reseller')
+        $reseller = User::whereIn('role', ['reseller', 'agen'])
             ->where('chapter', Auth::user()->chapter)
             ->findOrFail($id);
 
@@ -107,7 +107,7 @@ class ResellerController extends Controller
 
     public function destroy($id)
     {
-        $reseller = User::where('role', 'reseller')
+        $reseller = User::whereIn('role', ['reseller', 'agen'])
             ->where('chapter', Auth::user()->chapter)
             ->findOrFail($id);
 
@@ -118,7 +118,7 @@ class ResellerController extends Controller
 
     public function show($id)
     {
-        $reseller = User::where('role', 'reseller')
+        $reseller = User::whereIn('role', ['reseller', 'agen'])
             ->where('chapter', Auth::user()->chapter)
             ->findOrFail($id);
 

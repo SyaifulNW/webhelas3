@@ -599,7 +599,7 @@
                     </table>
                 </div>
                 <div class="mt-4 px-2">
-                    {{ $requests->links() }}
+                    {{ $requests->appends(request()->query())->links('pagination::bootstrap-4') }}
                 </div>
             </div>
         </div>

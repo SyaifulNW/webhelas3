@@ -50,7 +50,14 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-3">
         <div>
             <h1 class="h3 mb-1 text-gray-800 fw-bold">Manajemen Agen</h1>
-            <p class="text-muted small mb-0"><i class="fas fa-map-marker-alt mr-1"></i> Wilayah Chapter: <strong>{{ $chapter }}</strong></p>
+            <p class="text-muted small mb-0"><i class="fas fa-map-marker-alt mr-1"></i> 
+                @if (Auth::user()->kategori === 'Agen Pusat')
+                    Asal Kota:
+                @else
+                    Wilayah Chapter:
+                @endif
+                <strong>{{ $chapter }}</strong>
+            </p>
         </div>
         <button class="btn btn-primary shadow-sm fw-bold" data-toggle="modal" data-target="#modalTambahReseller">
             <i class="fas fa-user-plus mr-2"></i> Tambah Agen
@@ -173,7 +180,7 @@
                                     <td colspan="6" class="text-center py-5">
                                         <div class="text-muted">
                                             <i class="fas fa-user-slash fa-3x mb-3 opacity-25"></i>
-                                            <p>Belum ada agen yang Anda rekrut di Chapter {{ $chapter }}.</p>
+                                            <p>Belum ada agen yang Anda rekrut di @if (Auth::user()->kategori === 'Agen Pusat') Kota @else Chapter @endif {{ $chapter }}.</p>
                                         </div>
                                     </td>
                                 </tr>

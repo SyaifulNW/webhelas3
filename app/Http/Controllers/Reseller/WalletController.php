@@ -80,6 +80,9 @@ class WalletController extends Controller
                 'status' => $t->status,
                 'reference_no' => $t->reference_no,
                 'admin_note' => $t->admin_note,
+                'bank_name' => $t->bank_name,
+                'account_number' => $t->account_number,
+                'proof_of_transfer' => $t->proof_of_transfer,
             ];
         });
 
@@ -97,6 +100,7 @@ class WalletController extends Controller
         return view('reseller.wallet.index', [
             'wallet'             => $wallet,
             'recentTransactions' => $recentTransactions,
+            'dynamicIncomes'     => $dynamicIncomes,
             'totalIncome'        => $totalIncome,
             'totalWithdrawal'    => $totalWithdrawal,
             'availableBalance'   => $availableBalance,
@@ -138,6 +142,9 @@ class WalletController extends Controller
                 'status' => $t->status,
                 'reference_no' => $t->reference_no,
                 'admin_note' => $t->admin_note,
+                'bank_name' => $t->bank_name,
+                'account_number' => $t->account_number,
+                'proof_of_transfer' => $t->proof_of_transfer,
             ];
         });
 
@@ -165,7 +172,10 @@ class WalletController extends Controller
             ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath()]
         );
 
-        return view('reseller.wallet.history', compact('wallet', 'transactions'));
+        $totalIncome = $dynamicIncomes->sum('amount');
+        $totalWithdrawal = $dbWithdrawals->where('status', 'success')->sum('amount');
+
+        return view('reseller.wallet.history', compact('wallet', 'transactions', 'totalIncome', 'totalWithdrawal'));
     }
 
     public function withdraw(Request $request)

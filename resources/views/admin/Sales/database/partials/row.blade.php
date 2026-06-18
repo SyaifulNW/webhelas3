@@ -1,6 +1,6 @@
 @php
     $userRole = strtolower(auth()->user()->role);
-    $isChapterView = ($userRole === 'chapter' || $userRole === 'reseller' || (in_array($userRole, ['administrator', 'operasional']) && request('view_type') === 'chapter'));
+    $isChapterView = ($userRole === 'chapter' || $userRole === 'reseller' || $userRole === 'agen' || (in_array($userRole, ['administrator', 'operasional']) && request('view_type') === 'chapter'));
     $isAdminCSView = ($userRole === 'administrator' && request('view_type') !== 'chapter');
     $isCSMBCView = ($userRole === 'cs-mbc');
 @endphp

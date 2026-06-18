@@ -6,6 +6,7 @@
         $isChapterView =
             $userRole === 'chapter' ||
             $userRole === 'reseller' ||
+            $userRole === 'agen' ||
             (in_array($userRole, ['administrator', 'operasional']) && $viewType === 'chapter');
         $isAdminCSView = $userRole === 'administrator' && $viewType !== 'chapter';
         $isCSMBCView = $userRole === 'cs-mbc';
@@ -740,7 +741,7 @@
                 @endif
 
                 @if (
-                    !in_array($userRole, ['chapter', 'reseller', 'operasional']) &&
+                    !in_array($userRole, ['chapter', 'reseller', 'agen', 'operasional']) &&
                         !($userRole === 'administrator' && $viewType === 'chapter'))
                     @php
                         $today = \Carbon\Carbon::now()->startOfDay();
@@ -1023,6 +1024,7 @@
                             </div>
 
                             <!-- Target -->
+                            @if (!in_array($userRole, ['chapter', 'reseller', 'agen']))
                             <div class="g-stat-card g-sc-yellow">
                                 <div class="g-sc-content">
                                     <span class="g-sc-label">Target Bulanan</span>
@@ -1030,6 +1032,7 @@
                                 </div>
                                 <div class="g-sc-icon"><i class="fas fa-bullseye"></i></div>
                             </div>
+                            @endif
 
                             <!-- Jumlah Prospek -->
                             <div class="g-stat-card g-sc-red text-white" style="position: relative;">
@@ -1156,7 +1159,7 @@
                             </button>
                         @endif
 
-                        @if (in_array($userRole, ['chapter', 'reseller']) || (request('view_type') == 'chapter' && $userRole == 'administrator'))
+                        @if (in_array($userRole, ['chapter', 'reseller', 'agen']) || (request('view_type') == 'chapter' && $userRole == 'administrator'))
                             <div class="ml-2 px-2 py-1 bg-light border rounded-pill shadow-sm d-flex align-items-center">
                                 <i class="fas fa-database text-info mr-1"></i>
                                 <span class="text-xs font-weight-bold text-gray-800">Total Database: <span
@@ -1233,7 +1236,7 @@
                             <div class="w-100 mb-3 d-flex align-items-center justify-content-end">
                                 <div class="d-flex align-items-end flex-wrap" style="gap: 10px;">
                                     {{-- Status Ikut Kelas --}}
-                                    @if (!in_array($userRole, ['reseller', 'chapter']))
+                                    @if (!in_array($userRole, ['reseller', 'chapter', 'agen']))
                                         <div class="flex-column"
                                             style="gap: 2px; display: {{ request('view_type') === 'chapter' ? 'none' : 'flex' }};"
                                             id="filterIkutKelasContainer">
@@ -3100,7 +3103,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="modalMoveSalesPlanLabel">
-                        @if (in_array($userRole, ['reseller', 'chapter']))
+                        @if (in_array($userRole, ['reseller', 'chapter', 'agen']))
                             Pindahkan ke Prospek
                         @else
                             Masukkan ke Sales Plan
@@ -3113,12 +3116,12 @@
                 <form id="formMoveSalesPlan" method="POST" action="">
                     @csrf
                     <div class="modal-body">
-                        <p>Anda akan memindahkan <strong id="modalNamaPeserta"></strong> ke @if (in_array($userRole, ['reseller', 'chapter']))
+                        <p>Anda akan memindahkan <strong id="modalNamaPeserta"></strong> ke @if (in_array($userRole, ['reseller', 'chapter', 'agen']))
                                 Prospek
                             @else
                                 Sales Plan
                             @endif.
-                            @if (!in_array($userRole, ['reseller', 'chapter']))
+                            @if (!in_array($userRole, ['reseller', 'chapter', 'agen']))
                                 Silakan pilih <span id="textPotensi">Potensi Kelas Pertama</span>:
                             @endif
                         </p>
@@ -3130,7 +3133,7 @@
                                     @php
                                         $isM1T = str_contains($k->nama_kelas, 'Muslim Indonesia');
                                         $showCheckbox = true;
-                                        if (in_array($userRole, ['reseller', 'chapter']) && !$isM1T) {
+                                        if (in_array($userRole, ['reseller', 'chapter', 'agen']) && !$isM1T) {
                                             $showCheckbox = false;
                                         }
                                     @endphp
@@ -3154,7 +3157,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
                         <button type="submit" class="btn btn-primary">
-                            @if (in_array($userRole, ['reseller', 'chapter']))
+                            @if (in_array($userRole, ['reseller', 'chapter', 'agen']))
                                 Pindahkan ke Prospek
                             @else
                                 Masukkan ke Salesplan
@@ -4028,7 +4031,7 @@
                         {{-- Situasi Bisnis --}}
                         <div class="form-group">
                             <label
-                                for="situasi_bisnis">{{ in_array($userRole, ['chapter', 'reseller']) ? 'Situasi & Kendala Bisnis' : 'Situasi Bisnis' }}</label>
+                                for="situasi_bisnis">{{ in_array($userRole, ['chapter', 'reseller', 'agen']) ? 'Situasi & Kendala Bisnis' : 'Situasi Bisnis' }}</label>
                             <textarea class="form-control" id="situasi_bisnis" name="situasi_bisnis" rows="3"></textarea>
                         </div>
 
