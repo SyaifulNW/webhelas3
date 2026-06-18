@@ -1821,7 +1821,6 @@
                         </div>
                         <div id="pengadaan-pagination" class="mt-3 d-flex justify-content-center"></div>
                     </div>
-                </div>
             </div>
         </div>
     </div>

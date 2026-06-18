@@ -16,6 +16,7 @@ class Mom extends Model
         'keterangan',
         'deadline',
         'pic',
+        'requester',
         'target',
         'hasil',
         'status',

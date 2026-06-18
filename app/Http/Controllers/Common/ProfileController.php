@@ -69,7 +69,15 @@ class ProfileController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
+        $oldName = $user->name;
+        $newName = $data['name'] ?? $oldName;
+
         $user->update($data);
+
+        if ($oldName !== $newName) {
+            \App\Models\Mom::where('pic', $oldName)->update(['pic' => $newName]);
+            \App\Models\Mom::where('requester', $oldName)->update(['requester' => $newName]);
+        }
 
         return back()->with('success', 'Profil berhasil diperbarui!');
     }

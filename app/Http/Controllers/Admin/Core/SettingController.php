@@ -157,7 +157,15 @@ class SettingController extends Controller
             $data['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
         }
 
+        $oldName = $user->name;
+        $newName = $data['name'];
+
         $user->update($data);
+
+        if ($oldName !== $newName) {
+            \App\Models\Mom::where('pic', $oldName)->update(['pic' => $newName]);
+            \App\Models\Mom::where('requester', $oldName)->update(['requester' => $newName]);
+        }
 
         return redirect()->back()->with('success', 'User berhasil diperbarui.');
     }
@@ -296,5 +304,19 @@ class SettingController extends Controller
             \DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function updateTargetEvent(Request $request)
+    {
+        $request->validate([
+            'target_event_peserta' => 'required|numeric|min:1'
+        ]);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'target_event_peserta'],
+            ['value' => $request->target_event_peserta]
+        );
+
+        return redirect()->back()->with('success', 'Target peserta event berhasil diperbarui.');
     }
 }

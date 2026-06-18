@@ -452,6 +452,11 @@
                                         placeholder="Tuliskan keterangan poin atau to-do list..." required>{{ $point['keterangan'] }}</textarea>
                                 </div>
                                 <div class="field-group">
+                                    <label class="field-label">Target</label>
+                                    <input type="text" name="points[{{ $idx }}][target]" class="field-input" 
+                                        value="{{ $point['target'] ?? '' }}" placeholder="Tuliskan target...">
+                                </div>
+                                <div class="field-group">
                                     <label class="field-label">Deadline</label>
                                     <input type="date" name="points[{{ $idx }}][deadline]" class="field-input" 
                                         value="{{ $point['deadline'] }}">
@@ -471,6 +476,10 @@
                                 <label class="field-label">ToDoList / Poin Tindak Lanjut <span class="req">*</span></label>
                                 <textarea name="points[0][keterangan]" class="field-textarea" rows="3"
                                     placeholder="Tuliskan keterangan poin atau to-do list..." required></textarea>
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label">Target</label>
+                                <input type="text" name="points[0][target]" class="field-input" placeholder="Tuliskan target...">
                             </div>
                             <div class="field-group">
                                 <label class="field-label">Deadline</label>
@@ -532,10 +541,13 @@
                 card.querySelector('.point-number').textContent = `Poin Rapat #${index + 1}`;
                 
                 // Update input name attributes
-                const textarea = card.querySelector('textarea');
+                const textarea = card.querySelector('textarea[name*="[keterangan]"]');
                 if (textarea) textarea.setAttribute('name', `points[${index}][keterangan]`);
                 
-                const dateInput = card.querySelector('input[type="date"]');
+                const targetInput = card.querySelector('input[name*="[target]"]');
+                if (targetInput) targetInput.setAttribute('name', `points[${index}][target]`);
+                
+                const dateInput = card.querySelector('input[name*="[deadline]"]');
                 if (dateInput) dateInput.setAttribute('name', `points[${index}][deadline]`);
                 
                 // Hide delete button if only 1 card left
@@ -566,6 +578,10 @@
                         <label class="field-label">ToDoList / Poin Tindak Lanjut <span class="req">*</span></label>
                         <textarea name="points[${newIndex}][keterangan]" class="field-textarea" rows="3"
                             placeholder="Tuliskan keterangan poin atau to-do list..." required></textarea>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Target</label>
+                        <input type="text" name="points[${newIndex}][target]" class="field-input" placeholder="Tuliskan target...">
                     </div>
                     <div class="field-group">
                         <label class="field-label">Deadline</label>

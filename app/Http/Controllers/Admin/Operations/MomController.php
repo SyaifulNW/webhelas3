@@ -112,18 +112,18 @@ class MomController extends Controller
             $unit = $permissions['canAccessUnits'][0];
         }
 
-        // Auto-update overdue records for this unit
-        Mom::where('unit', $unit)
-            ->where('status', '!=', 'Done')
-            ->whereNotNull('deadline')
-            ->where('deadline', '<', now()->toDateString())
-            ->update(['status' => 'Overdue']);
+        // Auto-update overdue logic removed: user changes status manually
 
         $query = Mom::where('unit', $unit);
 
-        // Non-admin users only see their own data
+        // Non-admin users see their own data, or data where they are PIC, or data where they are Requester
         if (!$permissions['seeAllData']) {
-            $query->where('created_by', Auth::id());
+            $user = Auth::user();
+            $query->where(function ($q) use ($user) {
+                $q->where('created_by', $user->id)
+                  ->orWhere('pic', $user->name)
+                  ->orWhere('requester', $user->name);
+            });
         }
 
         // Optional status filter
@@ -131,12 +131,17 @@ class MomController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Optional PIC filter
+        if ($request->filled('pic_filter') && $request->pic_filter !== 'all') {
+            $query->where('pic', $request->pic_filter);
+        }
+
         // Optional deadline filter
         if ($request->filled('deadline_filter')) {
             $query->whereDate('deadline', $request->deadline_filter);
         }
 
-        // For admin: eager-load creator and group by user
+        // For admin/Yasmin: eager-load creator
         if ($permissions['seeAllData']) {
             $query->with('creator');
         }
@@ -154,14 +159,19 @@ class MomController extends Controller
 
         $moms = $query->get();
 
-        // Group by creator for admin view
+        // Group by creator for CS Yasmin (grouped view)
+        $groupView = $permissions['seeAllData'] && (strtolower(trim(Auth::user()->role)) !== 'administrator');
         $groupedMoms = null;
-        if ($permissions['seeAllData']) {
-            $groupedMoms = $moms->groupBy('created_by');
+        if ($groupView) {
+            $userId = Auth::id();
+            $groupedMoms = $moms->groupBy('created_by')->sortBy(function ($group, $key) use ($userId) {
+                return $key == $userId ? 0 : 1;
+            });
         }
 
         $pics = \App\Models\User::where('kategori', 'Pusat')
             ->where('is_active', 1)
+            ->where('role', '!=', 'administrator')
             ->orderBy('name', 'asc')
             ->get(['id', 'name']);
 
@@ -169,11 +179,11 @@ class MomController extends Controller
             return response()->json([
                 'success' => true,
                 'data'    => $moms,
-                'grouped' => $permissions['seeAllData'],
+                'grouped' => $groupView,
             ]);
         }
 
-        return view('admin.Operations.mom.index', compact('moms', 'unit', 'permissions', 'groupedMoms', 'pics'));
+        return view('admin.Operations.mom.index', compact('moms', 'unit', 'permissions', 'groupedMoms', 'pics', 'groupView'));
     }
 
     /**
@@ -233,6 +243,7 @@ class MomController extends Controller
         $validated = $request->validate([
             'points'              => 'required|array|min:1',
             'points.*.keterangan' => 'required|string',
+            'points.*.target'     => 'nullable|string',
             'points.*.deadline'   => 'nullable|date',
         ]);
 
@@ -240,7 +251,8 @@ class MomController extends Controller
             Mom::create([
                 'tanggal'    => now()->toDateString(),
                 'pic'        => $owner->name,
-                'target'     => '',
+                'requester'  => $owner->name,
+                'target'     => $point['target'] ?? '',
                 'keterangan' => $point['keterangan'],
                 'deadline'   => $point['deadline'] ?? null,
                 'status'     => 'Progress',
@@ -277,6 +289,7 @@ class MomController extends Controller
             'keterangan' => '',
             'deadline'   => null,
             'pic'        => '',
+            'requester'  => '',
             'target'     => '',
             'hasil'      => '',
             'status'     => 'Progress',
@@ -320,6 +333,7 @@ class MomController extends Controller
             'keterangan' => 'nullable|string',
             'deadline'   => 'nullable|date',
             'pic'        => 'nullable|string|max:255',
+            'requester'  => 'nullable|string|max:255',
             'target'     => 'nullable|string',
             'hasil'      => 'nullable|string',
             'status'     => 'nullable|in:Progress,Done,Overdue',
