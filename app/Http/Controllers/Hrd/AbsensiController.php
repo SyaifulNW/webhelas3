@@ -17,6 +17,23 @@ class AbsensiController extends Controller
      */
     public function hr(Request $request)
     {
+        // Auto-fix: Add missing columns to users table
+        $newColumns = ['tempat_lahir' => 'string', 'tanggal_lahir' => 'date', 'grade' => 'string'];
+        foreach ($newColumns as $col => $type) {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('users', $col)) {
+                try {
+                    \Illuminate\Support\Facades\Schema::table('users', function ($table) use ($col, $type) {
+                        if ($type === 'date') {
+                            $table->date($col)->nullable();
+                        } else {
+                            $table->string($col)->nullable();
+                        }
+                    });
+                } catch (\Exception $e) {
+                }
+            }
+        }
+
         $selectedDate  = $request->get('date', Carbon::today()->toDateString());
         $selectedMonth = $request->get('month', Carbon::today()->format('Y-m'));
 
@@ -43,7 +60,7 @@ class AbsensiController extends Controller
         $employees = User::where('is_active', 1)
             ->where('kategori', 'Pusat')
             ->where('role', '!=', 'administrator')
-            ->select('id', 'name', 'divisi', 'tipe_kontrak', 'status_sdm')
+            ->select('id', 'name', 'divisi', 'tipe_kontrak', 'status_sdm', 'tempat_lahir', 'tanggal_lahir', 'wa', 'grade')
             ->orderBy('name')
             ->get();
 
@@ -56,6 +73,34 @@ class AbsensiController extends Controller
             'absensi_jam_masuk_sabtu' => \App\Models\Setting::where('key', 'absensi_jam_masuk_sabtu')->value('value') ?? '08:00',
             'absensi_jam_pulang_sabtu' => \App\Models\Setting::where('key', 'absensi_jam_pulang_sabtu')->value('value') ?? '14:00',
         ];
+
+        // Fetch custom divisions from settings
+        $customDivisions = [];
+        $settingDiv = \App\Models\Setting::where('key', 'karyawan_divisi')->value('value');
+        if ($settingDiv) {
+            $customDivisions = json_decode($settingDiv, true) ?: [];
+        }
+        $defaultDivisions = ['CS & HRD', 'CS & Keuangan', 'Operasional', 'Produksi', 'Produksi Konten', 'Advertiser', 'CS & Sales', 'Web Developer'];
+        $dbDivisions = User::whereNotNull('divisi')->where('divisi', '!=', '')->distinct()->pluck('divisi')->toArray();
+        $divisions = array_values(array_unique(array_filter(array_merge($defaultDivisions, $customDivisions, $dbDivisions))));
+
+        // Fetch or initialize custom grades from settings
+        $defaultGrades = ['Junior 1', 'Junior 2', 'Junior 3', 'Senior 1 (SPV)', 'Senior 2 (SPV)', 'Senior 3 (SPV)', 'Manager 1', 'Manager 2', 'Manager 3', 'Direksi'];
+        $settingGrade = \App\Models\Setting::where('key', 'karyawan_grade')->first();
+        if (!$settingGrade) {
+            try {
+                \App\Models\Setting::create([
+                    'key' => 'karyawan_grade',
+                    'value' => json_encode($defaultGrades)
+                ]);
+            } catch (\Exception $e) {
+            }
+            $customGrades = $defaultGrades;
+        } else {
+            $customGrades = json_decode($settingGrade->value, true) ?: [];
+        }
+        $dbGrades = User::whereNotNull('grade')->where('grade', '!=', '')->distinct()->pluck('grade')->toArray();
+        $grades = array_values(array_unique(array_filter(array_merge($defaultGrades, $customGrades, $dbGrades))));
 
         return view('hrd.hr', compact(
             'attendances',
@@ -70,7 +115,9 @@ class AbsensiController extends Controller
             'persenIzin',
             'monthlyAttendances',
             'employees',
-            'settings'
+            'settings',
+            'divisions',
+            'grades'
         ));
     }
 
@@ -81,8 +128,8 @@ class AbsensiController extends Controller
     {
         $request->validate([
             'id'    => 'required|exists:users,id',
-            'field' => 'required|in:divisi,tipe_kontrak,status_sdm',
-            'value' => 'required|string|max:100',
+            'field' => 'required|in:divisi,tipe_kontrak,status_sdm,tempat_lahir,tanggal_lahir,wa,grade',
+            'value' => 'nullable|string|max:255',
         ]);
 
         User::where('id', $request->id)->update([
@@ -298,5 +345,33 @@ class AbsensiController extends Controller
         }
 
         return redirect()->back()->with('success', 'Pengaturan Absensi berhasil diperbarui!');
+    }
+
+    /**
+     * Store new division.
+     */
+    public function storeDivision(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $name = trim($request->name);
+
+        $customDivisions = [];
+        $settingDiv = \App\Models\Setting::where('key', 'karyawan_divisi')->value('value');
+        if ($settingDiv) {
+            $customDivisions = json_decode($settingDiv, true) ?: [];
+        }
+
+        if (!in_array($name, $customDivisions)) {
+            $customDivisions[] = $name;
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'karyawan_divisi'],
+                ['value' => json_encode($customDivisions)]
+            );
+        }
+
+        return response()->json(['success' => true]);
     }
 }

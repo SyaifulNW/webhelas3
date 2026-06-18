@@ -180,6 +180,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/hr', [App\Http\Controllers\Hrd\AbsensiController::class, 'hr'])->name('hr');
     Route::post('/hr/settings/update', [App\Http\Controllers\Hrd\AbsensiController::class, 'updateSettings'])->name('hr.settings.update');
     Route::post('/hr/employee/update', [App\Http\Controllers\Hrd\AbsensiController::class, 'updateEmployee'])->name('hr.employee.update');
+    Route::post('/hr/division/store', [App\Http\Controllers\Hrd\AbsensiController::class, 'storeDivision'])->name('hr.division.store');
     Route::post('/hr/employee/store', [App\Http\Controllers\Hrd\AbsensiController::class, 'storeEmployee'])->name('hr.employee.store');
     Route::delete('/hr/employee/{id}', [App\Http\Controllers\Hrd\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
     Route::view('/hrd-dashboard', 'hrd.hrd_dashboard')->name('hr.dashboard');
@@ -348,6 +349,10 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/settings/users/toggle', [SettingController::class, 'toggleUserStatus'])->name('settings.users.toggle');
             Route::post('/settings/target-event', [SettingController::class, 'updateTargetEvent'])->name('settings.target-event.update');
             Route::get('/monitoring-chapter', [\App\Http\Controllers\Operasional\MonitoringChapterController::class, 'index'])->name('monitoring-chapter');
+            Route::post('/monitoring-chapter/target', [\App\Http\Controllers\Operasional\MonitoringChapterController::class, 'updateTarget'])->name('monitoring-chapter.target.update');
+            Route::post('/monitoring-chapter/activity', [\App\Http\Controllers\Operasional\MonitoringChapterController::class, 'storeActivity'])->name('monitoring-chapter.activity.store');
+            Route::put('/monitoring-chapter/activity/{id}', [\App\Http\Controllers\Operasional\MonitoringChapterController::class, 'updateActivity'])->name('monitoring-chapter.activity.update');
+            Route::delete('/monitoring-chapter/activity/{id}', [\App\Http\Controllers\Operasional\MonitoringChapterController::class, 'destroyActivity'])->name('monitoring-chapter.activity.destroy');
         });
         Route::middleware(['role:administrator'])->group(function () {
             Route::post('/settings/target', [SettingController::class, 'updateTarget'])->name('settings.target.update');

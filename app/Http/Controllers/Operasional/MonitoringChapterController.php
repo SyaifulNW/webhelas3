@@ -7,16 +7,58 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\SalesPlan;
 use App\Models\Setting;
+use App\Models\ChapterActivity;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 class MonitoringChapterController extends Controller
 {
+    /**
+     * Show the monitoring page with chapter, agent, and activity tabs.
+     */
     public function index(Request $request)
     {
+        // 1. Auto-Fix: Create chapter_activities table dynamically if missing
+        if (!Schema::hasTable('chapter_activities')) {
+            try {
+                Schema::create('chapter_activities', function ($table) {
+                    $table->id();
+                    $table->string('type'); // 'open_house' or 'autopilot'
+                    $table->unsignedBigInteger('chapter_id')->nullable();
+                    $table->date('tanggal');
+                    $table->integer('target')->default(0);
+                    $table->integer('realisasi')->default(0);
+                    $table->string('evaluasi')->nullable();
+                    $table->string('periode', 7); // 'YYYY-MM'
+                    $table->timestamps();
+                });
+            } catch (\Exception $e) {
+            }
+        }
+
+        // 2. Determine Selected Month Period
+        $periode = $request->get('periode', Carbon::now()->format('Y-m'));
+        try {
+            $parsedDate = Carbon::createFromFormat('Y-m', $periode);
+            $startOfMonth = $parsedDate->copy()->startOfMonth();
+            $endOfMonth = $parsedDate->copy()->endOfMonth();
+        } catch (\Exception $e) {
+            $periode = Carbon::now()->format('Y-m');
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+        }
+
+        // List of chapters for select options (including chapters and central agents)
+        $allChaptersList = User::where(function ($query) {
+            $query->where('role', 'chapter')
+                ->orWhere(function ($sub) {
+                    $sub->where('role', 'agen')
+                        ->where('kategori', 'Agen Pusat');
+                });
+        })->orderBy('name')->get();
+
+        // 3. TAB 1: Data Chapter & Agen
         $targetEvent = Setting::where('key', 'target_event_peserta')->value('value') ?? 100;
-        
-        $startOfMonth = Carbon::now()->startOfMonth();
-        $endOfMonth = Carbon::now()->endOfMonth();
 
         $realisasiEvent = SalesPlan::join('peserta_smis', 'salesplans.id', '=', 'peserta_smis.sales_plan_id')
             ->where('salesplans.status', 'sudah_transfer')
@@ -27,6 +69,7 @@ class MonitoringChapterController extends Controller
             })
             ->count();
 
+        // Load standard chapters and their agents
         $chapters = User::where('role', 'chapter')
             ->with(['wallet'])
             ->get();
@@ -50,17 +93,14 @@ class MonitoringChapterController extends Controller
                 ->whereIn('salesplans.created_by', $allTeamIds)
                 ->count();
 
-            // Chapter Active Members (Chapter + all Agents under it)
+            // Chapter Active Members
             $chPesertaAktif = SalesPlan::join('peserta_smis', 'salesplans.id', '=', 'peserta_smis.sales_plan_id')
                 ->where('salesplans.status', 'sudah_transfer')
                 ->where('peserta_smis.approval_status', 'Approved')
                 ->whereIn('salesplans.created_by', $allTeamIds)
                 ->count();
 
-            // Earnings
             $chEarnings = \App\Services\EarningsService::calculateTotalEarnings($chId);
-
-            // Saldo
             $chSaldo = $ch->wallet->balance ?? 0;
 
             $agentsData = [];
@@ -106,8 +146,167 @@ class MonitoringChapterController extends Controller
             ];
         }
 
+        // Fetch central agents (role = agen, kategori = Agen Pusat)
+        $usersAgenPusatRaw = User::where('role', 'agen')
+            ->where('kategori', 'Agen Pusat')
+            ->with(['wallet'])
+            ->get();
+
+        $agenPusatData = [];
+        foreach ($usersAgenPusatRaw as $ap) {
+            $apClosingBulanIni = SalesPlan::join('peserta_smis', 'salesplans.id', '=', 'peserta_smis.sales_plan_id')
+                ->where('salesplans.status', 'sudah_transfer')
+                ->where('peserta_smis.approval_status', 'Approved')
+                ->whereBetween('salesplans.updated_at', [$startOfMonth, $endOfMonth])
+                ->where('salesplans.created_by', $ap->id)
+                ->count();
+
+            $apPesertaAktif = SalesPlan::join('peserta_smis', 'salesplans.id', '=', 'peserta_smis.sales_plan_id')
+                ->where('salesplans.status', 'sudah_transfer')
+                ->where('peserta_smis.approval_status', 'Approved')
+                ->where('salesplans.created_by', $ap->id)
+                ->count();
+
+            $apEarnings = \App\Services\EarningsService::calculateTotalEarnings($ap->id);
+            $apSaldo = $ap->wallet->balance ?? 0;
+
+            $agenPusatData[] = [
+                'id' => $ap->id,
+                'name' => $ap->name,
+                'location' => $ap->chapter ?? '-',
+                'role' => $ap->role,
+                'kategori' => $ap->kategori,
+                'closing_bulan_ini' => $apClosingBulanIni,
+                'peserta_aktif' => $apPesertaAktif,
+                'earnings' => $apEarnings,
+                'saldo' => $apSaldo,
+            ];
+        }
+
+        // 4. TAB 2 & 3: Open House & AutoPilot Activities
+        $targetOpenHouse = Setting::where('key', 'target_open_house_' . $periode)->value('value') ?? 0;
+        $targetAutoPilot = Setting::where('key', 'target_autopilot_' . $periode)->value('value') ?? 0;
+
+        $openHouseActivities = ChapterActivity::where('type', 'open_house')
+            ->where('periode', $periode)
+            ->with('chapter')
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        $autoPilotActivities = ChapterActivity::where('type', 'autopilot')
+            ->where('periode', $periode)
+            ->with('chapter')
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        $realisasiOpenHouse = $openHouseActivities->sum('realisasi');
+        $realisasiAutoPilot = $autoPilotActivities->sum('realisasi');
+
+        $kurangOpenHouse = max(0, $targetOpenHouse - $realisasiOpenHouse);
+        $kurangOpenHousePersen = $targetOpenHouse > 0 ? round(($kurangOpenHouse / $targetOpenHouse) * 100) : 0;
+
+        $kurangAutoPilot = max(0, $targetAutoPilot - $realisasiAutoPilot);
+        $kurangAutoPilotPersen = $targetAutoPilot > 0 ? round(($kurangAutoPilot / $targetAutoPilot) * 100) : 0;
+
+        // Generate periods: last 6 months to next 6 months
+        $periodsList = [];
+        for ($i = -6; $i <= 6; $i++) {
+            $p = Carbon::now()->addMonths($i);
+            $periodsList[$p->format('Y-m')] = $p->translatedFormat('F Y');
+        }
+        if (!isset($periodsList[$periode])) {
+            try {
+                $pParsed = Carbon::createFromFormat('Y-m', $periode);
+                $periodsList[$periode] = $pParsed->translatedFormat('F Y');
+            } catch (\Exception $e) {
+            }
+        }
+        ksort($periodsList);
+
         return view('operasional.monitoring.chapter', compact(
-            'targetEvent', 'realisasiEvent', 'chaptersData'
+            'targetEvent', 'realisasiEvent', 'chaptersData', 'agenPusatData',
+            'periode', 'allChaptersList', 'periodsList',
+            'targetOpenHouse', 'realisasiOpenHouse', 'kurangOpenHouse', 'kurangOpenHousePersen', 'openHouseActivities',
+            'targetAutoPilot', 'realisasiAutoPilot', 'kurangAutoPilot', 'kurangAutoPilotPersen', 'autoPilotActivities'
         ));
+    }
+
+    /**
+     * Update dynamic target (e.g. target_open_house_2026-06).
+     */
+    public function updateTarget(Request $request)
+    {
+        $request->validate([
+            'periode' => 'required|string|max:7',
+            'type' => 'required|in:open_house,autopilot',
+            'target' => 'required|integer|min:0',
+        ]);
+
+        Setting::updateOrCreate(
+            ['key' => 'target_' . $request->type . '_' . $request->periode],
+            ['value' => $request->target]
+        );
+
+        return redirect()->back()->with('success', 'Target berhasil diperbarui.');
+    }
+
+    /**
+     * Store new activity row.
+     */
+    public function storeActivity(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:open_house,autopilot',
+            'chapter_id' => 'nullable|exists:users,id',
+            'tanggal' => 'required|date',
+            'target' => 'required|integer|min:0',
+            'realisasi' => 'required|integer|min:0',
+            'evaluasi' => 'nullable|string|max:255',
+            'periode' => 'required|string|max:7',
+        ]);
+
+        $activity = ChapterActivity::create($request->only([
+            'type', 'chapter_id', 'tanggal', 'target', 'realisasi', 'evaluasi', 'periode'
+        ]));
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'activity' => $activity
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Data aktivitas berhasil ditambahkan.');
+    }
+
+    /**
+     * Update an activity row inline via AJAX.
+     */
+    public function updateActivity(Request $request, $id)
+    {
+        $activity = ChapterActivity::findOrFail($id);
+
+        $request->validate([
+            'chapter_id' => 'nullable|exists:users,id',
+            'tanggal' => 'required|date',
+            'target' => 'required|integer|min:0',
+            'realisasi' => 'required|integer|min:0',
+            'evaluasi' => 'nullable|string|max:255',
+        ]);
+
+        $activity->update($request->only(['chapter_id', 'tanggal', 'target', 'realisasi', 'evaluasi']));
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Delete an activity row via AJAX.
+     */
+    public function destroyActivity($id)
+    {
+        $activity = ChapterActivity::findOrFail($id);
+        $activity->delete();
+
+        return response()->json(['success' => true]);
     }
 }

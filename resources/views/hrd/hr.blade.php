@@ -224,26 +224,57 @@
                         <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
                             <thead class="bg-light text-dark font-weight-bold" style="border-bottom: 2px solid #eaecf4;">
                                 <tr>
-                                    <th class="py-3 px-4" style="width: 30%;">Nama Karyawan</th>
-                                    <th style="width: 25%;">Jabatan &amp; Divisi</th>
-                                    <th style="width: 20%;">Tipe Kontrak</th>
-                                    <th style="width: 15%;">Status</th>
-                                    <th class="text-center" style="width: 10%;">Aksi</th>
+                                    <th class="py-3 px-4" style="width: 15%;">Nama Karyawan</th>
+                                    <th style="width: 20%;">
+                                        Jabatan &amp; Divisi
+                                        <a href="javascript:void(0)" onclick="addDivision()" class="text-success ml-1" title="Tambah Jabatan/Divisi">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </a>
+                                    </th>
+                                    <th style="width: 25%;">Tempat Tanggal Lahir</th>
+                                    <th style="width: 15%;">Nomor HP</th>
+                                    <th style="width: 10%;">Grade/Level</th>
+                                    <th style="width: 10%;">Tipe Kontrak</th>
+                                    <th class="text-center" style="width: 5%;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($employees as $emp)
-                                    @php
-                                        $badgeClass = $emp->status_sdm === 'Non Aktif' ? 'bg-cuti' : 'bg-aktif';
-                                    @endphp
                                     <tr id="emp-row-{{ $emp->id }}">
                                         <td class="py-2 px-4 font-weight-bold text-dark">{{ $emp->name }}</td>
                                         <td class="py-2">
                                             <select class="form-control-inline"
                                                 onchange="updateEmpField({{ $emp->id }}, 'divisi', this.value)">
-                                                @foreach (['CS & HRD', 'CS & Keuangan', 'Operasional', 'Produksi', 'Produksi Konten', 'Advertiser', 'CS & Sales', 'Web Developer'] as $opt)
+                                                <option value="" disabled {{ !$emp->divisi ? 'selected' : '' }}>-- Pilih Jabatan/Divisi --</option>
+                                                @foreach ($divisions as $opt)
                                                     <option value="{{ $opt }}"
                                                         {{ $emp->divisi === $opt ? 'selected' : '' }}>{{ $opt }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td class="py-2">
+                                            <div class="d-flex gap-1">
+                                                <input type="text" class="form-control-inline px-2 mr-1" style="width: 45% !important;" 
+                                                    value="{{ $emp->tempat_lahir }}" placeholder="Tempat" 
+                                                    onchange="updateEmpField({{ $emp->id }}, 'tempat_lahir', this.value)">
+                                                <input type="date" class="form-control-inline px-2" style="width: 53% !important;" 
+                                                    value="{{ $emp->tanggal_lahir }}" 
+                                                    onchange="updateEmpField({{ $emp->id }}, 'tanggal_lahir', this.value)">
+                                            </div>
+                                        </td>
+                                        <td class="py-2">
+                                            <input type="text" class="form-control-inline px-2" 
+                                                value="{{ $emp->wa }}" placeholder="08xxxxxxxxxx" 
+                                                onchange="updateEmpField({{ $emp->id }}, 'wa', this.value)">
+                                        </td>
+                                        <td class="py-2">
+                                            <select class="form-control-inline"
+                                                onchange="updateEmpField({{ $emp->id }}, 'grade', this.value)">
+                                                <option value="" disabled {{ !$emp->grade ? 'selected' : '' }}>-- Pilih Grade --</option>
+                                                @foreach ($grades as $opt)
+                                                    <option value="{{ $opt }}"
+                                                        {{ $emp->grade === $opt ? 'selected' : '' }}>{{ $opt }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -258,16 +289,6 @@
                                                 @endforeach
                                             </select>
                                         </td>
-                                        <td class="py-2">
-                                            <select class="live-status-select {{ $badgeClass }}"
-                                                onchange="updateEmpField({{ $emp->id }}, 'status_sdm', this.value, this)">
-                                                <option value="Aktif"
-                                                    {{ $emp->status_sdm === 'Aktif' ? 'selected' : '' }}>Aktif</option>
-                                                <option value="Non Aktif"
-                                                    {{ $emp->status_sdm === 'Non Aktif' ? 'selected' : '' }}>Non Aktif
-                                                </option>
-                                            </select>
-                                        </td>
                                         <td class="text-center py-2">
                                             <button class="btn action-btn text-danger bg-light"
                                                 onclick="deleteEmployee({{ $emp->id }})" title="Hapus">
@@ -277,7 +298,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center py-5 text-muted">
+                                        <td colspan="7" class="text-center py-5 text-muted">
                                             <i class="fas fa-users-slash fa-3x mb-3 text-light"></i>
                                             <h6 class="font-weight-bold">Belum ada data karyawan aktif.</h6>
                                             <small>Tambahkan user dengan status aktif melalui manajemen user.</small>
@@ -705,6 +726,44 @@
         const CSRF = '{{ csrf_token() }}';
         const UPDATE_URL = '{{ route('hr.employee.update') }}';
         const DESTROY_URL = '{{ url('hr/employee') }}';
+
+        // ---- Add Division dynamically ----
+        function addDivision() {
+            Swal.fire({
+                title: 'Tambah Jabatan & Divisi Baru',
+                input: 'text',
+                inputLabel: 'Nama Jabatan / Divisi',
+                inputPlaceholder: 'Masukkan nama jabatan/divisi baru...',
+                showCancelButton: true,
+                confirmButtonColor: '#1cc88a',
+                cancelButtonColor: '#858796',
+                confirmButtonText: 'Tambah',
+                cancelButtonText: 'Batal',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Nama divisi tidak boleh kosong!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('{{ route("hr.division.store") }}', {
+                        _token: CSRF,
+                        name: result.value
+                    })
+                    .done((response) => {
+                        if (response.success) {
+                            showSaveToast('Divisi berhasil ditambahkan!');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan.', 'error');
+                        }
+                    })
+                    .fail(() => {
+                        Swal.fire('Gagal', 'Gagal menghubungi server.', 'error');
+                    });
+                }
+            });
+        }
 
         // ---- Toast Notification ----
         function showSaveToast(message) {
