@@ -60,7 +60,7 @@ class PenilaianCsController extends Controller
                              ->get();
         }
 
-        return $this->getPenilaianData($request, $daftarCs, 'admin.CS.penilaian-cs.index');
+        return $this->getPenilaianData($request, $daftarCs, 'admin.penilaian-cs.index');
     }
 
     public function managerIndex(Request $request)
@@ -81,7 +81,7 @@ class PenilaianCsController extends Controller
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
-             $routeView = 'admin.CS.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
+             $routeView = 'admin.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
         } elseif ($userName === 'Yasmin') {
             // Yasmin melihat user spesifik, tapi tidak melihat dirinya sendiri dan Linda
             $daftarCs = User::where(function($q) {
@@ -92,14 +92,14 @@ class PenilaianCsController extends Controller
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
-            $routeView = 'admin.CS.penilaian-cs.index';
+            $routeView = 'admin.penilaian-cs.index';
         } elseif ($userName === 'Agus Setyo') {
             // Agus Setyo view self (but excluded by user request)
             $daftarCs = User::where('name', 'Agus Setyo')
                             ->where('id', '!=', auth()->id())
                             ->where('is_active', 1)
                             ->get();
-            $routeView = 'admin.CS.penilaian-cs.index';
+            $routeView = 'admin.penilaian-cs.index';
         } else {
             // Administrator / Other Managers -> See all relevant roles + Yasmin
             $daftarCs = User::where(function($q) {

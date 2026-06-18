@@ -865,6 +865,33 @@
                 </div>
             </div>
 
+            <!-- Full Attendance History -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        Riwayat Absensi Lengkap
+                    </div>
+                    <select id="history-month-filter" onchange="loadAllHistory(1)" style="background: rgba(15,23,42,0.6); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; font-size: 0.75rem;">
+                        <option value="">Semua Bulan</option>
+                    </select>
+                </div>
+                <div id="all-history-container">
+                    <div style="text-align: center; color: var(--text-muted); padding: 20px 0;">
+                        Klik di bawah untuk memuat riwayat
+                    </div>
+                </div>
+                <div id="all-history-pagination" style="display: flex; justify-content: center; gap: 8px; padding: 12px 0;"></div>
+                <button type="button" onclick="loadAllHistory(1)" style="width: 100%; padding: 10px; background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                    Muat Riwayat Absensi
+                </button>
+            </div>
+
         </div>
 
         <!-- Android Bottom Key Navigation Mockup -->
@@ -1459,11 +1486,111 @@
         // Auto trigger camera activation, geolocation loading, and history fetching on load
         window.addEventListener('load', () => {
             loadHistory();
+            populateMonthFilter();
             setTimeout(() => {
                 getLocation();
                 startCamera();
             }, 500);
         });
+
+        // ===== FULL ATTENDANCE HISTORY =====
+        function populateMonthFilter() {
+            const select = document.getElementById('history-month-filter');
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const val = d.toISOString().slice(0, 7); // YYYY-MM
+                const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+                select.appendChild(opt);
+            }
+        }
+
+        function loadAllHistory(page) {
+            const container = document.getElementById('all-history-container');
+            const paginationEl = document.getElementById('all-history-pagination');
+            const bulan = document.getElementById('history-month-filter').value;
+
+            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px 0;">Memuat riwayat...</div>';
+            paginationEl.innerHTML = '';
+
+            let url = `/api/absensi/all-history?page=${page}&per_page=10`;
+            if (bulan) url += `&bulan=${bulan}`;
+
+            fetch(url)
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.success || !res.data || res.data.length === 0) {
+                        container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px 0;">Tidak ada data absensi.</div>';
+                        return;
+                    }
+
+                    let html = '<div class="logs-list" style="max-height: 400px; overflow-y: auto;">';
+
+                    // Group by date
+                    let grouped = {};
+                    res.data.forEach(item => {
+                        if (!grouped[item.tanggal]) grouped[item.tanggal] = [];
+                        grouped[item.tanggal].push(item);
+                    });
+
+                    for (const [tanggal, records] of Object.entries(grouped)) {
+                        const dateObj = new Date(tanggal + 'T00:00:00');
+                        const dateStr = dateObj.toLocaleDateString('id-ID', {
+                            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                        });
+
+                        html += `<div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">`;
+                        html += `<div style="font-size: 0.7rem; color: #818cf8; font-weight: 600; margin-bottom: 4px;">${dateStr}</div>`;
+
+                        records.forEach(item => {
+                            const statusColor = item.status_kehadiran === 'Hadir' ? '#10b981' : '#f59e0b';
+                            const lateBadge = item.is_late === 'Terlambat'
+                                ? '<span style="background:#ef4444; color:white; padding:1px 6px; border-radius:4px; font-size:0.6rem; margin-left:4px;">Terlambat</span>'
+                                : '';
+                            const jamKerja = item.total_jam_kerja
+                                ? `<span style="font-size:0.6rem; color:#10b981;">(${item.total_jam_kerja})</span>`
+                                : '';
+
+                            html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0;">`;
+                            html += `<div>`;
+                            html += `<span style="font-size:0.75rem; color:#e2e8f0;">${item.jam_masuk || '-'} Masuk</span>`;
+                            if (item.jam_pulang) {
+                                html += `<span style="font-size:0.75rem; color:#a78bfa; margin-left:8px;">${item.jam_pulang} Pulang</span>`;
+                            }
+                            html += `${lateBadge} ${jamKerja}`;
+                            html += `</div>`;
+                            html += `<span style="font-size:0.65rem; color:${statusColor}; font-weight:600;">${item.status_kehadiran}</span>`;
+                            html += `</div>`;
+                        });
+
+                        html += `</div>`;
+                    }
+
+                    html += '</div>';
+                    container.innerHTML = html;
+
+                    // Pagination
+                    const p = res.pagination;
+                    if (p && p.last_page > 1) {
+                        let pagHtml = '';
+                        if (p.current_page > 1) {
+                            pagHtml += `<button onclick="loadAllHistory(${p.current_page - 1})" style="padding:4px 10px; background:rgba(99,102,241,0.2); color:#818cf8; border:1px solid rgba(99,102,241,0.3); border-radius:6px; font-size:0.7rem; cursor:pointer;">Prev</button>`;
+                        }
+                        pagHtml += `<span style="font-size:0.7rem; color:var(--text-muted); align-self:center;">Hal ${p.current_page} / ${p.last_page} (${p.total} data)</span>`;
+                        if (p.current_page < p.last_page) {
+                            pagHtml += `<button onclick="loadAllHistory(${p.current_page + 1})" style="padding:4px 10px; background:rgba(99,102,241,0.2); color:#818cf8; border:1px solid rgba(99,102,241,0.3); border-radius:6px; font-size:0.7rem; cursor:pointer;">Next</button>`;
+                        }
+                        paginationEl.innerHTML = pagHtml;
+                    }
+                })
+                .catch(err => {
+                    console.error('All history error:', err);
+                    container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px 0;">Gagal memuat riwayat.</div>';
+                });
+        }
     </script>
 </body>
 

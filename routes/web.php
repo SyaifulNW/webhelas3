@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/api/absensi/store', [App\Http\Controllers\Hrd\AbsensiController::class, 'store'])->name('api.absensi.store');
     Route::get('/api/absensi/history', [App\Http\Controllers\Hrd\AbsensiController::class, 'history'])->name('api.absensi.history');
+    Route::get('/api/absensi/all-history', [App\Http\Controllers\Hrd\AbsensiController::class, 'allHistory'])->name('api.absensi.allHistory');
 });
 
 

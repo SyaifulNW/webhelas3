@@ -1483,6 +1483,41 @@
                     </li>
                 @endif
 
+                {{-- Menu SDM khusus Yasmin --}}
+                @if (auth()->user()->name === 'Yasmin')
+                    <li class="nav-item {{ request()->routeIs(['hr', 'admin.penilaian-cs.index']) ? 'active' : '' }}">
+                        <a class="nav-link collapsed" href="#" data-toggle="collapse"
+                            data-target="#collapseSdmYasmin"
+                            aria-expanded="{{ request()->routeIs(['hr', 'admin.penilaian-cs.index']) ? 'true' : 'false' }}"
+                            aria-controls="collapseSdmYasmin" title="SDM">
+                            <i class="fas fa-fw fa-users-cog"></i>
+                            <span><strong>SDM</strong></span>
+                        </a>
+                        <div id="collapseSdmYasmin"
+                            class="collapse {{ request()->routeIs(['hr', 'admin.penilaian-cs.index']) ? 'show' : '' }}"
+                            data-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <a class="collapse-item {{ request('section') === 'karyawan' && request()->routeIs('hr') ? 'active' : '' }}"
+                                    href="{{ route('hr', ['section' => 'karyawan']) }}">
+                                    <i class="fas fa-users mr-1"></i> Data Karyawan
+                                </a>
+                                <a class="collapse-item {{ request('section') === 'absensi' && request()->routeIs('hr') ? 'active' : '' }}"
+                                    href="{{ route('hr', ['section' => 'absensi']) }}">
+                                    <i class="fas fa-calendar-check mr-1"></i> Absensi & Izin
+                                </a>
+                                <a class="collapse-item {{ request()->routeIs('admin.penilaian-cs.index') ? 'active' : '' }}"
+                                    href="{{ route('admin.penilaian-cs.index') }}">
+                                    <i class="fas fa-star mr-1"></i> Penilaian KPI
+                                </a>
+                                <a class="collapse-item {{ request('section') === 'settings' && request()->routeIs('hr') ? 'active' : '' }}"
+                                    href="{{ route('hr', ['section' => 'settings']) }}">
+                                    <i class="fas fa-cogs mr-1"></i> Pengaturan Absensi
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                @endif
+
                 <hr class="sidebar-divider d-none d-md-block" />
 
                 {{-- Menu MoM — semua role internal kecuali administrator (sudah ada di blok khusus administrator),

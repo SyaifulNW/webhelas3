@@ -187,9 +187,18 @@ class AdminWalletController extends Controller
             $directFee = $directFeeCount * 500000;
         }
 
+        // Bonus Pribadi - HANYA dihitung dari omset bulan pertama peserta mendaftar
         $bonusPribadi = 0;
-        if ($omsetPribadi >= 20000000) $bonusPribadi = $omsetPribadi * 0.10;
-        elseif ($omsetPribadi >= 10000000) $bonusPribadi = $omsetPribadi * 0.05;
+        $firstMonthOmset = 0;
+        $userJoinMonth = $user->created_at ? $user->created_at->format('Y-m') : null;
+        if ($userJoinMonth) {
+            $firstMonthOmset = (float)(clone $baseQuery)
+                ->where('salesplans.created_by', $userId)
+                ->whereRaw("DATE_FORMAT(salesplans.updated_at, '%Y-%m') = ?", [$userJoinMonth])
+                ->sum(DB::raw($sumSql));
+            if ($firstMonthOmset >= 20000000) $bonusPribadi = $firstMonthOmset * 0.10;
+            elseif ($firstMonthOmset >= 10000000) $bonusPribadi = $firstMonthOmset * 0.05;
+        }
 
         $bonusTim = 0;
         $totalTeamSales = $omsetPribadi + $omsetReseller;
@@ -235,7 +244,8 @@ class AdminWalletController extends Controller
             'omsetPribadi', 'omsetReseller', 'komisi', 'royalti',
             'directFee', 'directFeeCount', 'bonusPribadi', 'bonusTim',
             'totalTeamSales', 'pesertaList', 'teamMembers',
-            'withdrawals', 'dynamicIncomes', 'isChapter'
+            'withdrawals', 'dynamicIncomes', 'isChapter',
+            'firstMonthOmset', 'userJoinMonth'
         ));
     }
 }

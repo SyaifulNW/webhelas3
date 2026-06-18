@@ -238,6 +238,38 @@ class AbsensiController extends Controller
     }
 
     /**
+     * Get all attendance history (paginated) for the logged-in user.
+     */
+    public function allHistory(Request $request)
+    {
+        $user = auth()->user();
+        $employeeId = $user->id_no ?: 'HC-' . sprintf('%04d', $user->id);
+
+        $bulan = $request->get('bulan'); // format: YYYY-MM
+        $perPage = $request->get('per_page', 20);
+
+        $query = Absensi::where('employee_id', $employeeId)
+            ->orderBy('tanggal', 'desc');
+
+        if ($bulan) {
+            $query->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [$bulan]);
+        }
+
+        $attendances = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $attendances->items(),
+            'pagination' => [
+                'current_page' => $attendances->currentPage(),
+                'last_page' => $attendances->lastPage(),
+                'per_page' => $attendances->perPage(),
+                'total' => $attendances->total(),
+            ]
+        ]);
+    }
+
+    /**
      * Update Attendance Settings
      */
     public function updateSettings(Request $request)

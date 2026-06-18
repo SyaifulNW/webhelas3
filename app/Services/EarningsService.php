@@ -94,12 +94,39 @@ class EarningsService
         // 5. Royalty (5% of Reseller SPP)
         $royalti = $sppReseller * 0.05;
 
-        // 6. Bonus Pribadi (Tiered: 10M -> 5%, >20M -> 10%)
+        // 6. Bonus Pribadi (Tiered: ≥10jt → 5%, ≥20jt → 10%)
+        // HANYA dihitung pada bulan pertama peserta mendaftar, BUKAN setiap bulan.
         $bonusPribadi = 0;
-        if ($omsetPribadi >= 20000000) {
-            $bonusPribadi = $omsetPribadi * 0.10;
-        } elseif ($omsetPribadi >= 10000000) {
-            $bonusPribadi = $omsetPribadi * 0.05;
+        $userJoinMonth = $user->created_at ? $user->created_at->format('Y-m') : null;
+
+        if ($userJoinMonth) {
+            // Skip if filter doesn't include the join month
+            if ($year) {
+                $joinYear = (int) substr($userJoinMonth, 0, 4);
+                if ($joinYear != $year) {
+                    $userJoinMonth = null;
+                }
+            }
+            if ($month && $userJoinMonth) {
+                $joinMonth = (int) substr($userJoinMonth, 5, 2);
+                if ($joinMonth != $month) {
+                    $userJoinMonth = null;
+                }
+            }
+        }
+
+        if ($userJoinMonth) {
+            $firstMonthOmset = (clone $baseQuery)
+                ->where('salesplans.created_by', $userId)
+                ->whereRaw("DATE_FORMAT(salesplans.updated_at, '%Y-%m') = ?", [$userJoinMonth])
+                ->sum(DB::raw($sumSql));
+            $firstMonthOmset = (float) $firstMonthOmset;
+
+            if ($firstMonthOmset >= 20000000) {
+                $bonusPribadi = $firstMonthOmset * 0.10;
+            } elseif ($firstMonthOmset >= 10000000) {
+                $bonusPribadi = $firstMonthOmset * 0.05;
+            }
         }
 
         // 7. Bonus Tim (10% if Team Sales >= 30,000,000)
@@ -300,20 +327,23 @@ class EarningsService
 
             $carbonDate = \Carbon\Carbon::createFromFormat('Y-m', $yearMonth)->endOfMonth();
 
-            // Bonus Pribadi
+            // Bonus Pribadi - HANYA di bulan pertama peserta mendaftar (bukan setiap bulan)
+            $userJoinMonth = $user->created_at ? $user->created_at->format('Y-m') : null;
             $bonusPribadi = 0;
-            if ($monthlyOmsetPribadi >= 20000000) {
-                $bonusPribadi = $monthlyOmsetPribadi * 0.10;
-            } elseif ($monthlyOmsetPribadi >= 10000000) {
-                $bonusPribadi = $monthlyOmsetPribadi * 0.05;
+            if ($userJoinMonth && $yearMonth === $userJoinMonth) {
+                if ($monthlyOmsetPribadi >= 20000000) {
+                    $bonusPribadi = $monthlyOmsetPribadi * 0.10;
+                } elseif ($monthlyOmsetPribadi >= 10000000) {
+                    $bonusPribadi = $monthlyOmsetPribadi * 0.05;
+                }
             }
 
             if ($bonusPribadi > 0) {
                 $transactions->push([
                     'created_at' => $carbonDate->copy(),
                     'type' => 'income',
-                    'source' => 'Bonus Pribadi Bulanan',
-                    'description' => 'Bonus Pencapaian Omset Pribadi (' . $yearMonth . ')',
+                    'source' => 'Bonus Pribadi',
+                    'description' => 'Bonus Pencapaian Omset Pribadi Bulan Pertama (' . $yearMonth . ')',
                     'amount' => $bonusPribadi,
                     'status' => 'success',
                     'reference_no' => 'INC-BP-' . strtoupper(substr(md5($userId . '_' . $yearMonth . '_bp'), -6)),

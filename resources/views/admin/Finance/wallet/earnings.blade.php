@@ -77,12 +77,12 @@
                         <tr>
                             <td>Bonus Pribadi</td>
                             <td class="text-muted small">
-                                @if($omsetPribadi >= 20000000)
-                                    10% × Rp {{ number_format($omsetPribadi, 0, ',', '.') }} (omset ≥ 20jt)
-                                @elseif($omsetPribadi >= 10000000)
-                                    5% × Rp {{ number_format($omsetPribadi, 0, ',', '.') }} (omset ≥ 10jt)
+                                @if($firstMonthOmset >= 20000000)
+                                    10% × Rp {{ number_format($firstMonthOmset, 0, ',', '.') }} (omset bulan pertama ≥ 20jt)
+                                @elseif($firstMonthOmset >= 10000000)
+                                    5% × Rp {{ number_format($firstMonthOmset, 0, ',', '.') }} (omset bulan pertama ≥ 10jt)
                                 @else
-                                    Belum tercapai (min. omset 10jt)
+                                    Belum tercapai (min. omset 10jt di bulan pertama)
                                 @endif
                             </td>
                             <td class="text-right font-weight-bold text-success">Rp {{ number_format($bonusPribadi, 0, ',', '.') }}</td>
