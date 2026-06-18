@@ -12,7 +12,7 @@
                 <i class="fas fa-wallet text-primary mr-2"></i>Detail Pendapatan: {{ $user->name }}
             </h1>
             <p class="text-muted mb-0">
-                {{ strtoupper($user->role) }} &middot; Chapter {{ $user->chapter ?? '-' }} &middot; ID: {{ $user->id }}
+                {{ strtoupper($user->role) }} &middot; {{ $user->kategori === 'Agen Pusat' ? 'Kota' : 'Chapter' }} {{ $user->chapter ?? '-' }} &middot; ID: {{ $user->id }}
             </p>
         </div>
     </div>
@@ -77,24 +77,30 @@
                         <tr>
                             <td>Bonus Pribadi</td>
                             <td class="text-muted small">
-                                @if($firstMonthOmset >= 20000000)
-                                    10% × Rp {{ number_format($firstMonthOmset, 0, ',', '.') }} (omset bulan pertama ≥ 20jt)
-                                @elseif($firstMonthOmset >= 10000000)
-                                    5% × Rp {{ number_format($firstMonthOmset, 0, ',', '.') }} (omset bulan pertama ≥ 10jt)
+                                @if($firstMonthBase >= 20000000)
+                                    {{ $firstMonthClosingCount }} closing × Rp 2.000.000 × 10% (≥ 10 closing di bulan pertama)
+                                @elseif($firstMonthBase >= 10000000)
+                                    {{ $firstMonthClosingCount }} closing × Rp 2.000.000 × 5% (≥ 5 closing di bulan pertama)
                                 @else
-                                    Belum tercapai (min. omset 10jt di bulan pertama)
+                                    Belum tercapai (min. 5 closing di bulan pertama)
                                 @endif
                             </td>
                             <td class="text-right font-weight-bold text-success">Rp {{ number_format($bonusPribadi, 0, ',', '.') }}</td>
                         </tr>
 
-                        @if($isChapter)
+                        @if($isChapter || (strtolower($user->role) === 'agen' && $user->kategori === 'Agen Pusat'))
                         <tr class="bg-light">
-                            <td colspan="3" class="font-weight-bold text-dark"><i class="fas fa-building mr-1"></i> Direct Fee Chapter</td>
+                            <td colspan="3" class="font-weight-bold text-dark"><i class="fas fa-building mr-1"></i> Direct Fee {{ strtolower($user->role) === 'agen' ? 'Agen' : 'Chapter' }}</td>
                         </tr>
                         <tr>
                             <td>Direct Fee</td>
-                            <td class="text-muted small">{{ $directFeeCount }} peserta regional × Rp 500.000</td>
+                            <td class="text-muted small">
+                                @if(strtolower($user->role) === 'agen' && $user->kategori === 'Agen Pusat')
+                                    {{ $directFeeCount }} peserta closing × Rp 200.000
+                                @else
+                                    {{ $directFeeCount }} peserta regional × Rp 500.000
+                                @endif
+                            </td>
                             <td class="text-right font-weight-bold text-success">Rp {{ number_format($directFee, 0, ',', '.') }}</td>
                         </tr>
                         @endif

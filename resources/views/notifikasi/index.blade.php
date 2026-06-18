@@ -55,9 +55,8 @@
             </table>
         </div>
 
-        {{-- 📄 Pagination --}}
         <div class="mt-3 d-flex justify-content-center">
-            {{ $notifikasi->links() }}
+            {{ $notifikasi->appends(request()->query())->links('pagination::bootstrap-4') }}
         </div>
     @else
         <div class="alert alert-info text-center">

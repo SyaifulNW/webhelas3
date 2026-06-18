@@ -110,7 +110,20 @@ class AdminWalletController extends Controller
     public function transactions()
     {
         $transactions = WalletTransaction::with('wallet.user')->latest()->paginate(50);
-        return view('admin.Finance.wallet.transactions', compact('transactions'));
+
+        // Sum of all earnings of all reseller and chapter users
+        $users = User::whereIn('role', ['reseller', 'chapter'])->get();
+        $totalIncome = 0;
+        foreach ($users as $user) {
+            $totalIncome += \App\Services\EarningsService::calculateTotalEarnings($user->id);
+        }
+
+        // Sum of all successful withdrawals
+        $totalWithdrawal = WalletTransaction::where('type', 'withdrawal')
+            ->where('status', 'success')
+            ->sum('amount');
+
+        return view('admin.Finance.wallet.transactions', compact('transactions', 'totalIncome', 'totalWithdrawal'));
     }
 
     public function destroyTransaction($id)
@@ -167,7 +180,7 @@ class AdminWalletController extends Controller
             ->where('salesplans.status', 'sudah_transfer')
             ->where('peserta_smis.approval_status', 'Approved');
 
-        $sumSql = 'CAST(COALESCE(NULLIF(COALESCE(peserta_smis.pembayaran_spp, 0) + COALESCE(peserta_smis.spp_1, 0) + COALESCE(peserta_smis.spp_2, 0) + COALESCE(peserta_smis.spp_3, 0) + COALESCE(peserta_smis.spp_4, 0) + COALESCE(peserta_smis.spp_5, 0) + COALESCE(peserta_smis.spp_6, 0) + COALESCE(peserta_smis.spp_7, 0) + COALESCE(peserta_smis.spp_8, 0) + COALESCE(peserta_smis.spp_9, 0) + COALESCE(peserta_smis.spp_10, 0) + COALESCE(peserta_smis.spp_11, 0) + COALESCE(peserta_smis.spp_12, 0), 0), GREATEST(0, COALESCE(salesplans.nominal, 0) - 500000), 0) AS DECIMAL(15,2))';
+        $sumSql = 'CAST(COALESCE(NULLIF(COALESCE(peserta_smis.spp_1, 0) + COALESCE(peserta_smis.spp_2, 0) + COALESCE(peserta_smis.spp_3, 0) + COALESCE(peserta_smis.spp_4, 0) + COALESCE(peserta_smis.spp_5, 0) + COALESCE(peserta_smis.spp_6, 0) + COALESCE(peserta_smis.spp_7, 0) + COALESCE(peserta_smis.spp_8, 0) + COALESCE(peserta_smis.spp_9, 0) + COALESCE(peserta_smis.spp_10, 0) + COALESCE(peserta_smis.spp_11, 0) + COALESCE(peserta_smis.spp_12, 0), 0), GREATEST(0, COALESCE(salesplans.nominal, 0) - 500000), 0) AS DECIMAL(15,2))';
 
         // Omset
         $omsetPribadi = (clone $baseQuery)->where('salesplans.created_by', $userId)->sum(DB::raw($sumSql));
@@ -182,22 +195,29 @@ class AdminWalletController extends Controller
 
         $directFee = 0;
         $directFeeCount = 0;
+        $isAgenPusat = (strtolower($user->role) === 'agen' && $user->kategori === 'Agen Pusat');
         if ($isChapter) {
             $directFeeCount = (clone $baseQuery)->whereIn('salesplans.created_by', $regionalTeamIds)->count();
             $directFee = $directFeeCount * 500000;
+        } elseif ($isAgenPusat) {
+            $directFeeCount = (clone $baseQuery)->where('salesplans.created_by', $userId)->count();
+            $directFee = $directFeeCount * 200000;
         }
 
-        // Bonus Pribadi - HANYA dihitung dari omset bulan pertama peserta mendaftar
+        // Bonus Pribadi - berdasarkan jumlah closing di bulan pertama user mendaftar
+        // Rumus: jumlah_closing × Rp 2.000.000 × tier% (5% jika ≥10jt, 10% jika ≥20jt)
         $bonusPribadi = 0;
-        $firstMonthOmset = 0;
+        $firstMonthClosingCount = 0;
+        $firstMonthBase = 0;
         $userJoinMonth = $user->created_at ? $user->created_at->format('Y-m') : null;
         if ($userJoinMonth) {
-            $firstMonthOmset = (float)(clone $baseQuery)
+            $firstMonthClosingCount = (clone $baseQuery)
                 ->where('salesplans.created_by', $userId)
                 ->whereRaw("DATE_FORMAT(salesplans.updated_at, '%Y-%m') = ?", [$userJoinMonth])
-                ->sum(DB::raw($sumSql));
-            if ($firstMonthOmset >= 20000000) $bonusPribadi = $firstMonthOmset * 0.10;
-            elseif ($firstMonthOmset >= 10000000) $bonusPribadi = $firstMonthOmset * 0.05;
+                ->count();
+            $firstMonthBase = $firstMonthClosingCount * 2000000;
+            if ($firstMonthBase >= 20000000) $bonusPribadi = $firstMonthBase * 0.10;
+            elseif ($firstMonthBase >= 10000000) $bonusPribadi = $firstMonthBase * 0.05;
         }
 
         $bonusTim = 0;
@@ -245,7 +265,7 @@ class AdminWalletController extends Controller
             'directFee', 'directFeeCount', 'bonusPribadi', 'bonusTim',
             'totalTeamSales', 'pesertaList', 'teamMembers',
             'withdrawals', 'dynamicIncomes', 'isChapter',
-            'firstMonthOmset', 'userJoinMonth'
+            'firstMonthClosingCount', 'firstMonthBase', 'userJoinMonth'
         ));
     }
 }

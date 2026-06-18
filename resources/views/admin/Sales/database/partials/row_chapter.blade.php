@@ -24,7 +24,7 @@
 
     static $chapterUsers = null;
     if ($chapterUsers === null) {
-        $chapterUsers = \App\Models\User::whereIn('role', ['chapter', 'reseller'])
+        $chapterUsers = \App\Models\User::whereIn('role', ['chapter', 'reseller', 'agen'])
             ->where('name', 'not like', '%umum%')
             ->orderBy('name')
             ->get(['id', 'name']);

@@ -468,7 +468,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/setting/update-reseller/{id}', [App\Http\Controllers\Chapter\SettingController::class, 'updateReseller'])->name('setting.update-reseller');
     });
 
-    Route::middleware(['role:reseller'])->prefix('reseller')->name('reseller.')->group(function () {
+    Route::middleware(['role:reseller,agen'])->prefix('reseller')->name('reseller.')->group(function () {
         Route::get('/setting', [App\Http\Controllers\Reseller\SettingController::class, 'index'])->name('setting.index');
         Route::get('/setting/{id}', [App\Http\Controllers\Reseller\SettingController::class, 'show'])->name('setting.show');
         Route::post('/setting/store-reseller', [App\Http\Controllers\Reseller\SettingController::class, 'storeReseller'])->name('setting.store-reseller');

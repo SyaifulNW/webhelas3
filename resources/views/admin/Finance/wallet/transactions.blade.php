@@ -9,6 +9,49 @@
         </a>
     </div>
 
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <!-- Total Seluruh Pemasukan Card -->
+        <div class="col-xl-6 col-md-6 mb-3 mb-md-0">
+            <div class="card border-0 shadow h-100 py-2" style="border-radius: 12px; border-left: 5px solid #28a745 !important;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Seluruh Pemasukan User</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Rp {{ number_format($totalIncome, 0, ',', '.') }}
+                            </div>
+                        </div>
+                        <div class="col-auto mr-2">
+                            <i class="fas fa-wallet fa-2x text-success" style="opacity: 0.35;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Seluruh Pengeluaran Card -->
+        <div class="col-xl-6 col-md-6">
+            <div class="card border-0 shadow h-100 py-2" style="border-radius: 12px; border-left: 5px solid #dc3545 !important;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Total Seluruh Penarikan (Sukses)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Rp {{ number_format($totalWithdrawal, 0, ',', '.') }}
+                            </div>
+                        </div>
+                        <div class="col-auto mr-2">
+                            <i class="fas fa-hand-holding-usd fa-2x text-danger" style="opacity: 0.35;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card shadow mb-4" style="border-radius: 15px;">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -78,7 +121,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">Belum ada transaksi</td>
+                            <td colspan="6" class="text-center py-5 text-muted">Belum ada transaksi</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -86,7 +129,7 @@
             </div>
             @if($transactions->hasPages())
                 <div class="p-3 border-top">
-                    {{ $transactions->links() }}
+                    {{ $transactions->appends(request()->query())->links('pagination::bootstrap-4') }}
                 </div>
             @endif
         </div>

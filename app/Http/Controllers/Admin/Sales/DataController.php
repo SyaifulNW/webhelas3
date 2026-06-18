@@ -44,7 +44,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $newData->created_by_role = $user->role;
             
             // Set default chapter city for Chapter/Reseller roles so the data is visible in their view
-            if (in_array(strtolower($user->role), ['chapter', 'reseller']) && $user->chapter) {
+            if (in_array(strtolower($user->role), ['chapter', 'reseller', 'agen']) && $user->chapter) {
                 $newData->kota_nama = $user->chapter;
             }
 
@@ -79,7 +79,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
             // Tentukan partial: chapter view untuk chapter/reseller/Rafi
             $viewType = $request->input('view_type', '');
-            $isChapterUser = in_array(strtolower($user->role), ['chapter', 'reseller']);
+            $isChapterUser = in_array(strtolower($user->role), ['chapter', 'reseller', 'agen']);
             $isChapterView = $isChapterUser || $isRafi || $viewType === 'chapter';
 
             if ($isChapterView) {
@@ -136,7 +136,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             if ($userRole === 'marketing') {
                 $csQuery->where('role', 'cs-mbc');
             } else {
-                $csQuery->whereIn('role', ['cs', 'CS', 'customer_service', 'cs-mbc', 'cs-smi', 'chapter', 'reseller']);
+                $csQuery->whereIn('role', ['cs', 'CS', 'customer_service', 'cs-mbc', 'cs-smi', 'chapter', 'reseller', 'agen']);
             }
         } else {
             // CS biasa hanya bisa lihat dirinya sendiri
@@ -213,6 +213,38 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $query->where('created_by_role', 'cs-mbc');
         } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && $user->name !== 'Agus Setyo') {
             $query->where('created_by', $user->name);
+        }
+
+        // Apply regional/role restrictions before calculating absolute total database
+        // Chapter Role – filter by user's chapter city OR own created data, and exclude certain CS-MBC names
+        if ($userRole === 'chapter') {
+            $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+            $query->where(function($q) use ($user, $excludeNames) {
+                $q->where('created_by', $user->name)
+                  ->orWhere(function($subQ) use ($user, $excludeNames) {
+                      $subQ->where('kota_nama', 'like', '%' . $user->chapter . '%')
+                           ->whereNotIn('created_by', $excludeNames)
+                           ->where('created_by_role', '!=', 'cs-mbc');
+                  });
+            });
+        } elseif (in_array($userRole, ['reseller', 'agen'])) {
+            // Reseller/Agen: See own data + downline data
+            $downlineNames = \App\Models\User::where('created_by', $user->id)->pluck('name')->toArray();
+            $viewNames = array_merge([$user->name], $downlineNames);
+            
+            if ($user->name === 'Tim Chapter Depok') {
+                $viewNames[] = 'AGUNG H. WIBOWO';
+            }
+            
+            $query->whereIn('created_by', $viewNames);
+        }
+
+        // Khusus Agus Setyo: Hanya kelas Start-Up Muslim/Muda Indonesia
+        if ($user->name === 'Agus Setyo') {
+            $query->whereHas('kelas', function($q) {
+                $q->where('nama_kelas', 'Start-Up Muda Indonesia')
+                ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
+            });
         }
 
         // [NEW] Capture Absolute Total Database for the current context (CS/Role)
@@ -475,36 +507,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
 
 
-        // Chapter Role – filter by user's chapter city OR own created data, and exclude certain CS-MBC names
-        if ($userRole === 'chapter') {
-            $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
-            $query->where(function($q) use ($user, $excludeNames) {
-                $q->where('created_by', $user->name)
-                  ->orWhere(function($subQ) use ($user, $excludeNames) {
-                      $subQ->where('kota_nama', 'like', '%' . $user->chapter . '%')
-                           ->whereNotIn('created_by', $excludeNames)
-                           ->where('created_by_role', '!=', 'cs-mbc');
-                  });
-            });
-        } elseif (in_array($userRole, ['reseller', 'agen'])) {
-            // Reseller/Agen: See own data + downline data
-            $downlineNames = \App\Models\User::where('created_by', $user->id)->pluck('name')->toArray();
-            $viewNames = array_merge([$user->name], $downlineNames);
-            
-            if ($user->name === 'Tim Chapter Depok') {
-                $viewNames[] = 'AGUNG H. WIBOWO';
-            }
-            
-            $query->whereIn('created_by', $viewNames);
-        }
-
-        // Khusus Agus Setyo: Hanya kelas Start-Up Muslim/Muda Indonesia
-        if ($user->name === 'Agus Setyo') {
-            $query->whereHas('kelas', function($q) {
-                $q->where('nama_kelas', 'Start-Up Muda Indonesia')
-                ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
-            });
-        }
+        // Regional/role restrictions already applied higher up to ensure correct database counts.
 
         // --- Stats Calculation for Dashboard Headers ---
         // KPI Query: Targets ALL data input (ignoring status_peserta) to reflect Acquisition Performance
@@ -1354,7 +1357,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $kelasId = $request->input('kelas_id') ?: $data->kelas_id;
             
             // For Chapter/Reseller, strictly use M1T
-            if (in_array($userRole, ['chapter', 'reseller'])) {
+            if (in_array($userRole, ['chapter', 'reseller', 'agen'])) {
                 $m1tClass = Kelas::where('nama_kelas', 'like', '%Muslim Indonesia%')->first();
                 $kelasId = $m1tClass ? $m1tClass->id : ($kelasId ?: 1);
             } elseif (!$kelasId) {

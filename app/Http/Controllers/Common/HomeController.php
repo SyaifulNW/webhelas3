@@ -63,7 +63,7 @@ class HomeController extends Controller
             if ($role === 'operasional') {
                 return $this->operasionalDashboard($request);
             }
-            if ($role === 'chapter' || $role === 'reseller') {
+            if ($role === 'chapter' || $role === 'reseller' || $role === 'agen') {
                 // Pre-calculate filter values
                 $bulanStr = $request->input('bulan') ?? \Carbon\Carbon::now()->format('Y-m');
                 try {
@@ -84,7 +84,7 @@ class HomeController extends Controller
                 $cleanChapterName = trim(str_ireplace('CHAPTER', '', $chapterName));
                 
                 // 0. Identify Direct Team Members (1 level below only)
-                $resellerMembersIds = \App\Models\User::where('role', 'reseller')
+                $resellerMembersIds = \App\Models\User::whereIn('role', ['reseller', 'agen'])
                     ->where('created_by', $userId)
                     ->pluck('id');
                 
@@ -93,7 +93,7 @@ class HomeController extends Controller
                 // 0b. Regional IDs for Chapter stats (Leads, Participants, Direct Fee)
                 $regionalTeamIds = $allTeamIds;
                 if ($isChapter) {
-                    $regionalMemberIds = \App\Models\User::where('role', 'reseller')
+                    $regionalMemberIds = \App\Models\User::whereIn('role', ['reseller', 'agen'])
                         ->where('chapter', 'LIKE', '%' . $cleanChapterName . '%')
                         ->pluck('id');
                     $regionalTeamIds = $regionalMemberIds->merge([$userId])->unique();
@@ -173,7 +173,7 @@ class HomeController extends Controller
                     ->whereYear('salesplans.updated_at', $tahun)
                     ->whereMonth('salesplans.updated_at', $bulanNum);
                 
-                $sumSql = 'CAST(COALESCE(NULLIF(COALESCE(peserta_smis.pembayaran_spp, 0) + COALESCE(peserta_smis.spp_1, 0) + COALESCE(peserta_smis.spp_2, 0) + COALESCE(peserta_smis.spp_3, 0) + COALESCE(peserta_smis.spp_4, 0) + COALESCE(peserta_smis.spp_5, 0) + COALESCE(peserta_smis.spp_6, 0) + COALESCE(peserta_smis.spp_7, 0) + COALESCE(peserta_smis.spp_8, 0) + COALESCE(peserta_smis.spp_9, 0) + COALESCE(peserta_smis.spp_10, 0) + COALESCE(peserta_smis.spp_11, 0) + COALESCE(peserta_smis.spp_12, 0), 0), GREATEST(0, COALESCE(salesplans.nominal, 0) - 500000), 0) AS DECIMAL(15,2))';
+                $sumSql = 'CAST(COALESCE(NULLIF(COALESCE(peserta_smis.spp_1, 0) + COALESCE(peserta_smis.spp_2, 0) + COALESCE(peserta_smis.spp_3, 0) + COALESCE(peserta_smis.spp_4, 0) + COALESCE(peserta_smis.spp_5, 0) + COALESCE(peserta_smis.spp_6, 0) + COALESCE(peserta_smis.spp_7, 0) + COALESCE(peserta_smis.spp_8, 0) + COALESCE(peserta_smis.spp_9, 0) + COALESCE(peserta_smis.spp_10, 0) + COALESCE(peserta_smis.spp_11, 0) + COALESCE(peserta_smis.spp_12, 0), 0), GREATEST(0, COALESCE(salesplans.nominal, 0) - 500000), 0) AS DECIMAL(15,2))';
 
                 $omsetPribadi = (clone $baseOmsetQuery)
                     ->where('salesplans.created_by', $userId)
@@ -188,33 +188,24 @@ class HomeController extends Controller
                 
                 $omsetBulanIni = $omsetPribadi + $omsetReseller;
 
-                $monthEarnings = \App\Services\EarningsService::calculateTotalEarnings($userId, $tahun, $bulanNum);
-                
-                // Detailed breakdown for view (excluding registration fee for commission and royalty)
-                $sppSql = $sumSql;
+                $monthTransactions = \App\Services\EarningsService::getDynamicTransactions($userId, $tahun, $bulanNum);
 
-                $sppPribadi = (clone $baseOmsetQuery)
-                    ->where('salesplans.created_by', $userId)
-                    ->sum(\DB::raw($sppSql));
+                $komisi = (float) $monthTransactions->where('type', 'income')->filter(function ($t) {
+                    return stripos($t['source'], 'Komisi SPP') !== false;
+                })->sum('amount');
 
-                $sppReseller = 0;
-                if ($resellerMembersIds->isNotEmpty()) {
-                    $sppReseller = (clone $baseOmsetQuery)
-                        ->whereIn('salesplans.created_by', $resellerMembersIds)
-                        ->sum(\DB::raw($sppSql));
-                }
+                $royalti = (float) $monthTransactions->where('type', 'income')->filter(function ($t) {
+                    return stripos($t['source'], 'Royalti SPP') !== false;
+                })->sum('amount');
 
-                $komisi = $sppPribadi * 0.10;
-                $directFee = 0;
-                if ($isChapter) {
-                    $totalParticipantsCount = (clone $baseOmsetQuery)->whereIn('salesplans.created_by', $regionalTeamIds)->count();
-                    $directFee = $totalParticipantsCount * 500000;
-                }
-                $royalti = $sppReseller * 0.05;
-                $bonusPribadi = ($omsetPribadi >= 20000000) ? ($omsetPribadi * 0.1) : (($omsetPribadi >= 10000000) ? ($omsetPribadi * 0.05) : 0);
-                $bonusTim = ($resellerMembersIds->isNotEmpty() && ($omsetPribadi + $omsetReseller) >= 30000000) ? (($omsetPribadi + $omsetReseller) * 0.1) : 0;
+                $directFee = (float) $monthTransactions->where('type', 'income')->filter(function ($t) {
+                    return stripos($t['source'], 'Direct Fee') !== false;
+                })->sum('amount');
 
-                $totalPenghasilan = $monthEarnings;
+                $bonusPribadi = (float) $monthTransactions->where('type', 'income')->where('source', 'Bonus Pribadi')->sum('amount');
+                $bonusTim = (float) $monthTransactions->where('type', 'income')->where('source', 'Bonus Tim Bulanan')->sum('amount');
+
+                $totalPenghasilan = $monthTransactions->where('type', 'income')->sum('amount');
 
                 // Progress towards a goal (using 50M or Team Target)
                 $targetBonus = (float) (\App\Models\Setting::where('key', 'target_omset_chapter')->value('value') ?? 50000000);
@@ -366,7 +357,7 @@ class HomeController extends Controller
                 $allChapters = \App\Models\User::where('role', 'chapter')->get();
                 foreach ($allChapters as $chap) {
                     $cleanChapName = trim(str_ireplace('CHAPTER', '', $chap->chapter));
-                    $resellerIds = \App\Models\User::where('role', 'reseller')
+                    $resellerIds = \App\Models\User::whereIn('role', ['reseller', 'agen'])
                         ->where('chapter', 'LIKE', '%' . $cleanChapName . '%')
                         ->pluck('id');
                     $teamIds = $resellerIds->merge([$chap->id])->unique();
