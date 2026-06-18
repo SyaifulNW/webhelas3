@@ -219,7 +219,11 @@ class PesertaSmiController extends Controller
         $mNum = ($sppMonth !== 'all') ? (int)$sppMonth : null;
         $yNum = ($yearFilter !== 'all') ? (int)$yearFilter : (int)date('Y');
         
-        if ($sppMonth !== 'all') {
+        // Skip month/year period filter for Lunas view (cumulative all-time stat)
+        $isLunasFilter = ($request->get('filter_status') === 'Lunas');
+        $statsQuery = $isLunasFilter ? clone $query : null;
+
+        if (!$isLunasFilter && $sppMonth !== 'all') {
             $month = (int) $sppMonth;
             if ($month >= 1 && $month <= 12) {
                 // Filter by active period (In that month and year)
@@ -236,7 +240,7 @@ class PesertaSmiController extends Controller
                     });
                 }
             }
-        } else {
+        } elseif (!$isLunasFilter) {
             // Still apply Year filter if active (show people active in this year)
             if ($yearFilter !== 'all') {
                 $dateStart = \Carbon\Carbon::createFromDate($yearFilter, 1, 1)->startOfYear()->format('Y-m-d');
@@ -254,7 +258,7 @@ class PesertaSmiController extends Controller
 
         // --- CUMULATIVE STATS ---
         $globalStats = (clone $globalQuery)->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
-        $totalStats = (clone $query)->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
+        $totalStats = ($statsQuery ?? clone $query)->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
 
         // [USER_REQUEST] Dashboard stats should only include Approved participants if they need approval
         $globalStats = $globalStats->filter(function($item) {
