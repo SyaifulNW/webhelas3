@@ -39,20 +39,22 @@ class SettingController extends Controller
 
         $isOperasional = strtolower(trim(\Illuminate\Support\Facades\Auth::user()->role)) === 'operasional';
 
-        // Cabang roles that Operasional is allowed to manage
+        // Cabang roles that exist in the system (for listing users)
         $cabangRoles = ['chapter', 'reseller', 'agen'];
 
         if ($isOperasional) {
             // Operasional sees only cabang users, no Pusat Helas list
             $usersPusat  = collect();
-            $usersCabang = \App\Models\User::whereIn('role', $cabangRoles)->get();
+            $usersCabang = \App\Models\User::whereIn('role', $cabangRoles)->where('kategori', '!=', 'Agen Pusat')->get();
+            $usersAgenPusat = \App\Models\User::where('role', 'agen')->where('kategori', 'Agen Pusat')->get();
             $menus       = collect();
             $targetOmset    = null;
             $targetOmsetSmi = null;
-            $roles = $cabangRoles;
+            $roles = ['chapter', 'agen'];
         } else {
-            $usersPusat  = \App\Models\User::whereNotIn('role', ['chapter', 'reseller'])->get();
-            $usersCabang = \App\Models\User::whereIn('role', ['chapter', 'reseller'])->get();
+            $usersPusat  = \App\Models\User::whereNotIn('role', ['chapter', 'reseller', 'agen'])->get();
+            $usersCabang = \App\Models\User::whereIn('role', ['chapter', 'reseller', 'agen'])->where('kategori', '!=', 'Agen Pusat')->get();
+            $usersAgenPusat = \App\Models\User::where('role', 'agen')->where('kategori', 'Agen Pusat')->get();
             $menus          = \App\Models\Menu::all();
             $targetOmset    = \App\Models\Setting::where('key', 'target_omset')->value('value');
             $targetOmsetSmi = \App\Models\Setting::where('key', 'target_omset_smi')->value('value');
@@ -82,6 +84,7 @@ class SettingController extends Controller
         return view('admin.Core.settings.index', [
             'usersPusat'     => $usersPusat,
             'usersCabang'    => $usersCabang,
+            'usersAgenPusat' => $usersAgenPusat,
             'menus'          => $menus,
             'targetOmset'    => $targetOmset,
             'targetOmsetSmi' => $targetOmsetSmi,
@@ -95,7 +98,7 @@ class SettingController extends Controller
     public function storeUser(Request $request)
     {
         $isOperasional = strtolower(trim(\Illuminate\Support\Facades\Auth::user()->role)) === 'operasional';
-        $allowedRoles  = $isOperasional ? ['chapter', 'reseller', 'agen'] : null;
+        $allowedRoles  = $isOperasional ? ['chapter', 'agen'] : null;
 
         $validated = $request->validate([
             'name'     => 'required|string|max:255',
@@ -126,10 +129,11 @@ class SettingController extends Controller
         $user = \App\Models\User::findOrFail($id);
 
         $isOperasional = strtolower(trim(\Illuminate\Support\Facades\Auth::user()->role)) === 'operasional';
-        $allowedRoles  = $isOperasional ? ['chapter', 'reseller', 'agen'] : null;
+        $allowedManageRoles  = $isOperasional ? ['chapter', 'reseller', 'agen'] : null;
+        $allowedAssignRoles  = $isOperasional ? ['chapter', 'agen'] : null;
 
         // Guard: operasional cannot edit users outside cabang roles
-        if ($allowedRoles && !in_array(strtolower($user->role), $allowedRoles)) {
+        if ($allowedManageRoles && !in_array(strtolower($user->role), $allowedManageRoles)) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengubah user ini.');
         }
 
@@ -141,7 +145,7 @@ class SettingController extends Controller
         ]);
 
         // Guard: operasional cannot change role to unauthorized value
-        if ($allowedRoles && !in_array($validated['role'], $allowedRoles)) {
+        if ($allowedAssignRoles && $validated['role'] !== $user->role && !in_array($validated['role'], $allowedAssignRoles)) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menggunakan role ini.');
         }
 

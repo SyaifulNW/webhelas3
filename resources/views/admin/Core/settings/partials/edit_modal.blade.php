@@ -20,6 +20,17 @@
                     <div class="form-group font-weight-bold">
                         <label>Role</label>
                         <select name="role" class="form-control role-select" required>
+                            @if (!in_array($u->role, $roles))
+                                <option value="{{ $u->role }}" selected>
+                                    @if ($u->role == 'cs-mbc')
+                                        CS MBC
+                                    @elseif($u->role == 'cs-smi')
+                                        CS SMI
+                                    @else
+                                        {{ ucfirst($u->role) }}
+                                    @endif
+                                </option>
+                            @endif
                             @foreach ($roles as $r)
                                 <option value="{{ $r }}" {{ $u->role == $r ? 'selected' : '' }}>
                                     @if ($r == 'cs-mbc')
@@ -40,21 +51,23 @@
                             </option>
                             <option value="Cabang" {{ ($u->kategori ?? '') === 'Cabang' ? 'selected' : '' }}>Cabang
                             </option>
+                            <option value="Agen Pusat" {{ ($u->kategori ?? '') === 'Agen Pusat' ? 'selected' : '' }}>Agen Pusat
+                            </option>
                         </select>
                     </div>
                     <div class="form-group chapter-field-container font-weight-bold"
                         style="display: {{ in_array($u->role, ['chapter', 'reseller', 'agen']) ? 'block' : 'none' }};">
 
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="mb-0">Pilih Chapter</label>
+                            <label class="mb-0">{{ ($u->kategori ?? '') === 'Agen Pusat' ? 'Asal Kota' : 'Pilih Chapter' }}</label>
                             <button type="button" class="btn btn-xs btn-outline-primary btn-add-chapter-toggle"
-                                style="font-size: 0.65rem; padding: 2px 8px;">
+                                style="font-size: 0.65rem; padding: 2px 8px; display: {{ ($u->kategori ?? '') === 'Agen Pusat' ? 'none' : 'inline-block' }};">
                                 <i class="fas fa-plus mr-1"></i>Tambah Chapter
                             </button>
                         </div>
 
-                        <div class="chapter-select-wrapper">
-                            <select name="chapter" class="form-control chapter-select"
+                        <div class="chapter-select-wrapper" style="display: {{ ($u->kategori ?? '') === 'Agen Pusat' ? 'none' : 'block' }};">
+                            <select {{ ($u->kategori ?? '') === 'Agen Pusat' ? '' : 'name=chapter' }} class="form-control chapter-select"
                                 data-current="{{ $u->chapter }}">
                                 <option value="">-- Pilih / Tulis Chapter --</option>
                                 @foreach ($takenChapters as $chap)
@@ -64,6 +77,10 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        <div class="city-input-wrapper" style="display: {{ ($u->kategori ?? '') === 'Agen Pusat' ? 'block' : 'none' }};">
+                            <input type="text" {{ ($u->kategori ?? '') === 'Agen Pusat' ? 'name=chapter' : '' }} class="form-control city-input" value="{{ $u->chapter }}" placeholder="Tulis Asal Kota...">
                         </div>
 
                         <div class="chapter-input-wrapper mt-1" style="display: none;">

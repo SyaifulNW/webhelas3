@@ -320,6 +320,73 @@
                                 </tbody>
                             </table>
                         </div>
+                </div>
+
+                {{-- Table Agen Pusat --}}
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 font-weight-bold"><i class="fas fa-user-tie mr-2"></i>Agen Pusat</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead class="bg-success text-white">
+                                    <tr>
+                                        <th style="width: 50px;">No.</th>
+                                        <th>Nama</th>
+                                        <th>Email</th>
+                                        <th>Asal Kota</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($usersAgenPusat as $u)
+                                        <tr>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td class="font-weight-bold">{{ $u->name }}</td>
+                                            <td>{{ $u->email }}</td>
+                                            <td>{{ $u->chapter ?: '-' }}</td>
+                                            <td>
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input user-toggle"
+                                                        id="userSwitch{{ $u->id }}" data-id="{{ $u->id }}"
+                                                        {{ $u->is_active ? 'checked' : '' }}>
+                                                    <label class="custom-control-label"
+                                                        for="userSwitch{{ $u->id }}">
+                                                        {{ $u->is_active ? 'Aktif' : 'Non-Aktif' }}
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td class="text-right">
+                                                <button class="btn btn-sm btn-warning shadow-sm" data-toggle="modal"
+                                                    data-target="#editUserModal{{ $u->id }}">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <form action="{{ route('admin.settings.users.destroy', $u->id) }}"
+                                                    method="POST" class="d-inline delete-form">
+                                                    @csrf @method('DELETE')
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger shadow-sm delete-btn">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+
+                                        {{-- Modal Edit (Agen Pusat) --}}
+                                        @include('admin.Core.settings.partials.edit_modal', [
+                                            'u' => $u,
+                                            'roles' => $roles,
+                                        ])
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted p-4">Tidak ada data agen pusat.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -394,6 +461,7 @@
                             <select name="kategori" class="form-control" required>
                                 <option value="Pusat" selected>Pusat</option>
                                 <option value="Cabang">Cabang</option>
+                                <option value="Agen Pusat">Agen Pusat</option>
                             </select>
                         </div>
                         <div class="form-group chapter-field-container" style="display: none;">
@@ -412,6 +480,10 @@
                                         <option value="{{ $chap }}">{{ $chap }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                            <div class="city-input-wrapper" style="display: none;">
+                                <input type="text" class="form-control city-input" placeholder="Tulis Asal Kota...">
                             </div>
 
                             <div class="chapter-input-wrapper mt-1" style="display: none;">
@@ -554,18 +626,56 @@
             })
         });
 
-        // Toggle Chapter Visibility & Clean/Dirty Labels
-        $(document).on('change', '.role-select', function() {
-            let role = $(this).val();
-            let modal = $(this).closest('.modal');
+        function updateChapterFieldVisibility(modal) {
+            let role = modal.find('.role-select').val();
+            let kategori = modal.find('select[name="kategori"]').val();
             let container = modal.find('.chapter-field-container');
-            let chapterSelect = container.find('select');
+            let chapterSelect = container.find('.chapter-select');
             let currentChapter = chapterSelect.data('current');
             let takenList = @json($takenChapters);
+            let label = container.find('label').first();
+            let btnAddChapter = container.find('.btn-add-chapter-toggle');
 
-            if (role === 'chapter' || role === 'reseller' || role === 'agen') {
+            let roleSupportsChapter = (role === 'chapter' || role === 'reseller' || role === 'agen');
+
+            if (!roleSupportsChapter) {
+                container.slideUp();
+                container.find('select, input').removeAttr('name').attr('required', false);
+            } else if (kategori === 'Agen Pusat') {
                 container.slideDown();
-                chapterSelect.attr('required', true);
+                label.text('Asal Kota');
+                btnAddChapter.hide();
+
+                container.find('.chapter-select-wrapper').hide();
+                container.find('.chapter-input-wrapper').hide();
+                container.find('.city-input-wrapper').show();
+
+                container.find('.city-input').attr('name', 'chapter').attr('required', false);
+                container.find('.chapter-select').removeAttr('name').attr('required', false);
+                container.find('.new-chapter-input').removeAttr('name').attr('required', false);
+            } else {
+                container.slideDown();
+                label.text('Pilih Chapter');
+                container.find('.city-input-wrapper').hide().find('.city-input').removeAttr('name').attr('required', false);
+
+                let isNewChapterMode = container.find('.chapter-input-wrapper').is(':visible') && !container.find('.chapter-select-wrapper').is(':visible');
+                
+                if (modal.is(':hidden') || (!container.find('.chapter-select-wrapper').is(':visible') && !container.find('.chapter-input-wrapper').is(':visible'))) {
+                    container.find('.chapter-select-wrapper').show();
+                    container.find('.chapter-input-wrapper').hide();
+                    btnAddChapter.show();
+                    isNewChapterMode = false;
+                }
+
+                if (isNewChapterMode) {
+                    container.find('.new-chapter-input').attr('name', 'chapter').attr('required', true);
+                    container.find('.chapter-select').removeAttr('name').attr('required', false);
+                    btnAddChapter.hide();
+                } else {
+                    container.find('.chapter-select').attr('name', 'chapter').attr('required', true);
+                    container.find('.new-chapter-input').removeAttr('name').attr('required', false);
+                    btnAddChapter.show();
+                }
 
                 chapterSelect.find('option').each(function() {
                     let val = $(this).val();
@@ -584,14 +694,24 @@
                         $(this).prop('disabled', false).text(val).css('background-color', '').show();
                     }
                 });
-            } else {
-                container.slideUp();
-                chapterSelect.attr('required', false).val('');
             }
+        }
+
+        // Toggle Chapter Visibility & Clean/Dirty Labels on role or category change
+        $(document).on('change', '.role-select, select[name="kategori"]', function() {
+            let modal = $(this).closest('.modal');
+            updateChapterFieldVisibility(modal);
         });
 
-        // Initialize display for edit modals (already handled by PHP style, but for reactivity)
-        $('.role-select').trigger('change');
+        // Initialize display for modals
+        $('.modal').on('show.bs.modal', function() {
+            updateChapterFieldVisibility($(this));
+        });
+
+        // Trigger initial visibility for all modal selects on page load
+        $('.modal').each(function() {
+            updateChapterFieldVisibility($(this));
+        });
 
         // Toggle Expand/Collapse Icon
         $('.clickable-row').on('click', function() {
