@@ -184,7 +184,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/hr/employee/store', [App\Http\Controllers\Hrd\AbsensiController::class, 'storeEmployee'])->name('hr.employee.store');
     Route::delete('/hr/employee/{id}', [App\Http\Controllers\Hrd\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
     Route::view('/hrd-dashboard', 'hrd.hrd_dashboard')->name('hr.dashboard');
-    // Agenda (To-Do List) — hanya Linda (cs-mbc/cs-smi, name check di controller)
+    // Agenda (To-Do List) (subrole/divisi check di controller)
     Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,cs-smi,operasional,hrd,produksi'])->group(function () {
         Route::get('/agenda', [App\Http\Controllers\Common\AgendaController::class, 'index'])->name('agenda.index');
         Route::post('/agenda/store', [App\Http\Controllers\Common\AgendaController::class, 'store'])->name('agenda.store');

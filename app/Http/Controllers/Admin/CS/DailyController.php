@@ -26,9 +26,9 @@ class DailyController extends Controller
         
         $query = Activity::where('role', $activityRole);
         
-        if (strtolower($userName) === 'nisa') {
+        if ($user->hasSubrole('activity_intake')) {
             $query->whereIn('categories_id', [6, 11]);
-        } elseif (strtolower($userName) === 'felmi') {
+        } elseif ($user->hasSubrole('activity_marketing')) {
             $query->whereIn('categories_id', [8, 9, 10]);
         } else {
             $categoryNames = [
@@ -98,9 +98,14 @@ class DailyController extends Controller
         $periodeInfo = [];
 
         if ($isCs) {
-            if (strtolower($userName) === 'linda') {
+            $hasFinance = $user->hasSubrole('finance_access');
+            $hasSales = $user->hasAnySubrole(['sales_all_view', 'cs_supervisor']);
+
+            if ($hasFinance && $hasSales) {
                 $divisiList = ['Divisi Keuangan', 'Sales & Marketing'];
-            } elseif (strtolower($userName) === 'yasmin') {
+            } elseif ($hasFinance) {
+                $divisiList = ['Divisi Keuangan'];
+            } elseif ($hasSales) {
                 $divisiList = ['Sales & Marketing'];
             } else {
                 $divisiName = 'Sales & Marketing'; // fallback
@@ -170,9 +175,9 @@ class DailyController extends Controller
         if (!$activities) {
             $query = Activity::where('role', $activityRole);
             
-            if (strtolower($userName) === 'nisa') {
+            if ($user->hasSubrole('activity_intake')) {
                 $query->whereIn('categories_id', [6, 11]);
-            } elseif (strtolower($userName) === 'felmi') {
+            } elseif ($user->hasSubrole('activity_marketing')) {
                 $query->whereIn('categories_id', [8, 9, 10]);
             } else {
                 $categoryNames = [
@@ -348,9 +353,9 @@ class DailyController extends Controller
     
     $query = Activity::where('role', $activityRole);
     
-    if (strtolower($userName) === 'nisa') {
+    if ($user->hasSubrole('activity_intake')) {
         $query->whereIn('categories_id', [6, 11]);
-    } elseif (strtolower($userName) === 'felmi') {
+    } elseif ($user->hasSubrole('activity_marketing')) {
         $query->whereIn('categories_id', [8, 9, 10]);
     } else {
         $categoryNames = [

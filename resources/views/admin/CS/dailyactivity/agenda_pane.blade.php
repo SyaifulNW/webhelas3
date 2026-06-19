@@ -53,10 +53,10 @@
             onclick="switchSubTab('{{ $divisiSlug }}', 'riwayat', this); loadRiwayat('{{ $divisi }}', '{{ $divisiSlug }}')">
             <i class="fas fa-history mr-1"></i> Riwayat
         </button>
-        @if (strtolower(auth()->user()->name) === 'yasmin')
+        @if (auth()->user()->hasSubrole('cs_supervisor'))
             <button class="divisi-tab-btn sub-tab-btn" id="btn-rekap-{{ $divisiSlug }}"
-                onclick="switchSubTab('{{ $divisiSlug }}', 'rekap', this); loadRekap('{{ $divisiSlug }}')" <i
-                class="fas fa-chart-pie mr-1"></i> Rekap Semua
+                onclick="switchSubTab('{{ $divisiSlug }}', 'rekap', this); loadRekap('{{ $divisiSlug }}')">
+                <i class="fas fa-chart-pie mr-1"></i> Rekap Semua
             </button>
         @endif
     </div>
@@ -309,8 +309,8 @@
         </div>
     </div>
 
-    {{-- Panel Rekap (hanya Yasmin) --}}
-    @if (strtolower(auth()->user()->name) === 'yasmin')
+    {{-- Panel Rekap (hanya CS Supervisor) --}}
+    @if (auth()->user()->hasSubrole('cs_supervisor'))
         <div id="sub-panel-rekap-{{ $divisiSlug }}" style="display: none;">
 
             {{-- Date Navigation Bar --}}

@@ -489,7 +489,7 @@
             color: #aaa !important;
         }
 
-        /* ======= REKAP STYLES (Yasmin only) ======= */
+        /* ======= REKAP STYLES (CS Supervisor only) ======= */
         .rekap-divisi-card {
             background: #fff;
             border: 1px solid #e3e6f0;
@@ -817,14 +817,17 @@
                 <button class="divisi-tab-btn active" onclick="switchMainTab('pane-activity-cs', this)">
                     <i class="fas fa-clipboard-list"></i> Activity CS
                 </button>
-                @if (auth()->user()->name === 'Linda')
+                @if (auth()->user()->hasSubrole('finance_access'))
                     <button class="divisi-tab-btn" onclick="switchMainTab('pane-activity-keuangan', this)">
                         <i class="fas fa-wallet"></i> Activity Keuangan
                     </button>
+                @endif
+                @if (auth()->user()->hasAnySubrole(['sales_all_view', 'cs_supervisor']))
                     <button class="divisi-tab-btn" onclick="switchMainTab('pane-activity-sales', this)">
                         <i class="fas fa-bullhorn"></i> Activity Sales&Marketing
                     </button>
-                @else
+                @endif
+                @if (!auth()->user()->hasSubrole('finance_access') && !auth()->user()->hasAnySubrole(['sales_all_view', 'cs_supervisor']))
                     <button class="divisi-tab-btn" onclick="switchMainTab('pane-activity-todo', this)">
                         <i class="fas fa-tasks"></i> Activity/ToDoList
                     </button>
@@ -839,13 +842,17 @@
             </div>
 
             {{-- Agenda Panes --}}
-            @if (auth()->user()->name === 'Linda')
-                <div class="main-pane" id="pane-activity-keuangan">
-                    @include('admin.CS.dailyactivity.agenda_pane', ['divisi' => 'Divisi Keuangan'])
-                </div>
-                <div class="main-pane" id="pane-activity-sales">
-                    @include('admin.CS.dailyactivity.agenda_pane', ['divisi' => 'Sales & Marketing'])
-                </div>
+            @if (auth()->user()->hasSubrole('finance_access') || auth()->user()->hasAnySubrole(['sales_all_view', 'cs_supervisor']))
+                @if (auth()->user()->hasSubrole('finance_access'))
+                    <div class="main-pane" id="pane-activity-keuangan">
+                        @include('admin.CS.dailyactivity.agenda_pane', ['divisi' => 'Divisi Keuangan'])
+                    </div>
+                @endif
+                @if (auth()->user()->hasAnySubrole(['sales_all_view', 'cs_supervisor']))
+                    <div class="main-pane" id="pane-activity-sales">
+                        @include('admin.CS.dailyactivity.agenda_pane', ['divisi' => 'Sales & Marketing'])
+                    </div>
+                @endif
             @else
                 <div class="main-pane" id="pane-activity-todo">
                     @include('admin.CS.dailyactivity.agenda_pane', ['divisi' => $divisiList[0]])
