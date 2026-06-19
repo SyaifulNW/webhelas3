@@ -116,6 +116,13 @@ class MomController extends Controller
 
         $query = Mom::where('unit', $unit);
 
+        // Filter out Done items older than 2 days after deadline
+        $query->where(function ($q) {
+            $q->where('status', '!=', 'Done')
+              ->orWhereNull('deadline')
+              ->orWhere('deadline', '>=', now()->subDays(2)->toDateString());
+        });
+
         // Non-admin users see their own data, or data where they are PIC, or data where they are Requester
         if (!$permissions['seeAllData']) {
             $user = Auth::user();
@@ -146,7 +153,8 @@ class MomController extends Controller
             $query->with('creator');
         }
 
-        // Sort by deadline (default to asc: closest deadline first)
+        // Sort by status 'Done' to the bottom, then by deadline
+        $query->orderByRaw("CASE WHEN status = 'Done' THEN 1 ELSE 0 END asc");
         $sortDeadline = $request->get('sort_deadline', 'asc');
         if ($sortDeadline === 'asc') {
             $query->orderByRaw('CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline asc');

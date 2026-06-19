@@ -9,7 +9,7 @@
         $groupView = $groupView ?? false;
         $availableUnits = $permissions['canAccessUnits'] ?? ['Helas Corp'];
         // Tampil kolom Aksi jika bisa edit ATAU bisa hapus (misal Yasmin)
-        $colCount = ($canEdit || $canDelete) ? 8 : 7;
+        $colCount = ($canEdit || $canDelete) ? 9 : 8;
     @endphp
 
     <div class="container-fluid px-4">
@@ -155,11 +155,13 @@
                                                         <th class="py-2 text-uppercase small align-middle"
                                                             style="width:155px;">Target</th>
                                                         <th class="py-2 text-uppercase small align-middle"
-                                                            style="min-width:180px;">
+                                                            style="min-width:150px;">Realisasi</th>
+                                                        <th class="py-2 text-uppercase small align-middle"
+                                                            style="width:130px;">
                                                             <div class="d-flex flex-column align-items-center" style="gap:4px;">
-                                                                <span>Realisasi & Status</span>
+                                                                <span>Status</span>
                                                                 <select class="filter-status-table border rounded px-1 py-0 text-white font-weight-bold" 
-                                                                    style="font-size:.7rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:22px; width:120px;">
+                                                                    style="font-size:.7rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:22px; width:110px;">
                                                                     <option value="all" style="color:#333;">Semua Status</option>
                                                                     <option value="Progress" style="color:#333;">Progress</option>
                                                                     <option value="Done" style="color:#333;">Done</option>
@@ -182,7 +184,7 @@
                                                                         ? 'bg-status-overdue'
                                                                         : 'bg-status-progress');
                                                         @endphp
-                                                        <tr data-id="{{ $item->id }}">
+                                                        <tr data-id="{{ $item->id }}" data-status="{{ $item->status }}">
                                                             <td class="text-center font-weight-bold text-muted align-middle small">
                                                                 {{ $idx + 1 }}
                                                             </td>
@@ -293,48 +295,41 @@
                                                             @endif
 
                                                             @if ($isOwnerGroup && $canEdit)
-                                                                <td class="p-0 align-middle tc-cell" data-label="Hasil & Status">
-                                                                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                                                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
-                                                                            {{ $item->hasil ?: '' }}</div>
-                                                                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                                                            @if ($item->hasil)
-                                                                                <button class="btn-lihat" style="margin-top:0;"
-                                                                                    onclick="showPopup('Hasil', this.closest('td').querySelector('textarea, .tc-text').textContent)">
-                                                                                    <i class="fas fa-eye"></i> Lihat
-                                                                                </button>
-                                                                            @endif
-                                                                            <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                                                                {{ $item->status }}
-                                                                            </span>
-                                                                        </div>
+                                                                <td class="p-0 align-middle tc-cell" data-label="Realisasi">
+                                                                    <div class="tc-view">
+                                                                        <div class="tc-text" data-placeholder="Hasil tindak lanjut...">{{ $item->hasil ?: '' }}</div>
+                                                                        @if ($item->hasil)
+                                                                            <button class="btn-lihat"
+                                                                                onclick="showPopup('Realisasi', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                                <i class="fas fa-eye"></i> Lihat
+                                                                            </button>
+                                                                        @endif
                                                                     </div>
-                                                                    <div class="tc-edit-wrapper" style="display:none; padding:6px 8px;">
-                                                                        <textarea class="tc-textarea live-field mb-2" data-field="hasil" placeholder="Hasil tindak lanjut..." style="display:block; width:100%;">{{ $item->hasil }}</textarea>
-                                                                        <select class="form-control-inline live-field status-select {{ $sc }}" data-field="status" style="width:100% !important;">
-                                                                            <option value="Progress" {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
-                                                                            <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>Done</option>
-                                                                            <option value="Overdue" {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
-                                                                        </select>
-                                                                    </div>
+                                                                    <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut...">{{ $item->hasil }}</textarea>
+                                                                </td>
+                                                                <td class="p-1 align-middle text-center" style="width:130px;">
+                                                                    <select class="form-control-inline live-field status-select {{ $sc }}" data-field="status" style="width:100% !important;">
+                                                                        <option value="Progress" {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
+                                                                        <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>Done</option>
+                                                                        <option value="Overdue" {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
+                                                                    </select>
                                                                 </td>
                                                             @else
-                                                                <td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
-                                                                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                                                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
-                                                                            {{ $item->hasil ?: '' }}</div>
-                                                                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                                                            @if ($item->hasil)
-                                                                                <button class="btn-lihat" style="margin-top:0;"
-                                                                                    onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)">
-                                                                                    <i class="fas fa-eye"></i> Lihat
-                                                                                </button>
-                                                                            @endif
-                                                                            <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                                                                {{ $item->status ?: '-' }}
-                                                                            </span>
-                                                                        </div>
+                                                                <td class="p-0 align-middle tc-cell readonly-cell" data-label="Realisasi">
+                                                                    <div class="tc-view">
+                                                                        <div class="tc-text" data-placeholder="Hasil tindak lanjut...">{{ $item->hasil ?: '' }}</div>
+                                                                        @if ($item->hasil)
+                                                                            <button class="btn-lihat"
+                                                                                onclick="showPopup('Realisasi', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                                <i class="fas fa-eye"></i> Lihat
+                                                                            </button>
+                                                                        @endif
                                                                     </div>
+                                                                </td>
+                                                                <td class="text-center align-middle">
+                                                                    <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                                        {{ $item->status ?: '-' }}
+                                                                    </span>
                                                                 </td>
                                                             @endif
 
@@ -375,11 +370,12 @@
                                             <th class="py-3 text-uppercase small align-middle" style="width:130px;">PIC</th>
                                             <th class="py-3 text-uppercase small align-middle" style="width:130px;">Requester</th>
                                             <th class="py-3 text-uppercase small align-middle" style="width:170px;">Target</th>
-                                            <th class="py-3 text-uppercase small align-middle" style="min-width:200px;">
+                                            <th class="py-3 text-uppercase small align-middle" style="min-width:150px;">Realisasi</th>
+                                            <th class="py-3 text-uppercase small align-middle" style="width:140px;">
                                                 <div class="d-flex flex-column align-items-center" style="gap:5px;">
-                                                    <span>Realisasi & Status</span>
+                                                    <span>Status</span>
                                                     <select id="filter-status-table" class="border rounded px-2 py-1 text-white font-weight-bold" 
-                                                        style="font-size:.75rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:26px; width:130px;">
+                                                        style="font-size:.75rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:26px; width:120px;">
                                                         <option value="all" style="color:#333;">Semua Status</option>
                                                         <option value="Progress" style="color:#333;">Progress</option>
                                                         <option value="Done" style="color:#333;">Done</option>
@@ -403,11 +399,11 @@
                                                             : 'bg-status-progress');
                                                 $isOwner = (int)$item->created_by === (int)Auth::id();
                                             @endphp
-                                            <tr data-id="{{ $item->id }}">
+                                            <tr data-id="{{ $item->id }}" data-status="{{ $item->status }}">
                                                 <td class="text-center font-weight-bold text-muted no-col align-middle">
                                                     {{ $index + 1 }}
                                                 </td>
-
+ 
                                                 @if ($isOwner)
                                                     <td class="p-0 align-middle tc-cell" data-label="ToDoList / Task">
                                                         <div class="tc-view">
@@ -434,7 +430,7 @@
                                                         </div>
                                                     </td>
                                                 @endif
-
+ 
                                                 @if ($isOwner)
                                                     <td class="p-1 align-middle">
                                                         <input type="date"
@@ -446,7 +442,7 @@
                                                         {{ $item->deadline ? \Carbon\Carbon::parse($item->deadline)->format('d/m/Y') : '-' }}
                                                     </td>
                                                 @endif
-
+ 
                                                 @if ($isOwner)
                                                     <td class="p-1 align-middle pic-cell">
                                                         <select class="form-control-inline live-field" data-field="pic">
@@ -463,7 +459,7 @@
                                                         {{ $item->pic ?: '-' }}
                                                     </td>
                                                 @endif
-
+ 
                                                 @if ($isOwner)
                                                     <td class="p-1 align-middle">
                                                         <select class="form-control-inline live-field" data-field="requester">
@@ -480,7 +476,7 @@
                                                         {{ $item->requester ?: '-' }}
                                                     </td>
                                                 @endif
-
+ 
                                                 @if ($isOwner)
                                                     <td class="p-0 align-middle tc-cell" data-label="Target">
                                                         <div class="tc-view">
@@ -509,50 +505,43 @@
                                                         </div>
                                                     </td>
                                                 @endif
-
+ 
                                                 @if ($isOwner)
-                                                    <td class="p-0 align-middle tc-cell" data-label="Hasil & Status">
-                                                        <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                                            <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
-                                                                    {{ $item->hasil ?: '' }}</div>
-                                                            <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                                                @if ($item->hasil)
-                                                                    <button class="btn-lihat" style="margin-top:0;"
-                                                                        onclick="showPopup('Hasil', this.closest('td').querySelector('textarea, .tc-text').textContent)">
-                                                                        <i class="fas fa-eye"></i> Lihat
-                                                                    </button>
-                                                                @endif
-                                                                <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                                                    {{ $item->status }}
-                                                                </span>
-                                                            </div>
+                                                    <td class="p-0 align-middle tc-cell" data-label="Realisasi">
+                                                        <div class="tc-view">
+                                                            <div class="tc-text" data-placeholder="Hasil tindak lanjut...">{{ $item->hasil ?: '' }}</div>
+                                                            @if ($item->hasil)
+                                                                <button class="btn-lihat"
+                                                                    onclick="showPopup('Realisasi', this.closest('td').querySelector('textarea, .tc-text').textContent)">
+                                                                    <i class="fas fa-eye"></i> Lihat
+                                                                </button>
+                                                            @endif
                                                         </div>
-                                                        <div class="tc-edit-wrapper" style="display:none; padding:6px 8px;">
-                                                            <textarea class="tc-textarea live-field mb-2" data-field="hasil" placeholder="Hasil tindak lanjut..." style="display:block; width:100%;">{{ $item->hasil }}</textarea>
-                                                            <select class="form-control-inline live-field status-select {{ $sc }}" data-field="status" style="width:100% !important;">
-                                                                <option value="Progress" {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
-                                                                <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>Done</option>
-                                                                <option value="Overdue" {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
-                                                            </select>
-                                                        </div>
+                                                        <textarea class="tc-textarea live-field" data-field="hasil" placeholder="Hasil tindak lanjut...">{{ $item->hasil }}</textarea>
+                                                    </td>
+                                                    <td class="p-1 align-middle text-center" style="width:130px;">
+                                                        <select class="form-control-inline live-field status-select {{ $sc }}" data-field="status" style="width:100% !important;">
+                                                            <option value="Progress" {{ $item->status === 'Progress' ? 'selected' : '' }}>Progress</option>
+                                                            <option value="Done" {{ $item->status === 'Done' ? 'selected' : '' }}>Done</option>
+                                                            <option value="Overdue" {{ $item->status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
+                                                        </select>
                                                     </td>
                                                 @else
-                                                    <td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
-                                                        <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                                            <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">
-                                                                {{ $item->hasil ?: '' }}</div>
-                                                            <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                                                @if ($item->hasil)
-                                                                    <button class="btn-lihat" style="margin-top:0;"
-                                                                        onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)">
-                                                                        <i class="fas fa-eye"></i> Lihat
-                                                                    </button>
-                                                                @endif
-                                                                <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                                                    {{ $item->status }}
-                                                                </span>
-                                                            </div>
+                                                    <td class="p-0 align-middle tc-cell readonly-cell" data-label="Realisasi">
+                                                        <div class="tc-view">
+                                                            <div class="tc-text" data-placeholder="Hasil tindak lanjut...">{{ $item->hasil ?: '' }}</div>
+                                                            @if ($item->hasil)
+                                                                <button class="btn-lihat"
+                                                                    onclick="showPopup('Realisasi', this.closest('td').querySelector('.tc-text').textContent)">
+                                                                    <i class="fas fa-eye"></i> Lihat
+                                                                </button>
+                                                            @endif
                                                         </div>
+                                                    </td>
+                                                    <td class="text-center align-middle">
+                                                        <span class="badge {{ $sc }} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                                            {{ $item->status }}
+                                                        </span>
                                                     </td>
                                                 @endif
 
@@ -1111,7 +1100,7 @@
                 $('.filtered-empty').remove();
                 let vis = 0;
                 $('#mom-table-body tr').not('.empty-row').each(function() {
-                    const s = $(this).find('[data-field="status"]').val() || '';
+                    const s = $(this).attr('data-status') || '';
                     
                     const $picCell = $(this).find('.pic-cell');
                     let picText = '';
@@ -1192,33 +1181,15 @@
             </td>`;
             }
 
-            function buildHasilCell(item) {
-                const hasilVal = item.hasil || '';
+            function buildStatusCell(item) {
                 const statusVal = item.status || 'Progress';
                 const sc = statusClass(statusVal);
-                
-                const lihat = hasilVal ?
-                    `<button class="btn-lihat" style="margin-top:0;" onclick="showPopup('Hasil', this.closest('td').querySelector('textarea,.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
-                    '';
-                
-                return `<td class="p-0 align-middle tc-cell" data-label="Hasil & Status">
-                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">${escHtml(hasilVal)}</div>
-                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                            ${lihat}
-                            <span class="badge ${sc} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                ${statusVal}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="tc-edit-wrapper" style="display:none; padding:6px 8px;">
-                        <textarea class="tc-textarea live-field mb-2" data-field="hasil" placeholder="Hasil tindak lanjut..." style="display:block; width:100%;">${escHtml(hasilVal)}</textarea>
-                        <select class="form-control-inline live-field status-select ${sc}" data-field="status" style="width:100% !important;">
-                            <option value="Progress" ${statusVal==='Progress'?'selected':''}>Progress</option>
-                            <option value="Done"     ${statusVal==='Done'    ?'selected':''}>Done</option>
-                            <option value="Overdue"  ${statusVal==='Overdue' ?'selected':''}>Overdue</option>
-                        </select>
-                    </div>
+                return `<td class="p-1 align-middle text-center" style="width:130px;">
+                    <select class="form-control-inline live-field status-select ${sc}" data-field="status" style="width:100% !important;">
+                        <option value="Progress" ${statusVal==='Progress'?'selected':''}>Progress</option>
+                        <option value="Done"     ${statusVal==='Done'    ?'selected':''}>Done</option>
+                        <option value="Overdue"  ${statusVal==='Overdue' ?'selected':''}>Overdue</option>
+                    </select>
                 </td>`;
             }
 
@@ -1258,17 +1229,20 @@
                            </td>`;
 
                     const hasilCell = isOwner
-                        ? buildHasilCell(item)
-                        : `<td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
-                            <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">${escHtml(item.hasil || '')}</div>
-                                <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                    ${item.hasil ? `<button class="btn-lihat" style="margin-top:0;" onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` : ''}
-                                    <span class="badge ${statusClass(item.status)} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                        ${escHtml(item.status || '-')}
-                                    </span>
-                                </div>
+                        ? buildTcCell(item, 'hasil', 'Realisasi', 'Hasil tindak lanjut...')
+                        : `<td class="p-0 align-middle tc-cell readonly-cell" data-label="Realisasi">
+                            <div class="tc-view">
+                                <div class="tc-text" data-placeholder="Hasil tindak lanjut...">${escHtml(item.hasil || '')}</div>
+                                ${item.hasil ? `<button class="btn-lihat" onclick="showPopup('Realisasi', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` : ''}
                             </div>
+                           </td>`;
+
+                    const statusCell = isOwner
+                        ? buildStatusCell(item)
+                        : `<td class="text-center align-middle">
+                            <span class="badge ${statusClass(item.status)} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                ${escHtml(item.status || '-')}
+                            </span>
                            </td>`;
 
                     const actionCell = (CAN_EDIT || CAN_DELETE)
@@ -1277,7 +1251,7 @@
                            </td>`
                         : '';
 
-                    return `<tr data-id="${item.id}">
+                    return `<tr data-id="${item.id}" data-status="${item.status}">
                     <td class="text-center font-weight-bold text-muted no-col align-middle">${i + 1}</td>
                     ${keteranganCell}
                     ${deadlineCell}
@@ -1285,13 +1259,14 @@
                     ${requesterCell}
                     ${targetCell}
                     ${hasilCell}
+                    ${statusCell}
                     ${actionCell}
                 </tr>`;
                 }).join('');
             }
 
             function buildNewRow(item) {
-                return `<tr data-id="${item.id}">
+                return `<tr data-id="${item.id}" data-status="${item.status}">
                 <td class="text-center font-weight-bold text-muted no-col align-middle">1</td>
                 <td class="p-0 align-middle tc-cell editing" data-label="ToDoList / Task">
                     <div class="tc-view"><div class="tc-text"></div></div>
@@ -1304,7 +1279,8 @@
                     <div class="tc-view"><div class="tc-text" data-placeholder="Target pekerjaan..."></div></div>
                     <textarea class="tc-textarea live-field" data-field="target" placeholder="Target pekerjaan..."></textarea>
                 </td>
-                ${buildHasilCell(item)}
+                ${buildTcCell(item, 'hasil', 'Realisasi', 'Hasil tindak lanjut...')}
+                ${buildStatusCell(item)}
                 <td class="text-center align-middle p-1">
                     <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>
                 </td>
@@ -1361,14 +1337,15 @@
                             const picCell = `<td class="p-1 align-middle pic-cell">${buildPicSelect(item.pic)}</td>`;
                             const requesterCell = `<td class="p-1 align-middle">${buildRequesterSelect(item.requester)}</td>`;
                             const targetCell = buildTcCell(item,'target','Target','Target pekerjaan...');
-                            const hasilCell = buildHasilCell(item);
+                            const hasilCell = buildTcCell(item, 'hasil', 'Realisasi', 'Hasil tindak lanjut...');
+                            const statusCell = buildStatusCell(item);
                             const actionCell = (CAN_EDIT || CAN_DELETE)
                                 ? `<td class="text-center align-middle p-1">
                                     <button class="btn btn-link text-danger p-0 btn-delete" data-id="${item.id}" title="Hapus"><i class="fas fa-trash-alt"></i></button>
                                    </td>`
                                 : '';
 
-                            return `<tr data-id="${item.id}">
+                            return `<tr data-id="${item.id}" data-status="${item.status}">
                                 <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
                                 ${keteranganCell}
                                 ${deadlineCell}
@@ -1376,6 +1353,7 @@
                                 ${requesterCell}
                                 ${targetCell}
                                 ${hasilCell}
+                                ${statusCell}
                                 ${actionCell}
                             </tr>`;
                         } else {
@@ -1395,32 +1373,24 @@
                             </td>`;
                             };
 
-                            const tcReadonlyHasil = (val, status) => {
+                            const tcReadonlyStatus = (status) => {
                                 const sc = statusClass(status);
-                                const lihat = val ?
-                                    `<button class="btn-lihat" style="margin-top:0;" onclick="showPopup('Hasil', this.closest('td').querySelector('.tc-text').textContent)"><i class="fas fa-eye"></i> Lihat</button>` :
-                                    '';
-                                return `<td class="p-0 align-middle tc-cell readonly-cell" data-label="Hasil & Status">
-                                    <div class="tc-view d-flex flex-column align-items-center" style="gap:6px; padding: 6px 8px;">
-                                        <div class="tc-text w-100" data-placeholder="Hasil tindak lanjut...">${escHtml(val)}</div>
-                                        <div class="d-flex align-items-center w-100 justify-content-between flex-wrap" style="gap:4px;">
-                                            ${lihat}
-                                            <span class="badge ${sc} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                                                ${escHtml(status||'-')}
-                                            </span>
-                                        </div>
-                                    </div>
+                                return `<td class="text-center align-middle">
+                                    <span class="badge ${sc} px-2 py-1 font-weight-bold" style="font-size:0.65rem; border-radius:20px; text-transform:uppercase; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                                        ${escHtml(status||'-')}
+                                    </span>
                                 </td>`;
                             };
 
-                            return `<tr>
+                            return `<tr data-status="${item.status}">
                                 <td class="text-center font-weight-bold text-muted align-middle small">${i + 1}</td>
                                 ${tcReadonly(keterangan, 'ToDoList / Task', 'Tulis keterangan/poin rapat...')}
                                 <td class="text-center align-middle small">${fmtDate(item.deadline)}</td>
                                 <td class="align-middle small pic-cell" style="padding:5px 7px;">${escHtml(item.pic||'-')}</td>
                                 <td class="align-middle small" style="padding:5px 7px;">${escHtml(item.requester||'-')}</td>
                                 ${tcReadonly(target, 'Target', 'Target pekerjaan...')}
-                                ${tcReadonlyHasil(hasil, item.status)}
+                                ${tcReadonly(hasil, 'Realisasi', 'Hasil tindak lanjut...')}
+                                ${tcReadonlyStatus(item.status)}
                             </tr>`;
                         }
                     }).join('');
@@ -1447,11 +1417,12 @@
                                             <th class="py-2 text-uppercase small align-middle" style="width:120px;">PIC</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:120px;">Requester</th>
                                             <th class="py-2 text-uppercase small align-middle" style="width:155px;">Target</th>
-                                            <th class="py-2 text-uppercase small align-middle" style="min-width:180px;">
+                                            <th class="py-2 text-uppercase small align-middle" style="min-width:150px;">Realisasi</th>
+                                            <th class="py-2 text-uppercase small align-middle" style="width:130px;">
                                                 <div class="d-flex flex-column align-items-center" style="gap:4px;">
-                                                    <span>Hasil & Status</span>
+                                                    <span>Status</span>
                                                     <select class="filter-status-table border rounded px-1 py-0 text-white font-weight-bold" 
-                                                        style="font-size:.7rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:22px; width:120px;">
+                                                        style="font-size:.7rem; outline:none; cursor:pointer; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.4); height:22px; width:110px;">
                                                         <option value="all">Semua Status</option>
                                                         <option value="Progress">Progress</option>
                                                         <option value="Done">Done</option>
@@ -1487,7 +1458,7 @@
                     success(res) {
                         if ($el) $el.css('opacity', '');
                         if (field === 'status') {
-                            applyFilter();
+                            loadUnit(activeUnit, false);
                         }
                         toast('Tersimpan', 'success', 700);
                     },
@@ -1668,13 +1639,8 @@
                     const val = $select.val();
                     if (!id) return;
                     
+                    $select.closest('tr').attr('data-status', val);
                     saveField(id, 'status', val, $select);
-                    
-                    const $td = $select.closest('.tc-cell');
-                    const $badge = $td.find('.tc-view .badge');
-                    $badge.removeClass('bg-status-progress bg-status-done bg-status-overdue bg-status-none')
-                          .addClass(statusClass(val))
-                          .text(val);
                     
                     $select.removeClass('bg-status-progress bg-status-done bg-status-overdue bg-status-none')
                            .addClass(statusClass(val));
