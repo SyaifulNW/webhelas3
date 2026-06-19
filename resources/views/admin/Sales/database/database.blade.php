@@ -507,7 +507,7 @@
             </div>
         </div>
 
-        @if (auth()->user()->name !== 'Agus Setyo')
+
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-warning text-dark fw-bold">
                     <i class="fas fa-comments me-2"></i> Komentar untuk {{ $user->name }}
@@ -573,7 +573,7 @@
                     </div>
                 </div>
             </div>
-        @endif
+
     @endif
 
 
@@ -754,7 +754,6 @@
                                 'marketing',
                                 'operasional',
                             ]) ||
-                            $user->name === 'Agus Setyo' ||
                             $user->name === 'Linda'
                         ) {
                             $csList = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'customer_service'])
@@ -1356,8 +1355,7 @@
                                     @endif
 
                                     {{-- CS / Chapter Filter --}}
-                                    @if (in_array(strtolower($user->role), ['administrator', 'manager', 'marketing', 'operasional']) ||
-                                            $user->name === 'Agus Setyo')
+                                    @if (in_array(strtolower($user->role), ['administrator', 'manager', 'marketing', 'operasional']))
                                         <div class="flex-column"
                                             style="gap: 2px; display: {{ request('view_type') === 'chapter' ? 'flex' : 'none' }};"
                                             id="filterChapterContainer">

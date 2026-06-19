@@ -90,7 +90,7 @@
                             @foreach($csDistribution as $cs)
                             <div class="bg-white border rounded-2 px-3 py-2 d-flex align-items-center gap-3 shadow-sm" style="min-width: 140px;">
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark small text-uppercase" style="font-size: 0.75rem;">{{ $cs->name === 'Putri' ? 'Diah Putri' : $cs->name }}</div>
+                                    <div class="fw-bold text-dark small text-uppercase" style="font-size: 0.75rem;">{{ $cs->name }}</div>
                                     <div class="text-muted" style="font-size: 0.65rem;"><i class="fa-solid fa-paper-plane me-1"></i>Terkirim</div>
                                 </div>
                                 <div class="bg-light fw-bold px-2 py-1 rounded border text-primary" style="font-size: 1rem;">
@@ -254,7 +254,7 @@
                                         $csClass = $csClasses[$item->assigned_cs] ?? 'bg-soft-blue text-primary border-primary';
                                     @endphp
                                     <span class="badge cs-badge {{ $csClass }} px-2 py-1">
-                                        {{ str_ireplace('Putri', 'Diah Putri', $item->assigned_cs) }}
+                                        {{ $item->assigned_cs }}
                                     </span>
                                 @elseif($item->is_transferred)
                                     <span class="text-muted small">Terkirim</span>
@@ -604,13 +604,12 @@
                                 let csClass = 'bg-soft-blue text-primary border-primary';
                                 if (data.assigned_cs === 'Linda') csClass = 'cs-badge-linda';
                                 else if (data.assigned_cs === 'Yasmin') csClass = 'cs-badge-yasmin';
-                                else if (data.assigned_cs === 'Putri') csClass = 'cs-badge-putri';
                                 else if (data.assigned_cs === 'Arifa') csClass = 'cs-badge-arifa';
                                 else if (data.assigned_cs === 'Puput') csClass = 'cs-badge-puput';
 
                                 csCell.innerHTML = `
                                     <span class="badge cs-badge ${csClass} px-2 py-1">
-                                        ${data.assigned_cs === 'Putri' ? 'Diah Putri' : data.assigned_cs}
+                                        ${data.assigned_cs}
                                     </span>
                                 `;
                             }

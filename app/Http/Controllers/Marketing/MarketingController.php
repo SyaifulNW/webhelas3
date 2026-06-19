@@ -17,7 +17,7 @@ class MarketingController extends Controller
         $user = Auth::user();
         if (!$user) return redirect()->route('login');
 
-        $isAdministrator = ($user->role === 'administrator' || $user->role === 'advertising' || $user->role === 'Advertising');
+        $isAdministrator = $user->isAnyRole(['administrator', 'advertising']);
         $bulan = $request->input('bulan', now()->month);
         $tahun = $request->input('tahun', now()->year);
         $status = $request->input('status');
@@ -26,7 +26,7 @@ class MarketingController extends Controller
         $selectedMarketingUserId = $request->input('marketing_user_id');
 
         if ($isAdministrator) {
-            $marketingUsers = \App\Models\User::whereIn('name', ['Felmi', 'Nisa'])->get();
+            $marketingUsers = \App\Models\User::whereIn('role', ['marketing'])->where('is_active', 1)->get();
             if (!$selectedMarketingUserId && $marketingUsers->isNotEmpty()) {
                 $selectedMarketingUserId = $marketingUsers->firstWhere('name', 'Felmi')->id ?? $marketingUsers->first()->id;
             }
@@ -112,7 +112,7 @@ class MarketingController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        if ($user->role === 'administrator' || $user->role === 'advertising' || $user->role === 'Advertising') {
+        if ($user->isAnyRole(['administrator', 'advertising'])) {
             return response()->json(['error' => 'Anda tidak memiliki hak untuk menambah data'], 403);
         }
         $userName = $user->name;
@@ -143,7 +143,7 @@ class MarketingController extends Controller
     public function updateInline(Request $request)
     {
         $user = Auth::user();
-        if ($user->role === 'administrator' || $user->role === 'advertising' || $user->role === 'Advertising') {
+        if ($user->isAnyRole(['administrator', 'advertising'])) {
             return response()->json(['error' => 'Anda tidak memiliki hak untuk mengubah data'], 403);
         }
 
@@ -171,7 +171,7 @@ class MarketingController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-        if ($user->role === 'administrator' || $user->role === 'advertising' || $user->role === 'Advertising') {
+        if ($user->isAnyRole(['administrator', 'advertising'])) {
             return back()->with('error', 'Anda tidak memiliki hak untuk menghapus data');
         }
 
@@ -184,7 +184,7 @@ class MarketingController extends Controller
         $user = Auth::user();
         if (!$user) return redirect()->route('login');
 
-        $isAdministrator = ($user->role === 'administrator' || $user->role === 'advertising' || $user->role === 'Advertising');
+        $isAdministrator = $user->isAnyRole(['administrator', 'advertising']);
         $bulan = $request->input('bulan', now()->month);
         $tahun = $request->input('tahun', now()->year);
         $status = $request->input('status');

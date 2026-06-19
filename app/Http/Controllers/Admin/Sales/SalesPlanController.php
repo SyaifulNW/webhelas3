@@ -82,8 +82,8 @@ class SalesPlanController extends Controller
         $csList = User::orderBy('name', 'asc')->get();
 
         // Filter CS List for Admin Dropdown (Specific Request)
-        if (in_array(auth()->id(), [1, 2])) {
-            $csList = User::whereIn('name', ['Yasmin', 'Linda', 'Arifa', 'Diah Putri', 'Shafa Zahra', 'Gunawan', 'Latifah'])
+        if (auth()->user()->isRole('administrator') || auth()->user()->hasAnySubrole(['cs_supervisor', 'sales_all_view'])) {
+            $csList = User::whereJsonContains('subrole', 'cs_pusat')
                 ->orderBy('name', 'asc')
                 ->get();
         } else {
@@ -148,14 +148,9 @@ class SalesPlanController extends Controller
 
 
 
-        // Determine exempt users (who can see all data)
-        $exemptUsers = ['Agus Setyo', 'Fitra Jaya Saleh'];
-
-        // Linda & Shafa Zahra are exempt for MBC (to see DATA PESERTA ALL), but NOT for M1T (type=smi)
-        if ($request->input('type') != 'smi' && request('kelas') != 'Start-Up Muslim Indonesia') {
-            $exemptUsers[] = 'Linda';
-            $exemptUsers[] = 'Shafa Zahra';
-        }
+        // Determine if user is exempt from created_by filter
+        $isExempt = auth()->user()->hasSubrole('exempt_transfer') || 
+            ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasSubrole('sales_all_view'));
 
         // Clone query logic untuk statistik agar menyertakan semua data (tidak terpotong pagination)
         $salesplanStats = SalesPlan::where('status', 'sudah_transfer')
@@ -184,10 +179,10 @@ class SalesPlanController extends Controller
             ->when($tahunFilter, function ($query) use ($tahunFilter) {
                 $query->whereYear('updated_at', $tahunFilter);
             })
-            ->when(!$isAdmin && auth()->check() && !in_array(optional(auth()->user())->name, $exemptUsers), function ($query) use ($userId) {
+            ->when(!$isAdmin && auth()->check() && !$isExempt, function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = ['Yasmin', 'Linda', 'Shafa Zahra', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -248,10 +243,10 @@ class SalesPlanController extends Controller
                     $sub->whereNotIn('role', ['chapter', 'reseller', 'agen']);
                 });
             })
-            ->when(!$isAdmin && auth()->check() && !in_array(optional(auth()->user())->name, $exemptUsers), function ($query) use ($userId) {
+            ->when(!$isAdmin && auth()->check() && !$isExempt, function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = ['Yasmin', 'Linda', 'Shafa Zahra', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -308,10 +303,10 @@ class SalesPlanController extends Controller
                         ->where('nama_kelas', 'NOT LIKE', 'SMI - %');
                 });
             })
-            ->when(!$isAdmin && auth()->check() && !in_array(optional(auth()->user())->name, $exemptUsers), function ($query) use ($userId) {
+            ->when(!$isAdmin && auth()->check() && !$isExempt, function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = ['Yasmin', 'Linda', 'Shafa Zahra', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -763,10 +758,8 @@ class SalesPlanController extends Controller
 
         $userId = auth()->id();
         $isAdmin = in_array($userId, [1]);
-        $exemptUsers = ['Agus Setyo', 'Fitra Jaya Saleh'];
-        if ($request->input('type') != 'smi' && request('kelas') != 'Start-Up Muslim Indonesia') {
-            $exemptUsers[] = 'Linda';
-        }
+        $isExempt = auth()->user()->hasSubrole('exempt_transfer') || 
+            ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasSubrole('sales_all_view'));
 
         $query = SalesPlan::with(['kelas'])
             ->when($kelasFilter, function ($query) use ($kelasFilter) {
@@ -786,10 +779,10 @@ class SalesPlanController extends Controller
             ->when($tahunFilter, function ($query) use ($tahunFilter) {
                 $query->whereYear('updated_at', $tahunFilter);
             })
-            ->when(!$isAdmin && auth()->check() && !in_array(optional(auth()->user())->name, $exemptUsers), function ($query) use ($userId) {
+            ->when(!$isAdmin && auth()->check() && !$isExempt, function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = ['Yasmin', 'Linda', 'Shafa Zahra', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
                     $query->whereHas('data', function ($sub) use ($chapter, $excludeNames) {
                         $sub->where('kota_nama', 'like', "%$chapter%")
                             ->whereNotIn('created_by', $excludeNames)
@@ -915,15 +908,13 @@ class SalesPlanController extends Controller
 
             $userRole = strtolower($user->role ?? '');
             $isAdmin = in_array($userRole, ['administrator']);
-            $exemptUsers = ['Agus Setyo', 'Fitra Jaya Saleh'];
-            if ($request->input('type') != 'smi' && request('kelas') != 'Start-Up Muslim Indonesia') {
-                $exemptUsers[] = 'Linda';
-            }
+            $isExempt = $user->hasSubrole('exempt_transfer') || 
+                ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && $user->hasSubrole('sales_all_view'));
 
             $query = SalesPlan::query();
 
             // Security check
-            if (!$isAdmin && !in_array($user->name ?? '', $exemptUsers)) {
+            if (!$isAdmin && !$isExempt) {
                 $query->where('created_by', $userId);
             }
 

@@ -19,14 +19,12 @@ class ProgramKerjaController extends Controller
     {
         $user = Auth::user();
         $viewRole = $request->query('view_role');
-        $isRafiRofi = preg_match('/Rafi|Rofi/i', $user->name);
 
         $query = ProgramKerja::with('inisiatifs')
             ->orderBy('created_at', 'desc');
 
         $userRole = strtolower($user->role);
         $userName = $user->name;
-        $isYasminLinda = stripos($userName, 'Yasmin') !== false || stripos($userName, 'Linda') !== false;
 
         // Jika administrator ingin melihat monitoring role tertentu
         if ($userRole === 'administrator') {

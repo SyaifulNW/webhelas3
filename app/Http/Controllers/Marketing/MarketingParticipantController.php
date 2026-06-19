@@ -22,7 +22,7 @@ class MarketingParticipantController extends Controller
         if ($isAdministrator) {
             $marketingUsers = User::where('role', 'marketing')->get();
         } elseif ($isAdvertising) {
-            $marketingUsers = User::whereIn('name', ['Felmi', 'Nisa'])->get();
+            $marketingUsers = User::where('role', 'marketing')->where('is_active', 1)->get();
         }
 
         // Month & Year Filter
@@ -41,7 +41,7 @@ class MarketingParticipantController extends Controller
                 $query->where('created_by', $request->marketing_user_id);
             }
         } elseif ($isAdvertising) {
-            $felmiNisaIds = User::whereIn('name', ['Felmi', 'Nisa'])->pluck('id')->toArray();
+            $felmiNisaIds = User::where('role', 'marketing')->where('is_active', 1)->pluck('id')->toArray();
             
             if ($request->has('marketing_user_id') && $request->marketing_user_id != 'all') {
                 $query->where('created_by', $request->marketing_user_id);
@@ -99,7 +99,7 @@ class MarketingParticipantController extends Controller
         ->groupBy('assigned_cs');
 
     $csDistribution = [];
-    $targetCs = ['Linda', 'Yasmin', 'Diah Putri', 'Arifa', 'Puput'];
+    $targetCs = User::whereIn('role', ['cs-mbc', 'cs-smi'])->where('is_active', 1)->pluck('name')->toArray();
     
     foreach ($targetCs as $name) {
         $count = 0;
@@ -245,20 +245,18 @@ class MarketingParticipantController extends Controller
             }
 
             // Rotator CS List (Based on actual DB names and requested rotation)
-            $csList = [
-                ['name' => 'Linda', 'role' => 'cs-mbc'],
-                ['name' => 'Yasmin', 'role' => 'cs-mbc'],
-                ['name' => 'Diah Putri', 'role' => 'cs-mbc'],
-                ['name' => 'Arifa', 'role' => 'cs-mbc'],
-                ['name' => 'Puput', 'role' => 'cs-smi'],
-            ];
+            $csList = User::whereIn('role', ['cs-mbc', 'cs-smi'])
+                ->where('is_active', 1)
+                ->get()
+                ->map(fn($u) => ['name' => $u->name, 'role' => $u->role])
+                ->toArray();
 
             // Determine leads source based on creator
             $leadsSource = 'ADS';
             if ($participant->creator) {
-                if ($participant->creator->name === 'Felmi') {
+                if ($participant->creator->hasSubrole('activity_marketing')) {
                     $leadsSource = 'Open House';
-                } elseif ($participant->creator->name === 'Nisa') {
+                } elseif ($participant->creator->hasSubrole('activity_intake')) {
                     $leadsSource = 'Sosial Media';
                 }
             }

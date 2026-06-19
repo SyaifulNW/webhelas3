@@ -66,8 +66,8 @@ class AdvertisingController extends Controller
         $nilaiAkhirRoas = round(($nilaiRoas / 100) * $bobotRoas, 2);
 
         // List CS
-        $csSMI = ['Latifah', 'Tursia'];
-        $csMBC = ['Administrator', 'Linda', 'Yasmin', 'Shafa', 'Arifa', 'Qiyya'];
+        $csSMI = \App\Models\User::where('role', 'cs-smi')->where('is_active', 1)->pluck('name')->toArray();
+        $csMBC = \App\Models\User::whereIn('role', ['cs-mbc', 'administrator'])->where('is_active', 1)->pluck('name')->toArray();
 
         // 2. Jumlah Leads (MBC) - Target 300/bulan
         // Logic: Sumber Leads (kolom 'leads') berisi "Iklan", Created By CS MBC
@@ -109,7 +109,7 @@ class AdvertisingController extends Controller
         $nilaiAkhirPenilaianAtasan = round(($penilaianAtasan / 100) * $bobotPenilaianAtasan, 2);
 
         // Total Nilai
-        $isEkoSulis = stripos($userName, 'Eko Sulis') !== false;
+        $isEkoSulis = auth()->user()->isRole('advertising');
 
         if ($isEkoSulis) {
             $nilaiAkhirRoas = 0;

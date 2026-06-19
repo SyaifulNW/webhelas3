@@ -29,19 +29,14 @@ class AdminActivityController extends Controller
         // ==============================
         $csQuery = User::query();
 
-        $userName = trim($user->name);
-
-        if ($user->role === 'administrator' || in_array($userName, ['Linda', 'Yasmin'])) {
-             // Admin, Linda & Yasmin bisa lihat CS MBC + Team Mereka (Arifa, Felmi, Nisa, Eko Sulis, dll)
+        if ($user->role === 'administrator' || $user->hasAnySubrole(['cs_supervisor', 'sales_all_view'])) {
+             // Admin & CS Supervisors can see CS MBC + their team
              $csQuery->where(function($q) {
-                 $q->where('role', 'cs-mbc')
-                   ->orWhereIn('name', ['Arifa', 'Felmi', 'Nisa', 'Eko Sulis', 'Shafa', 'Qiyya']);
+                 $q->whereIn('role', ['cs-mbc', 'marketing', 'advertising', 'produksi']);
              });
-        } elseif (in_array($userName, ['Agus', 'Agus Setyo'])) {
-            $csQuery->whereIn('name', ['Puput']);
         } else {
-            // CS biasa hanya bisa melihat dirinya sendiri
-            $csQuery->where('id', $user->id);
+             // Ordinary CS can only see themselves
+             $csQuery->where('id', $user->id);
         }
 
         $csList = $csQuery->where('is_active', 1)->where('id', '!=', 1)->orderBy('name')->get();
@@ -55,14 +50,13 @@ class AdminActivityController extends Controller
         
         // Ambil target user untuk filter kategori
         $targetUserForFilter = User::find($csId);
-        $targetNameForFilter = $targetUserForFilter ? trim($targetUserForFilter->name) : '';
 
         // Ambil master aktivitas dengan filter kategori
         $activityQuery = Activity::with('kategori')->orderBy('categories_id');
         
-        if ($targetNameForFilter === 'Nisa') {
+        if ($targetUserForFilter && $targetUserForFilter->hasSubrole('activity_intake')) {
             $activityQuery->whereIn('categories_id', [6, 7, 11]);
-        } elseif ($targetNameForFilter === 'Felmi') {
+        } elseif ($targetUserForFilter && $targetUserForFilter->hasSubrole('activity_marketing')) {
             $activityQuery->whereIn('categories_id', [8, 9, 10]);
         } else {
             // Pelanggan CS Standard (Arifa, Shafa, Qiyya, dll)
@@ -194,9 +188,9 @@ class AdminActivityController extends Controller
         $csName = trim($cs->name);
 
         $activityQuery = Activity::query();
-        if ($csName === 'Nisa') {
+        if ($cs->hasSubrole('activity_intake')) {
             $activityQuery->whereIn('categories_id', [6, 7, 11]);
-        } elseif ($csName === 'Felmi') {
+        } elseif ($cs->hasSubrole('activity_marketing')) {
             $activityQuery->whereIn('categories_id', [8, 9, 10]);
         } else {
             $activityQuery->whereIn('categories_id', [1, 2, 3, 4, 5])

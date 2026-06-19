@@ -68,7 +68,7 @@
                   @endif
 
                   
-                  @if(in_array(trim($namaUser), ['Rofi', 'Linda', 'Yasmin', 'Felmi', 'Nisa']))
+                  @if(in_array(trim($namaUser), ['Rofi', 'Linda', 'Yasmin', 'Felmi']))
                   <div class="row mt-2">
                       <div class="col">
                           {{-- Hanya Gantt Chart saja sesuai request --}}

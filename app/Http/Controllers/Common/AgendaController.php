@@ -98,8 +98,8 @@ class AgendaController extends Controller
      */
     private function authorizeAgenda(): void
     {
-        if (Auth::user()->name !== 'Linda') {
-            abort(403, 'Fitur Agenda hanya tersedia untuk Linda.');
+        if (!Auth::user()->hasSubrole('finance_access')) {
+            abort(403, 'Fitur Agenda hanya tersedia untuk pengguna dengan Akses Keuangan.');
         }
     }
 

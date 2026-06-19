@@ -890,13 +890,12 @@ class DashboardController extends Controller
 
     public function storeLabaRugi(Request $request)
     {
-        // Allow Linda even if role is administrator (might be a mismatch on server)
+        // Allow Linda and Yasmin via finance_access / cs_supervisor subroles even if role is administrator
         $user = Auth::user();
         $isAdmin = strtolower($user->role ?? '') === 'administrator';
-        $isLinda = stripos($user->name ?? '', 'Linda') !== false;
-        $isYasmin = stripos($user->name ?? '', 'Yasmin') !== false;
+        $hasFinanceAccess = $user->hasAnySubrole(['finance_access', 'cs_supervisor']);
 
-        if ($isAdmin && !$isLinda && !$isYasmin) {
+        if ($isAdmin && !$hasFinanceAccess) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -998,9 +997,9 @@ class DashboardController extends Controller
 
     public function destroyLabaRugi($id)
     {
-        $userName = Auth::user()->name;
-        $isYasmin = stripos($userName, 'Yasmin') !== false;
-        if (strtolower(Auth::user()->role) === 'administrator' && $userName !== 'Linda' && !$isYasmin) {
+        $user = Auth::user();
+        $hasFinanceAccess = $user->hasAnySubrole(['finance_access', 'cs_supervisor']);
+        if (strtolower($user->role) === 'administrator' && !$hasFinanceAccess) {
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -1039,13 +1038,11 @@ class DashboardController extends Controller
     public function storeKas(Request $request)
     {
         $user = Auth::user();
-        // Check if user is Linda or similar permission logic
-        $isLinda = stripos($user->name ?? '', 'Linda') !== false;
+        $hasFinanceAccess = $user->hasAnySubrole(['finance_access', 'cs_supervisor']);
         $isManager = strtolower($user->role ?? '') === 'manager';
         $isAdmin = strtolower($user->role ?? '') === 'administrator';
-        $isYasmin = $user->name === 'Yasmin';
 
-        if (!$isLinda && !$isManager && !$isAdmin && !$isYasmin) {
+        if (!$hasFinanceAccess && !$isManager && !$isAdmin) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menambah data.');
         }
 
@@ -1074,11 +1071,10 @@ class DashboardController extends Controller
     public function destroyKas($id)
     {
         $user = Auth::user();
-        $isLinda = stripos($user->name ?? '', 'Linda') !== false;
-        $isYasmin = $user->name === 'Yasmin';
+        $hasFinanceAccess = $user->hasAnySubrole(['finance_access', 'cs_supervisor']);
 
-        if (!$isLinda && !$isYasmin && strtolower($user->role) === 'administrator') {
-            return redirect()->back()->with('error', 'Hanya Linda dan Yasmin yang dapat menghapus data kas.');
+        if (!$hasFinanceAccess && strtolower($user->role) === 'administrator') {
+            return redirect()->back()->with('error', 'Hanya pengguna dengan Akses Keuangan atau Supervisor CS yang dapat menghapus data kas.');
         }
 
         $kas = \App\Models\Kas::findOrFail($id);

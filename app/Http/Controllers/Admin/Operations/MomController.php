@@ -44,9 +44,8 @@ class MomController extends Controller
     {
         $user = Auth::user();
         $role = strtolower(trim($user->role ?? ''));
-        $username = strtolower(trim($user->username ?? ''));
-        $name = strtolower(trim($user->name ?? ''));
-        $isYasmin = ($username === 'yasmin' || $name === 'yasmin');
+        $hasSupervisorAccess = $user->hasSubrole('cs_supervisor');
+        $hasClinicAccess = $user->hasSubrole('clinic_access');
 
         // Blocked roles – should never reach here if route middleware is applied
         if (in_array($role, self::BLOCKED_ROLES) || str_starts_with($role, 'chapter_')) {
@@ -59,38 +58,39 @@ class MomController extends Controller
         }
 
         // Administrator – all units, read-only, sees ALL data across all users
-        // Exception: Yasmin (CS) always gets full delete access across all units
+        // Exception: CS Supervisor always gets full delete access across all units
         if ($role === 'administrator') {
             return [
                 'canAccessUnits' => self::UNITS,
                 'canEdit'        => false,
-                'canDelete'      => $isYasmin, // Yasmin can delete even if admin
-                'isReadOnly'     => !$isYasmin,
+                'canDelete'      => $hasSupervisorAccess,
+                'isReadOnly'     => !$hasSupervisorAccess,
                 'seeAllData'     => true,
             ];
         }
 
         // CS roles – full edit, own data only
-        // Clinic panel only for users listed in CLINIC_UNIT_NAMES (e.g. Yasmin)
+        // Clinic panel only for users with clinic_access or cs_supervisor subroles
         if (in_array($role, self::MULTI_UNIT_ROLES)) {
-            $canAccessClinic = in_array($user->name, self::CLINIC_UNIT_NAMES) || $isYasmin;
+            $canAccessClinic = $hasClinicAccess || $hasSupervisorAccess;
             return [
                 'canAccessUnits' => $canAccessClinic ? self::UNITS : ['Helas Corp'],
                 'canEdit'        => true,
                 'canDelete'      => true,
                 'isReadOnly'     => false,
-                'seeAllData'     => $isYasmin ? true : false,
+                'seeAllData'     => $hasSupervisorAccess ? true : false,
             ];
         }
 
         // All other internal staff – full edit, own data only
-        // Yasmin gets access to all units and can delete any record
+        // CS Supervisor or Clinic Access gets access to all units and can delete any record
+        $canAccessClinic = $hasClinicAccess || $hasSupervisorAccess;
         return [
-            'canAccessUnits' => $isYasmin ? self::UNITS : ['Helas Corp'],
+            'canAccessUnits' => $canAccessClinic ? self::UNITS : ['Helas Corp'],
             'canEdit'        => true,
-            'canDelete'      => $isYasmin, // Yasmin can delete records she doesn't own
+            'canDelete'      => $hasSupervisorAccess,
             'isReadOnly'     => false,
-            'seeAllData'     => $isYasmin ? true : false,
+            'seeAllData'     => $hasSupervisorAccess ? true : false,
         ];
     }
 

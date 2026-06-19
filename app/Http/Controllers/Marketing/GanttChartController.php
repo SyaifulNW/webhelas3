@@ -66,8 +66,8 @@ class GanttChartController extends Controller
                 });
             }
             $programs = $query->get();
-        } elseif ($user->name === 'Linda' || stripos($user->name, 'Yasmin') !== false) {
-            // Linda / Yasmin bisa lihat punya sendiri + orang lain yang diijinkan
+        } elseif ($user->hasSubrole('gantt_cross_view')) {
+            // User dengan subrole gantt_cross_view bisa lihat punya sendiri + orang lain yang diijinkan
             $programs = ProgramKerja::with([
                 'inisiatifs' => function ($sub) use ($user, $targetUser, $targetUserId) {
                     $sub->where(function ($q) use ($user, $targetUser) {
@@ -84,7 +84,7 @@ class GanttChartController extends Controller
                 $q->where('created_by', $user->id)
                     ->orWhere('created_by', $targetUser->id)
                     ->orWhereHas('user', function ($subQ) {
-                        $subQ->whereIn('name', ['Felmi', 'Nisa', 'Eko Sulis', 'Arifa']);
+                        $subQ->whereIn('role', ['marketing', 'advertising', 'cs-mbc', 'cs-smi']);
                     })
                     ->orWhereHas('inisiatifs', function ($sub) use ($targetUser) {
                         $sub->where('pic', 'like', '%' . trim($targetUser->name) . '%');
@@ -93,7 +93,7 @@ class GanttChartController extends Controller
             ->get();
         } else {
             // Selain admin & Linda/Yasmin -> lihat miliknya sendiri ATAU yang ditugaskan ke dia (PIC)
-            $isFelmi = stripos($user->name, 'Felmi') !== false;
+            $isFelmi = $user->hasSubrole('activity_marketing');
 
             if ($isFelmi) {
                 // Felmi: KHUSUS yang dia jadi PIC saja

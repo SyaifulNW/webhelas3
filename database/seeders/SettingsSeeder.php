@@ -47,6 +47,10 @@ class SettingsSeeder extends Seeder
             
             // HRD specific
             ['name' => 'menu_hrd', 'label' => 'MENU HRD (Section)'],
+
+            // Keuangan
+            ['name' => 'keuangan_besar', 'label' => 'KEUANGAN BESAR'],
+            ['name' => 'keuangan_kecil', 'label' => 'KEUANGAN KECIL'],
         ];
 
         foreach ($menus as $m) {

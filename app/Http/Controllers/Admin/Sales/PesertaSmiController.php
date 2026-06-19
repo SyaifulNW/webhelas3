@@ -1160,8 +1160,8 @@ class PesertaSmiController extends Controller
         $picsFromUsers = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'administrator', 'marketing', 'Advertising'])->pluck('name')->toArray();
         $allPicNames = array_unique(array_merge($picsFromCsName, $picsFromUsers));
         
-        // [USER_REQUEST] CS Pusat hanya Linda, Yasmin, Shafa Zahra saja
-        $whitelist = ['Linda', 'Yasmin', 'Shafa Zahra', 'Shafa'];
+        // CS Pusat based on subrole cs_pusat
+        $whitelist = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
         $allPicNames = array_filter($allPicNames, function($name) use ($whitelist) {
             foreach($whitelist as $w) {
                 if (stripos($name, $w) !== false) return true;
@@ -1247,7 +1247,7 @@ class PesertaSmiController extends Controller
 
                 if ($chapterName) {
                     $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
-                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
 
                     $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
                         $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {

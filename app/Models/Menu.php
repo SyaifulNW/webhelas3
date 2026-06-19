@@ -19,8 +19,13 @@ class Menu extends Model
         return \Cache::remember($cacheKey, 3600, function() use ($name) {
             $menu = self::where('name', $name)->first();
             if ($menu) {
-                // Special case for settings menu for Yasmin
-                if (in_array($name, ['settings', 'keuangan']) && auth()->check() && auth()->user()->name === 'Yasmin') {
+                // Special case for settings menu for finance_access
+                if (in_array($name, ['settings', 'keuangan_besar']) && auth()->check() && auth()->user()->hasSubrole('finance_access')) {
+                    return true;
+                }
+
+                // Special case for keuangan_kecil
+                if ($name === 'keuangan_kecil' && auth()->check() && auth()->user()->hasAnySubrole(['finance_kecil', 'cs_supervisor'])) {
                     return true;
                 }
                 

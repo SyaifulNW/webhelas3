@@ -33,6 +33,7 @@ class User extends Authenticatable
         'tipe_kontrak',
         'status_sdm',
         'kategori',
+        'subrole',
     ];
 
     /**
@@ -52,7 +53,41 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'subrole' => 'array',
     ];
+
+    public function hasSubrole(string $subrole): bool
+    {
+        if (empty($this->subrole)) {
+            return false;
+        }
+        $subroles = is_array($this->subrole) ? $this->subrole : json_decode($this->subrole, true);
+        return is_array($subroles) && in_array($subrole, $subroles);
+    }
+
+    public function hasAnySubrole(array $subroles): bool
+    {
+        if (empty($this->subrole)) {
+            return false;
+        }
+        $userSubroles = is_array($this->subrole) ? $this->subrole : json_decode($this->subrole, true);
+        if (!is_array($userSubroles)) {
+            return false;
+        }
+        return count(array_intersect($subroles, $userSubroles)) > 0;
+    }
+
+    public function isRole(string $role): bool
+    {
+        return strtolower($this->role) === strtolower($role);
+    }
+
+    public function isAnyRole(array $roles): bool
+    {
+        $userRole = strtolower($this->role);
+        $allowedRoles = array_map('strtolower', $roles);
+        return in_array($userRole, $allowedRoles);
+    }
 
     // app/Models/User.php
     public function data()

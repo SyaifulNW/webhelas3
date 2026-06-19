@@ -379,7 +379,6 @@
         1 => 'Administrator',
         2 => 'Linda',
         3 => 'Yasmin',
-        4 => 'Tursia',
         10 => 'Qiyya',
         6 => 'Shafa',
     ];
@@ -509,7 +508,7 @@
     <select name="created_by" id="cs_filter" class="form-select filter-select">
         <option value="">-- Semua Tim --</option>
         @foreach($csList as $cs)
-            @if((auth()->id() == 1 && !in_array($cs->name, ['Latifah', 'Tursia'])) || (auth()->id() == 13 && in_array($cs->name, ['Latifah', 'Tursia', 'Gunawan', 'Puput'])) || (auth()->user()->name == 'Linda'))
+            @if((auth()->id() == 1) || (auth()->id() == 13 && $cs->name === 'Puput') || (auth()->user()->name == 'Linda'))
                 <option value="{{ $cs->id }}" {{ request('created_by') == $cs->id ? 'selected' : '' }}>
                     {{ $cs->name }}
                 </option>

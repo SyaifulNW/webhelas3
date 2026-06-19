@@ -50,6 +50,8 @@ class SettingController extends Controller
             $menus       = collect();
             $targetOmset    = null;
             $targetOmsetSmi = null;
+            $targetDatabaseAdmin = null;
+            $targetDatabaseCs    = null;
             $roles = ['chapter', 'agen'];
         } else {
             $usersPusat  = \App\Models\User::whereNotIn('role', ['chapter', 'reseller', 'agen'])->get();
@@ -58,6 +60,8 @@ class SettingController extends Controller
             $menus          = \App\Models\Menu::all();
             $targetOmset    = \App\Models\Setting::where('key', 'target_omset')->value('value');
             $targetOmsetSmi = \App\Models\Setting::where('key', 'target_omset_smi')->value('value');
+            $targetDatabaseAdmin = \App\Models\Setting::where('key', 'target_database_admin')->value('value') ?? 250;
+            $targetDatabaseCs    = \App\Models\Setting::where('key', 'target_database_cs')->value('value') ?? 50;
             $roles = [
                 'administrator',
                 'marketing',
@@ -88,6 +92,8 @@ class SettingController extends Controller
             'menus'          => $menus,
             'targetOmset'    => $targetOmset,
             'targetOmsetSmi' => $targetOmsetSmi,
+            'targetDatabaseAdmin' => $targetDatabaseAdmin,
+            'targetDatabaseCs'    => $targetDatabaseCs,
             'roles'          => $roles,
             'takenChapters'  => $takenChapters,
             'isOperasional'  => $isOperasional,
@@ -118,6 +124,7 @@ class SettingController extends Controller
             'role'     => $validated['role'],
             'chapter'  => $request->chapter,
             'kategori' => $request->kategori ?? 'Pusat',
+            'subrole'  => $request->subrole,
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
 
@@ -155,6 +162,7 @@ class SettingController extends Controller
             'role'     => $validated['role'],
             'chapter'  => $request->chapter,
             'kategori' => $request->kategori ?? 'Pusat',
+            'subrole'  => $request->subrole,
         ];
 
         if ($request->filled('password')) {
@@ -198,7 +206,9 @@ class SettingController extends Controller
     {
         $request->validate([
             'target_omset' => 'required|numeric',
-            'target_omset_smi' => 'nullable|numeric'
+            'target_omset_smi' => 'nullable|numeric',
+            'target_database_admin' => 'nullable|numeric',
+            'target_database_cs' => 'nullable|numeric',
         ]);
 
         \App\Models\Setting::updateOrCreate(
@@ -213,7 +223,21 @@ class SettingController extends Controller
             );
         }
 
-        return redirect()->back()->with('success', 'Target Omset berhasil diperbarui.');
+        if ($request->has('target_database_admin')) {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'target_database_admin'],
+                ['value' => $request->target_database_admin]
+            );
+        }
+
+        if ($request->has('target_database_cs')) {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'target_database_cs'],
+                ['value' => $request->target_database_cs]
+            );
+        }
+
+        return redirect()->back()->with('success', 'Target Omset & Database berhasil diperbarui.');
     }
 
     // --- MENUS ---

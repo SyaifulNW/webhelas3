@@ -22,7 +22,7 @@ public function index(Request $request)
 $loggedInUser = auth()->user();
 
 // Logika memilih user lain jika ada input user_id (misal Admin/Manager melihat tim)
-if ($request->has('user_id') && ($loggedInUser->role !== 'marketing' || $loggedInUser->name == 'Eko Sulis')) { // Adjust permission logic as needed
+if ($request->has('user_id') && ($loggedInUser->role !== 'marketing' || $loggedInUser->isRole('advertising'))) { // Adjust permission logic as needed
 $userId = $request->user_id;
 $targetUser = User::find($userId);
 } else {
@@ -44,8 +44,8 @@ $bulanNum = intval($bulan);
 // 1. LEADS MBC (45%)
 // ============================
 // List CS
-$csSMI = ['Latifah', 'Tursia'];
-$csMBC = ['Administrator', 'Linda', 'Yasmin', 'Shafa', 'Arifa', 'Qiyya'];
+$csSMI = [];
+$csMBC = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'administrator'])->where('is_active', 1)->pluck('name')->toArray();
 
 // ============================
 // 3. PENILAIAN ATASAN (10%) - Common calculation
@@ -80,7 +80,7 @@ $bobotLeadsMBC = 0;
 $bobotLeadsSMI = 0;
 $bobotManual = 0;
 
-if ($namaUserData === 'Eko Sulis') {
+if ($targetUser->isRole('advertising')) {
 // --- LOGIK KHUSUS EKO SULIS (ADVERTISING) ---
 
 // 0. ROAS (30%)
@@ -152,7 +152,7 @@ $leadsMBC = Data::whereYear('created_at', $tahun)
 ->whereIn('created_by', $csMBC)
 ->count();
 
-$targetLeadsMBC = (trim($namaUserData) === 'Nisa') ? 100 : 150;
+$targetLeadsMBC = 150;
 $persenLeadsMBC = $targetLeadsMBC > 0 ? min(($leadsMBC / $targetLeadsMBC) * 100, 100) : 0;
 $bobotLeadsMBC = 45;
 $nilaiLeadsMBC = round(($persenLeadsMBC / 100) * $bobotLeadsMBC, 2);
@@ -183,7 +183,7 @@ $nilaiManualPart = round(($persenManual / 100) * $bobotManual, 2);
     // ============================
     // 4. TOTAL NILAI
     // ============================
-    if (trim($namaUserData) === 'Felmi') {
+    if ($user->hasSubrole('activity_marketing')) {
         // --- LOGIK KHUSUS FELMI (EVENT MARKETING) ---
         // 1. Total Leads Baru (40%) - Target 100
         $leadsFelmiCount = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
@@ -236,7 +236,7 @@ $totalIntakeBobot = 0;
 $totalFelmiKpiScore = 0;
 $overallPerformanceScore = 0;
 
-if (trim($targetUser->name ?? '') === 'Felmi') {
+if ($targetUser->hasSubrole('activity_marketing')) {
 // 1. INTAKE RECAP
 $daysInMonth = Carbon::create($tahun, $bulanNum, 1)->daysInMonth;
 $daysInMonth = $daysInMonth ?: 30; // Fallback
@@ -509,14 +509,15 @@ $hariKerja++;
 }
 }
 
-// Ambil aktivitas dan hitung KPI
-$activityQuery = Activity::with('kategori')->orderBy('categories_id');
-if ($targetName === 'Nisa') {
-$activityQuery->whereIn('categories_id', [6, 11]);
-} else {
-$activityQuery->whereIn('categories_id', [1, 2, 3, 4, 5]);
-}
-$activities = $activityQuery->get()->groupBy('categories_id');
+        $activityQuery = Activity::with('kategori')->orderBy('categories_id');
+        if ($targetUser && $targetUser->hasSubrole('activity_intake')) {
+            $activityQuery->whereIn('categories_id', [6, 7, 11]);
+        } elseif ($targetUser && $targetUser->hasSubrole('activity_marketing')) {
+            $activityQuery->whereIn('categories_id', [8, 9, 10]);
+        } else {
+            $activityQuery->whereIn('categories_id', [1, 2, 3, 4, 5]);
+        }
+        $activities = $activityQuery->get()->groupBy('categories_id');
 
 $categoryKpiWeights = [
 'Aktivitas Pribadi' => 10,
@@ -570,8 +571,8 @@ return $dailyTotalKpi;
 private function hitungTotalNilai($userId, $namaUserData, $bulan, $tahun, $role)
 {
 // List CS
-$csSMI = ['Latifah', 'Tursia'];
-$csMBC = ['Administrator', 'Linda', 'Yasmin', 'Shafa', 'Arifa', 'Qiyya'];
+$csSMI = [];
+$csMBC = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'administrator'])->where('is_active', 1)->pluck('name')->toArray();
 
 // Penilaian Atasan
 $manual = \App\Models\PenilaianManual::where('user_id', $userId)
@@ -580,7 +581,7 @@ $manual = \App\Models\PenilaianManual::where('user_id', $userId)
 ->first();
 $manualVal = $manual ? $manual->total_nilai : 0;
 
-if (trim($namaUserData) === 'Eko Sulis') {
+if ($user->isRole('advertising')) {
 $totalOmset = SalesPlan::with('data')
 ->whereYear('updated_at', $tahun)
 ->whereMonth('updated_at', $bulan)
@@ -620,7 +621,7 @@ $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 }
 
     // Default
-    if (trim($namaUserData) === 'Felmi') {
+    if ($user->hasSubrole('activity_marketing')) {
         // 1. Leads Felmi (40%)
         $leadsFelmiCount = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)->whereMonth('created_at', $bulan)->where('created_by', $userId)->count();
         $nilaiLeadsFelmi = round((min(($leadsFelmiCount / 100) * 100, 100) / 100) * 40, 2);
@@ -648,7 +649,7 @@ $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
     }
 
     $leadsMBC = Data::whereYear('created_at', $tahun)->whereMonth('created_at', $bulan)->where('leads', 'like', '%Marketing%')->whereIn('created_by', $csMBC)->count();
-    $targetMBC = (trim($namaUserData) === 'Nisa') ? 100 : 150;
+    $targetMBC = 150;
     $nilaiLeadsMBC = round((min(($leadsMBC / $targetMBC) * 100, 100) / 100) * 45, 2);
 
     $leadsSMI = Data::whereYear('created_at', $tahun)->whereMonth('created_at', $bulan)->where('leads', 'like', '%Marketing%')->whereIn('created_by', $csSMI)->count();
@@ -678,8 +679,8 @@ $role = $user->role;
 
 // Re-calculate or use request data
 // List CS
-$csSMI = ['Latifah', 'Tursia'];
-$csMBC = ['Administrator', 'Linda', 'Yasmin', 'Shafa', 'Arifa', 'Qiyya'];
+$csSMI = [];
+$csMBC = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'administrator'])->where('is_active', 1)->pluck('name')->toArray();
 
 // Penilaian Atasan
 $manual = \App\Models\PenilaianManual::where('user_id', $userId)
@@ -722,7 +723,7 @@ $persenVisit = 0;
 $nilaiVisit = 0;
 
 $felmiKpi = [];
-if (trim($namaUserData) === 'Eko Sulis') {
+if ($user->isRole('advertising')) {
 // ROAS
 // ...
 $totalOmset = SalesPlan::with('data')->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulanNum)->where('status', 'sudah_transfer')->whereHas('data', function($q){$q->where('leads', 'LIKE', '%Iklan%');})->sum('nominal');
@@ -772,7 +773,7 @@ $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
             'targetLeadsNisa' => $targetLeadsNisa,
             'nilaiLeadsNisa' => $nilaiLeadsNisa,
         ];
-} elseif (trim($namaUserData) === 'Felmi') {
+} elseif ($user->hasSubrole('activity_marketing')) {
 // --- KASH KHUSUS FELMI ---
 // 1. Intake Recap Score
 $daysInMonth = Carbon::create($tahun, $bulanNum, 1)->daysInMonth;
@@ -865,7 +866,7 @@ $extra = [
 ];
 } else {
 $leadsMBC = Data::whereYear('created_at', $tahun)->whereMonth('created_at', $bulanNum)->where('leads', 'like', '%Marketing%')->whereIn('created_by', $csMBC)->count();
-$targetLeadsMBC = (trim($namaUserData) === 'Nisa') ? 100 : 150;
+$targetLeadsMBC = ($user->hasSubrole('activity_intake')) ? 100 : 150;
 $nilaiLeadsMBC = round((min(($leadsMBC / $targetLeadsMBC) * 100, 100) / 100) * 45, 2);
 
 $leadsSMI = Data::whereYear('created_at', $tahun)->whereMonth('created_at', $bulanNum)->where('leads', 'like', '%Marketing%')->whereIn('created_by', $csSMI)->count();

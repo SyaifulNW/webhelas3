@@ -49,7 +49,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             }
 
             // Deteksi apakah ini Rafi (operasional)
-            $isRafi = strtolower($user->role) === 'operasional' && stripos($user->name, 'Rafi') !== false;
+            $isRafi = $user->hasSubrole('operasional_rafi');
 
             // Set status_data: ADD OPS jika yang tambah adalah Operasional (Rafi)
             if ($isRafi) {
@@ -119,20 +119,20 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         $userRole = strtolower($user->role);
 
         // --- Admin MBC Khusus ---
-        $adminMbcIds = [2, 3, 6, 10, 4, 12];
-        $allowedCsNames = ['Linda', 'Yasmin', 'Shafa', 'Arifa', 'Tursia', 'Latifah'];
+        $adminMbcIds = User::whereJsonContains('subrole', 'cs_supervisor')->pluck('id')->toArray();
+        $allowedCsNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
 
         // --- Ambil daftar CS sesuai role ---
         $csQuery = \App\Models\User::query();
 
-        if (in_array($userId, $adminMbcIds)) {
+        if (auth()->user()->hasSubrole('cs_supervisor')) {
             // Admin MBC hanya bisa lihat CS tertentu
             $csQuery->whereIn('name', $allowedCsNames);
         } elseif ($userRole === 'manager') {
             // Manager hanya boleh lihat Latifah & Tursia
             $csQuery->whereIn('name', ['Latifah', 'Tursia']);
-        } elseif ($userRole === 'administrator' || $userRole === 'marketing' || $userRole === 'operasional' || $user->name === 'Agus Setyo') {
-            // Administrator & Agus Setyo & Linda & Marketing boleh lihat daftar CS
+        } elseif ($userRole === 'administrator' || $userRole === 'marketing' || $userRole === 'operasional') {
+            // Administrator & Linda & Marketing boleh lihat daftar CS
             if ($userRole === 'marketing') {
                 $csQuery->where('role', 'cs-mbc');
             } else {
@@ -596,7 +596,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             ->whereMonth('created_at', $statsMonth)
             ->count();
 
-        $target = in_array($userRole, ['administrator', 'operasional']) ? 250 : 50;
+        $targetAdmin = \App\Models\Setting::where('key', 'target_database_admin')->value('value') ?? 250;
+        $targetCs = \App\Models\Setting::where('key', 'target_database_cs')->value('value') ?? 50;
+        $target = in_array($userRole, ['administrator', 'operasional']) ? $targetAdmin : $targetCs;
         $kurang = max($target - $databaseBaru, 0);
 
         // Compute Prospek Counts based on current query
@@ -999,8 +1001,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                         // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
                         $authUser = Auth::user();
                         if (
-                            strtolower($authUser->role) === 'operasional' &&
-                            stripos($authUser->name, 'Rafi') !== false &&
+                            $authUser->hasSubrole('operasional_rafi') &&
                             $data->status_data === 'CHAPTER'
                         ) {
                             $data->status_data = 'EDIT OPS';
@@ -1069,8 +1070,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
             $authUser = Auth::user();
             if (
-                strtolower($authUser->role) === 'operasional' &&
-                stripos($authUser->name, 'Rafi') !== false &&
+                $authUser->hasSubrole('operasional_rafi') &&
                 $data->status_data === 'CHAPTER'
             ) {
                 $data->status_data = 'EDIT OPS';
@@ -1143,8 +1143,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
         $authUser = Auth::user();
         if (
-            strtolower($authUser->role) === 'operasional' &&
-            stripos($authUser->name, 'Rafi') !== false &&
+            $authUser->hasSubrole('operasional_rafi') &&
             $data->status_data === 'CHAPTER'
         ) {
             $data->status_data = 'EDIT OPS';
@@ -1489,7 +1488,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 ->count();
                 
             $totalDatabase = $query->count();
-            $target = (strtolower($user->role) === 'administrator') ? 250 : 50;
+            $targetAdmin = \App\Models\Setting::where('key', 'target_database_admin')->value('value') ?? 250;
+            $targetCs = \App\Models\Setting::where('key', 'target_database_cs')->value('value') ?? 50;
+            $target = in_array(strtolower($user->role), ['administrator', 'operasional']) ? $targetAdmin : $targetCs;
             $kurang = max($target - $databaseBaru, 0);
 
             return response()->json([
@@ -1947,8 +1948,15 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
     public function formM1t($identifier)
     {
         if (strtolower($identifier) === 'cs-mbc') {
-            // Equal Rotator between Linda, Shafa Zahra, and Yasmin
-            $sequence = ['Linda', 'Shafa Zahra', 'Yasmin'];
+            // Equal Rotator from users with cs_rotasi subrole
+            $sequence = \App\Models\User::whereJsonContains('subrole', 'cs_rotasi')
+                ->where('is_active', 1)
+                ->pluck('name')
+                ->toArray();
+            
+            if (empty($sequence)) {
+                $sequence = ['Linda', 'Shafa Zahra', 'Yasmin']; // Fallback
+            }
             
             // Get the last lead submitted by one of these CSs to find who was assigned last
             $lastLead = \App\Models\Data::whereIn('created_by', $sequence)
@@ -2124,19 +2132,10 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $isChapterOrAgent = in_array(strtolower($user->role ?? ''), ['chapter', 'reseller', 'agen']);
             
             if ($isChapterOrAgent) {
-                if (!empty($user->wa)) {
-                    $waNumber = $user->wa;
-                } else {
-                    $waNumber = null;
-                }
+                $waNumber = !empty($user->wa) ? $user->wa : null;
             } else {
-                $waNumber = '088228814769'; // Default fallback to Yasmin
-                foreach ($waNumberMap as $nameKey => $phone) {
-                    if (stripos($user->name, $nameKey) !== false) {
-                        $waNumber = $phone;
-                        break;
-                    }
-                }
+                // Fetch WA number of the assigned CS user directly
+                $waNumber = !empty($user->wa) ? $user->wa : '088228814769'; // Fallback to Yasmin
             }
             
             $zoomTanggal = $request->input('jadwal_zoom_tanggal') ?? '-';

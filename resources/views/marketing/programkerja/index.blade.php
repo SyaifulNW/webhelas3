@@ -308,12 +308,13 @@
     @php
         $userRole = strtolower(Auth::user()->role);
         $userName = Auth::user()->name;
-        $isFelmi = stripos($userName, 'Felmi') !== false;
+        $currentUser = Auth::user();
+        $isFelmi = $currentUser->hasSubrole('activity_marketing');
         $isChapter = $userRole === 'chapter';
         $isOperasional = $userRole === 'operasional';
-        $isRofi = stripos($userName, 'Rofi') !== false;
-        $isRafi = stripos($userName, 'Rafi') !== false;
-        $isYasminLinda = stripos($userName, 'Yasmin') !== false || stripos($userName, 'Linda') !== false;
+        $isRofi = $currentUser->hasSubrole('gantt_marketing_view');
+        $isRafi = $currentUser->hasSubrole('operasional_rafi');
+        $isYasminLinda = $currentUser->hasSubrole('gantt_cross_view');
 
         // $isProduksi: menentukan FORMAT KOLOM yang ditampilkan (kolom produksi vs marketing)
         // Rofi (produksi) dan Rafi (operasional) keduanya melihat kolom MARKETING, bukan kolom produksi
@@ -323,6 +324,13 @@
             !$isRafi;
 
         $isReadOnly = ($userRole === 'administrator' && isset($viewRole)) || $isFelmi;
+
+        // Dynamic Active Users for Options
+        $activeUsers = \App\Models\User::where('is_active', 1)
+            ->whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi', 'operasional', 'administrator'])
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
     @endphp
 
     <div class="container mt-4">
@@ -407,7 +415,7 @@
                             @foreach ($programs as $index => $program)
                                 @php
                                     $userName = Auth::user()->name;
-                                    $isRofi = stripos($userName, 'Rofi') !== false;
+                                    $isRofi = $currentUser->hasSubrole('gantt_marketing_view');
 
                                     // Rofi dan Administrator diberikan hak akses penuh (Full Access)
                                     $isFullAccess = strtolower(Auth::user()->role) === 'administrator' || $isRofi;
@@ -462,7 +470,7 @@
                                             $isCreator ||
                                             $isChapter ||
                                             $isYasminLinda ||
-                                            stripos($inisiatif->pic, Auth::user()->name) !== false;
+                                            stripos($inisiatif->pic ?? '', Auth::user()->name) !== false;
                                         $inisiatifReadOnly = !$canActionInisiatif;
                                     @endphp
                                     <tr class="inisiatif-row" data-id="{{ $inisiatif->id }}">
@@ -482,7 +490,7 @@
                                                 <select class="form-select form-select-sm" data-field="pic"
                                                     {{ $inisiatifReadOnly ? 'disabled' : '' }}>
                                                     <option value="">-- Pilih --</option>
-                                                    @foreach (['Linda', 'Yasmin', 'Shafa', 'Rafi', 'Rofi', 'Rida', 'Felmi', 'Syaiful', 'Putri'] as $name)
+                                                    @foreach ($activeUsers as $name)
                                                         <option value="{{ $name }}"
                                                             {{ $inisiatif->pic == $name ? 'selected' : '' }}>
                                                             {{ $name }}
@@ -497,7 +505,7 @@
                                             <select class="form-select form-select-sm" data-field="requester"
                                                 {{ $inisiatifReadOnly ? 'disabled' : '' }}>
                                                 <option value="">-- Pilih --</option>
-                                                @foreach (['Coach Fitra', 'Linda', 'Yasmin', 'Shafa', 'Rafi', 'Rofi', 'Rida', 'Felmi', 'Syaiful', 'Putri'] as $name)
+                                                @foreach (array_merge(['Coach Fitra'], $activeUsers) as $name)
                                                     <option value="{{ $name }}"
                                                         {{ $inisiatif->requester == $name ? 'selected' : '' }}>
                                                         {{ $name }}
@@ -902,14 +910,16 @@
                     const isOperasional = {{ $isOperasional ? 'true' : 'false' }};
                     let rowHtml = '';
                     if (isProduksi) {
+                        const activeUsers = @json($activeUsers);
                         let picHtml = (isChapter || isYasminLinda) ?
                             `<input type="text" class="form-control form-control-sm" data-field="pic" placeholder="Nama PIC">` :
                             `<select class="form-select form-select-sm" data-field="pic">
-                                ${['Linda', 'Yasmin', 'Shafa','Rafi', 'Rofi', 'Rida', 'Felmi', 'Syaiful', 'Putri'].map(n => `<option value="${n}">${n}</option>`).join('')}
+                                <option value="">-- Pilih --</option>
+                                ${activeUsers.map(n => `<option value="${n}">${n}</option>`).join('')}
                                </select>`;
 
                         const requesterOptsProduksi =
-                            `<option value="">-- Pilih --</option>${['Coach Fitra', 'Linda', 'Yasmin', 'Shafa', 'Rafi', 'Rofi', 'Rida', 'Felmi', 'Syaiful', 'Putri'].map(n => `<option value="${n}">${n}</option>`).join('')}`;
+                            `<option value="">-- Pilih --</option>${['Coach Fitra', ...activeUsers].map(n => `<option value="${n}">${n}</option>`).join('')}`;
 
                         rowHtml = `
                 <tr class="inisiatif-row new" data-program-id="${programId}">
@@ -938,14 +948,14 @@
                   <td contenteditable="true" data-field="judul">Inisiatif Baru</td>
                   <td>
                     <select class="form-select form-select-sm" data-field="pic">
-                      ${['Linda', 'Yasmin', 'Shafa', 'Rafi', 'Rofi', 'Rida', 'Felmi', 'Syaiful', 'Putri']
-                                .map(n => `<option value="${n}">${n}</option>`).join('')}
+                      <option value="">-- Pilih --</option>
+                      ${activeUsers.map(n => `<option value="${n}">${n}</option>`).join('')}
                     </select>
                   </td>
                   <td>
                     <select class="form-select form-select-sm" data-field="requester">
                       <option value="">-- Pilih --</option>
-                      ${['Coach Fitra', 'Linda', 'Yasmin', 'Shafa', 'Rafi', 'Rofi', 'Rida', 'Felmi', 'Syaiful', 'Putri'].map(n => `<option value="${n}">${n}</option>`).join('')}
+                      ${['Coach Fitra', ...activeUsers].map(n => `<option value="${n}">${n}</option>`).join('')}
                     </select>
                   </td>
                   ${!isOperasional ? `

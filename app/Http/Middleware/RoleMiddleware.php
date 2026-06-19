@@ -21,8 +21,8 @@ class RoleMiddleware
             return $next($request);
         }
 
-        // Special case: allow Yasmin to access administrator routes
-        if (Auth::user()->name === 'Yasmin' && in_array('administrator', $allowedRoles)) {
+        // Special case: allow cs_supervisor to access administrator routes
+        if (Auth::user()->hasSubrole('cs_supervisor') && in_array('administrator', $allowedRoles)) {
             return $next($request);
         }
 

@@ -21,96 +21,43 @@ class PenilaianCsController extends Controller
 
     public function index(Request $request)
     {
-        $userName = trim(optional(auth()->user())->name);
+        $user = auth()->user();
+        $isSupervisor = $user->hasAnySubrole(['cs_supervisor', 'sales_all_view']);
+        
+        $csQuery = User::whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
+                       ->where('id', '!=', 1)
+                       ->where('is_active', 1);
 
-        if ($userName === 'Linda') {
-             $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa', 'Rida', 'Shafa Zahra'])
-                                  ->orWhereIn('role', ['cs-mbc', 'cs-smi', 'advertising', 'produksi']);
-                             })
-                             ->whereNotIn('name', ['Linda', 'Yasmin'])
-                             ->where('id', '!=', 1)
-                             ->where('id', '!=', auth()->id())
-                             ->where('is_active', 1)
-                             ->orderBy('name')
-                             ->get();
-        } elseif ($userName === 'Agus Setyo') {
-             $daftarCs = User::where('name', 'Agus Setyo')
-                             ->where('id', '!=', auth()->id())
-                             ->where('is_active', 1)
-                             ->get();
-        } elseif ($userName === 'Yasmin') {
-             $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Arifa', 'Puput', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
-                                  ->orWhere('id', 14);
-                             })
-                             ->where('id', '!=', 1)
-                             ->where('is_active', 1)
-                             ->orderBy('name')
-                             ->get();
+        if ($user->role !== 'administrator' && !$isSupervisor) {
+             $csQuery->where('id', $user->id);
         } else {
-             // Revised List for Admin & Others
-             $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
-                                  ->orWhere('id', 14);
-                             })
-                             ->where('id', '!=', 1)
-                             ->where('is_active', 1)
-                             ->orderBy('name')
-                             ->get();
+             $csQuery->where('id', '!=', $user->id);
         }
+        
+        $daftarCs = $csQuery->orderBy('name')->get();
 
         return $this->getPenilaianData($request, $daftarCs, 'admin.penilaian-cs.index');
     }
 
     public function managerIndex(Request $request)
     {
-        $userName = trim(optional(auth()->user())->name);
-
-        // Custom Logic untuk Dropdown User
-        $routeView = 'manager.penilaian-cs.index'; // Default view for manager
+        $user = auth()->user();
+        $isSupervisor = $user->hasAnySubrole(['cs_supervisor', 'sales_all_view']);
         
-        if ($userName === 'Linda') {
-             // Linda melihat: (Felmi, Eko Sulis, Arifa, Nisa) + Semua CS-MBC + Semua CS-SMI + Yasmin
-             $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa', 'Rida', 'Shafa Zahra', 'Yasmin'])
-                                  ->orWhereIn('role', ['cs-mbc', 'cs-smi', 'advertising', 'produksi']);
-                             })
-                             ->whereNotIn('name', ['Linda'])
-                             ->where('id', '!=', auth()->id())
-                             ->where('is_active', 1)
-                             ->orderBy('name')
-                             ->get();
-             $routeView = 'admin.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
-        } elseif ($userName === 'Yasmin') {
-            // Yasmin melihat user spesifik, tapi tidak melihat dirinya sendiri dan Linda
-            $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Arifa', 'Puput', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
-                                  ->orWhere('id', 14);
-                             })
-                             ->where('id', '!=', 1)
-                             ->where('is_active', 1)
-                             ->orderBy('name')
-                             ->get();
-            $routeView = 'admin.penilaian-cs.index';
-        } elseif ($userName === 'Agus Setyo') {
-            // Agus Setyo view self (but excluded by user request)
-            $daftarCs = User::where('name', 'Agus Setyo')
-                            ->where('id', '!=', auth()->id())
-                            ->where('is_active', 1)
-                            ->get();
-            $routeView = 'admin.penilaian-cs.index';
+        $csQuery = User::whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
+                       ->where('id', '!=', 1)
+                       ->where('is_active', 1);
+
+        if ($user->role !== 'administrator' && !$isSupervisor) {
+             $csQuery->where('id', $user->id);
         } else {
-            // Administrator / Other Managers -> See all relevant roles + Yasmin
-            $daftarCs = User::where(function($q) {
-                    $q->whereIn('role', ['cs', 'cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
-                      ->orWhere('name', 'Yasmin');
-                })
-                ->where('id', '!=', 1)
-                ->where('id', '!=', auth()->id())
-                ->where('is_active', 1)
-                ->orderBy('name')
-                ->get();
+             $csQuery->where('id', '!=', $user->id);
+        }
+        
+        $daftarCs = $csQuery->orderBy('name')->get();
+        $routeView = 'manager.penilaian-cs.index';
+        if ($user->role === 'administrator' || $isSupervisor) {
+             $routeView = 'admin.penilaian-cs.index';
         }
 
         return $this->getPenilaianData($request, $daftarCs, $routeView);
@@ -148,7 +95,7 @@ class PenilaianCsController extends Controller
              // Cek apakah auth id ada di daftarCs (yg sudah di-filter aktif & bukan diri sendiri)
              if (!$daftarCs->contains('id', $userId)) {
                  // Prioritaskan CS (bukan Felmi/Nisa/Eko) agar muncul dashboard standar
-                 $defaultUser = $daftarCs->whereNotIn('name', ['Felmi', 'Nisa', 'Eko Sulis'])->first() ?? $daftarCs->first();
+                 $defaultUser = $daftarCs->whereNotIn('role', ['marketing', 'advertising'])->first() ?? $daftarCs->first();
                  $userId = $defaultUser->id ?? $userId;
              }
         } else {
@@ -160,7 +107,7 @@ class PenilaianCsController extends Controller
 
         // Check if user is Marketing (Felmi, Nisa, Eko Sulis)
         // Jika target adalah Marketing (Felmi, Nisa, Eko Sulis)
-        if (in_array($namaUser, ['Felmi', 'Nisa', 'Eko Sulis'])) {
+        if ($targetUser && in_array(strtolower($targetUser->role), ['marketing', 'advertising'])) {
             return $this->getMarketingPenilaianData($request, $targetUser, $bulan, $tahun, $daftarCs, $routeAction);
         }
 
@@ -324,10 +271,10 @@ public function store(Request $request)
         $bulanNum = intval($bulan);
 
         // List CS for Leads Calculation
-        $csSMI = ['Latifah', 'Tursia'];
-        $csMBC = ['Administrator', 'Linda', 'Yasmin', 'Shafa', 'Arifa', 'Qiyya'];
+        $csSMI = [];
+        $csMBC = User::whereIn('role', ['administrator', 'cs-mbc'])->where('is_active', 1)->pluck('name')->toArray();
 
-        if ($namaUserData === 'Eko Sulis') {
+        if (strtolower($userObj->role) === 'advertising') {
             // --- LOGIK KHUSUS EKO SULIS (ADVERTISING) ---
             
             // 0. ROAS (30%)
@@ -346,8 +293,8 @@ public function store(Request $request)
             $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
             $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            $felmiUser = User::where('name', 'Felmi')->first();
-            $nisaUser = User::where('name', 'Nisa')->first();
+            $felmiUser = User::get()->first(fn($u) => $u->hasSubrole('activity_marketing'));
+            $nisaUser = User::get()->first(fn($u) => $u->hasSubrole('activity_intake'));
 
             // 1. LEADS ADS (20%)
             $leadsAds = Data::whereYear('created_at', $tahun)
@@ -450,7 +397,7 @@ public function store(Request $request)
         $totalFelmiKpiScore = 0;
         $overallPerformanceScore = 0;
 
-        if (trim($targetUser->name) === 'Felmi') {
+        if ($targetUser->hasSubrole('activity_marketing')) {
             $kpiConfigs = [
                 ['nama' => 'Total Leads Baru/Bulan', 'target' => 100, 'bobot' => 40],
                 ['nama' => 'Entrepreneur Forum / E-Fest', 'target' => 50, 'bobot' => 30],
@@ -549,8 +496,8 @@ public function store(Request $request)
 
     private function hitungTotalNilaiMarketing($userId, $bulan, $tahun)
     {
-        $csSMI = ['Latifah', 'Tursia'];
-        $csMBC = ['Administrator', 'Linda', 'Yasmin', 'Shafa', 'Arifa', 'Qiyya'];
+        $csSMI = [];
+        $csMBC = User::whereIn('role', ['administrator', 'cs-mbc'])->where('is_active', 1)->pluck('name')->toArray();
 
         $userObj = User::find($userId);
         if (!$userObj) return 0;
@@ -558,7 +505,7 @@ public function store(Request $request)
         $namaUserData = trim($userObj->name);
         $bulanNum = intval($bulan);
 
-        if ($namaUserData === 'Eko Sulis') {
+        if (strtolower($userObj->role) === 'advertising') {
              // 0. ROAS (30%)
             $totalOmset = SalesPlan::with('data')
                 ->whereYear('updated_at', $tahun)
@@ -574,8 +521,8 @@ public function store(Request $request)
             $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
             $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            $felmiUser = User::where('name', 'Felmi')->first();
-            $nisaUser = User::where('name', 'Nisa')->first();
+            $felmiUser = User::get()->first(fn($u) => $u->hasSubrole('activity_marketing'));
+            $nisaUser = User::get()->first(fn($u) => $u->hasSubrole('activity_intake'));
 
             // 1. LEADS ADS (20%)
             $leadsAds = Data::whereYear('created_at', $tahun)
@@ -616,7 +563,7 @@ public function store(Request $request)
             return $nilaiAkhirRoas + $nilaiLeadsAds + $nilaiLeadsFelmi + $nilaiLeadsNisa + $nilaiManualPart;
         }
 
-        if ($namaUserData === 'Felmi') {
+        if ($userObj->hasSubrole('activity_marketing')) {
             // 1. Leads Felmi (40%)
             $leadsFelmiCount = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
                 ->whereMonth('created_at', $bulanNum)
@@ -656,7 +603,7 @@ public function store(Request $request)
             ->where('leads', 'like', '%Marketing%')
             ->whereIn('created_by', $csMBC)
             ->count();
-        $targetMBC = ($namaUserData === 'Nisa') ? 100 : 150;
+        $targetMBC = 150;
         $nilaiLeadsMBC = round((min(($leadsMBC / $targetMBC) * 100, 100) / 100) * 45, 2);
 
         // 2. LEADS SMI (45%)
@@ -784,12 +731,7 @@ public function store(Request $request)
         }
 
         // Ambil aktivitas dan hitung KPI
-        $activityQuery = Activity::with('kategori')->orderBy('categories_id');
-        if ($targetName === 'Nisa') {
-            $activityQuery->whereIn('categories_id', [6, 7]);
-        } else {
-            $activityQuery->whereIn('categories_id', [1, 2, 3, 4, 5]);
-        }
+        $activityQuery->whereIn('categories_id', [1, 2, 3, 4, 5]);
         $activities = $activityQuery->get()->groupBy('categories_id');
 
         $categoryKpiWeights = [

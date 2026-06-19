@@ -133,7 +133,6 @@ namespace App\Models;
                 1 => 'Administrator',
                 2 => 'Linda',
                 3 => 'Yasmin',
-                4 => 'Tursia',
                 5 => 'Livia',
                 6 => 'Shafa',
             ];
