@@ -22,7 +22,7 @@ class PengadaanBarangController extends Controller
             'acc'            => 'Pending',
         ]);
 
-        // Otomatis buat PengajuanAnggaran untuk Linda
+        // Otomatis buat PengajuanAnggaran
         $user = Auth::user();
         $pengajuan = PengajuanAnggaran::create([
             'tanggal_pengajuan' => Carbon::now(),

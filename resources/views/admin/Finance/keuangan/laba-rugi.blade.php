@@ -14,7 +14,7 @@
     $user = Auth::user();
     $userName = $user->name ?? '';
     $userRole = strtolower($user->role ?? '');
-    $isLinda = stripos($userName, 'Linda') !== false;
+    $isLinda = $user->hasSubrole('spp_admin') || stripos($userName, 'Linda') !== false;
     $isAdmin = $userRole === 'administrator';
     $canEdit = !$isAdmin || $isLinda;
 

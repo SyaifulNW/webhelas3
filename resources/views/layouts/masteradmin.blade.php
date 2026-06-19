@@ -481,7 +481,6 @@
                     });
                 @endphp
 
-<<<<<<< HEAD
                 @include('layouts.partials.sidebar.brand')
 
                 <!-- 1. Menu Administrator -->

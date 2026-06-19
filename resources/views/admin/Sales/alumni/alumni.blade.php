@@ -50,7 +50,7 @@
                             <th>Kelas Yang Belum Ikut</th>
                             <th>Potensi Kelas Selanjutnya</th>
                
-                            @if(auth()->user()->email == 'mbchamasah@gmail.com')
+                            @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) || auth()->user()->hasSubrole('spp_admin') || auth()->user()->email == 'mbchamasah@gmail.com')
                             <th>Input Oleh</th>
                             @endif
                                  
@@ -89,7 +89,7 @@
                                 </select>
                             </td>
                             <td>Kelas Selanjutnya</td>
-                            @if(auth()->user()->email == 'mbchamasah@gmail.com')
+                            @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) || auth()->user()->hasSubrole('spp_admin') || auth()->user()->email == 'mbchamasah@gmail.com')
                             <td>{{ $item->created_by }}</td>
                             @endif
 

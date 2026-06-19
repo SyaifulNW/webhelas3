@@ -203,9 +203,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // CS biasa → hanya datanya sendiri (Moved higher to capture absolute total correctly)
         $forceMyData = $request->input('view') === 'me';
         if ($userRole === 'marketing') {
-            if (stripos($user->name, 'Felmi') !== false) {
+            if ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
                 $query->whereIn('leads', ['Event', 'Open House']);
-            } elseif (stripos($user->name, 'Nisa') !== false) {
+            } elseif ($user->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
                 $query->whereIn('leads', ['Online', 'Sosmed']);
             } else {
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
@@ -218,7 +218,14 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // Apply regional/role restrictions before calculating absolute total database
         // Chapter Role – filter by user's chapter city OR own created data, and exclude certain CS-MBC names
         if ($userRole === 'chapter') {
-            $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+            $dbExcludeNames = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')
+                ->orWhereIn('role', ['cs-mbc', 'operasional'])
+                ->orWhere(function($sq) {
+                    $sq->whereNotNull('subrole')->where('subrole', '!=', '[]');
+                })
+                ->pluck('name')
+                ->toArray();
+            $excludeNames = array_unique(array_merge($dbExcludeNames, ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan']));
             $query->where(function($q) use ($user, $excludeNames) {
                 $q->where('created_by', $user->name)
                   ->orWhere(function($subQ) use ($user, $excludeNames) {
@@ -542,7 +549,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         }
         // Strict CS View
         // Strict CS View
-        if (($user->name === 'Linda' && $forceMyData) || (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && $user->name !== 'Agus Setyo' && $user->name !== 'Linda')) {
+        if (($user->hasSubrole('spp_admin') && $forceMyData) || ($user->name === 'Linda' && $forceMyData) || (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnySubrole(['spp_admin', 'sales_admin']) && $user->name !== 'Agus Setyo' && $user->name !== 'Linda')) {
             $kpiQuery->where('created_by', $user->name);
         }
         
@@ -564,7 +571,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // Agus Setyo
         // Marketing Role specific KPI filter
         if ($userRole === 'marketing') {
-            if (stripos($user->name, 'Felmi') !== false) {
+            if ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
                 $kpiQuery->where('leads', 'Event');
             } else {
                 $kpiQuery->whereIn('leads', ['Marketing', 'Event']);
@@ -1243,7 +1250,8 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
         public function peserta_baru()
         {
-            if (Auth::user()->email === 'mbchamasah@gmail.com') {
+            // Subrole 'alumni_admin' dapat melihat semua data tanpa filter
+            if (Auth::user()->hasSubrole('alumni_admin')) {
                 $data = data::whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan'])->paginate(50);
             } else {
                 $data = data::whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan'])
@@ -1255,7 +1263,8 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
         public function alumni()
         {
-            if (Auth::user()->email === 'mbchamasah@gmail.com') {
+            // Subrole 'alumni_admin' dapat melihat semua data alumni tanpa filter
+            if (Auth::user()->hasSubrole('alumni_admin')) {
                 $data = data::where('status_peserta', 'alumni')->paginate(50);
             } else {
                 $data = data::where('status_peserta', 'alumni')
@@ -1717,9 +1726,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // CS biasa -> hanya datanya sendiri
         $forceMyData = $request->input('view') === 'me';
         if ($userRole === 'marketing') {
-            if (stripos($user->name, 'Felmi') !== false) {
+            if ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
                 $query->whereIn('leads', ['Event', 'Open House']);
-            } elseif (stripos($user->name, 'Nisa') !== false) {
+            } elseif ($user->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
                 $query->whereIn('leads', ['Online', 'Sosmed']);
             } else {
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
@@ -1869,7 +1878,14 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
         // Chapter Role
         if ($userRole === 'chapter') {
-            $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+            $dbExcludeNames = User::whereJsonContains('subrole', 'cs_pusat')
+                ->orWhereIn('role', ['cs-mbc', 'operasional'])
+                ->orWhere(function($sq) {
+                    $sq->whereNotNull('subrole')->where('subrole', '!=', '[]');
+                })
+                ->pluck('name')
+                ->toArray();
+            $excludeNames = array_unique(array_merge($dbExcludeNames, ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan']));
             $query->where(function($q) use ($user, $excludeNames) {
                 $q->where('created_by', $user->name)
                   ->orWhere(function($subQ) use ($user, $excludeNames) {
@@ -2121,21 +2137,20 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         }
 
         // Send WhatsApp Notification to the assigned CS (Rotator or Specific Form Owner)
+        // Nomor WA CS diambil dari kolom 'wa' di tabel users (diisi melalui profil/settings)
         $waUrl = null;
         try {
-            $waNumberMap = [
-                'Linda' => '08561490495',
-                'Shafa' => '089602710354',
-                'Yasmin' => '088228814769'
-            ];
             
             $isChapterOrAgent = in_array(strtolower($user->role ?? ''), ['chapter', 'reseller', 'agen']);
             
+            // Ambil nomor WA dari kolom 'wa' milik user yang bersangkutan
+            // Tidak perlu hardcode — setiap CS mengisi nomor WA-nya sendiri di profil
             if ($isChapterOrAgent) {
                 $waNumber = !empty($user->wa) ? $user->wa : null;
             } else {
-                // Fetch WA number of the assigned CS user directly
-                $waNumber = !empty($user->wa) ? $user->wa : '088228814769'; // Fallback to Yasmin
+                // Gunakan nomor WA dari profil user (kolom 'wa')
+                // Jika belum diisi, kirim notifikasi ke nomor admin via env
+                $waNumber = !empty($user->wa) ? $user->wa : env('ADMIN_WA_FALLBACK');
             }
             
             $zoomTanggal = $request->input('jadwal_zoom_tanggal') ?? '-';
@@ -2312,9 +2327,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         }
 
         if ($userRole === 'marketing') {
-            if (stripos($user->name, 'Felmi') !== false) {
+            if ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
                 $query->whereIn('leads', ['Event', 'Open House']);
-            } elseif (stripos($user->name, 'Nisa') !== false) {
+            } elseif ($user->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
                 $query->whereIn('leads', ['Online', 'Sosmed']);
             } else {
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);

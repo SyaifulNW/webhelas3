@@ -93,7 +93,7 @@ class GanttChartController extends Controller
             ->get();
         } else {
             // Selain admin & Linda/Yasmin -> lihat miliknya sendiri ATAU yang ditugaskan ke dia (PIC)
-            $isFelmi = $user->hasSubrole('activity_marketing');
+            $isFelmi = $user->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']);
 
             if ($isFelmi) {
                 // Felmi: KHUSUS yang dia jadi PIC saja

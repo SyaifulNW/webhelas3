@@ -2,6 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+
+/*
+ * Role-role divisi internal (bukan chapter/reseller/agen).
+ * Dipakai di beberapa middleware group agar tidak perlu duplikasi string.
+ */
+const INTERNAL_ROLES = 'administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,cs-smi,operasional,hrd,produksi';
 // Common/General & Others
 use App\Http\Controllers\Common\OngkirController;
 use App\Http\Controllers\Common\WilayahController;
@@ -67,16 +73,17 @@ use App\Http\Controllers\Admin\Sales\SalesPlanController;
 Route::get('/', function () {
     if (Auth::check()) {
         $role = strtolower(Auth::user()->role ?? '');
-        
-        if (Auth::user()->name === 'Fitra Jaya Saleh') {
-            if ($role === 'administrator') return redirect('/administrator');
-            if ($role === 'manager') return redirect('/manager');
-            return redirect('/home');
-        }
+
+        // Redirect berdasarkan role — berlaku untuk semua user, bukan nama spesifik
+        if ($role === 'administrator') return redirect()->route('administrator');
+        if ($role === 'manager') return redirect()->route('manager');
 
         if (in_array($role, ['chapter', 'reseller', 'agen']) || str_starts_with($role, 'chapter_')) {
-            return redirect('/home');
+            return redirect()->route('home');
         }
+
+        // Role lainnya (marketing, cs, dll) diarahkan ke home
+        return redirect('/home');
     }
     return view('welcome');
 });
@@ -185,7 +192,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/hr/employee/{id}', [App\Http\Controllers\Hrd\AbsensiController::class, 'destroyEmployee'])->name('hr.employee.destroy');
     Route::view('/hrd-dashboard', 'hrd.hrd_dashboard')->name('hr.dashboard');
     // Agenda (To-Do List) (subrole/divisi check di controller)
-    Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,cs-smi,operasional,hrd,produksi'])->group(function () {
+    Route::middleware(['role:' . INTERNAL_ROLES])->group(function () {
         Route::get('/agenda', [App\Http\Controllers\Common\AgendaController::class, 'index'])->name('agenda.index');
         Route::post('/agenda/store', [App\Http\Controllers\Common\AgendaController::class, 'store'])->name('agenda.store');
         Route::post('/agenda/toggle/{logId}', [App\Http\Controllers\Common\AgendaController::class, 'toggleCheck'])->name('agenda.toggle');
@@ -386,7 +393,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/cs/{id}', [AdminController::class, 'detailCS'])->name('cs.detail');
 
         // Minutes of Meeting (MoM) — semua divisi internal kecuali chapter, reseller, agen
-        Route::middleware(['role:administrator,marketing,manager,hr,human_resource,advertising,cs-mbc,cs-smi,operasional,hrd,produksi'])->group(function () {
+        Route::middleware(['role:' . INTERNAL_ROLES])->group(function () {
             Route::get('/mom', [MomController::class, 'index'])->name('mom.index');
             Route::post('/mom', [MomController::class, 'store'])->name('mom.store');
             Route::put('/mom/{id}', [MomController::class, 'update'])->name('mom.update');
@@ -405,7 +412,9 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Wallet Features (User: Chapter / Reseller)
-    Route::middleware(['role:chapter,reseller,agen,chapter_tangerang,chapter_cirebon,chapter_jakarta,chapter_depok,chapter_kaltim,chapter_makassar,chapter_lampung'])->group(function () {
+    // Semua chapter (termasuk chapter_*) + reseller + agen dapat akses wallet
+    // Pattern 'chapter_*' ditangani oleh RoleMiddleware via str_starts_with
+    Route::middleware(['role:chapter,reseller,agen,chapter_'])->group(function () {
         Route::prefix('wallet')->name('wallet.')->group(function () {
             Route::get('/', [WalletController::class, 'index'])->name('index');
             Route::get('/history', [WalletController::class, 'history'])->name('history');

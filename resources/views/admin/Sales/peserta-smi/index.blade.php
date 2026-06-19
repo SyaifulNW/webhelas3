@@ -389,7 +389,7 @@
 
         @if(!in_array(strtolower(auth()->user()->role), ['chapter', 'reseller', 'agen']))
         <!-- Filter Card Section (At the Very Top) -->
-        <div class="col-12 mb-3 @if(auth()->check() && (strtolower(auth()->user()->role) === 'administrator' || in_array(auth()->user()->name, ['Linda', 'Yasmin']))) d-none @endif">
+        <div class="col-12 mb-3 @if(auth()->check() && (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings']) || in_array(auth()->user()->name, ['Linda', 'Yasmin']))) d-none @endif">
             <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
                 <div class="card-header py-2 d-flex flex-row align-items-center justify-content-start bg-primary text-white" style="gap: 20px;">
                     <div class="d-flex align-items-center mr-2">
@@ -398,7 +398,7 @@
                     <div class="d-flex align-items-end flex-wrap p-2 rounded w-100" style="gap: 10px; background: rgba(255,255,255,0.07);">
                         {{-- Chapter, CS Pusat & Status Peserta filters removed per user request --}}
                         {{-- Hidden inputs to keep filter values for backend if needed --}}
-                        @if(strtolower(auth()->user()->role) === 'administrator' || in_array(auth()->user()->name, ['Linda', 'Yasmin']))
+                        @if(strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings']) || in_array(auth()->user()->name, ['Linda', 'Yasmin']))
                         <input type="hidden" form="sppFilterForm" name="filter_chapter" id="smi_filter_chapter" value="{{ request('filter_chapter', 'all') }}">
                         <input type="hidden" form="sppFilterForm" name="filter_cs_pusat" id="smi_filter_cs_pusat" value="{{ request('filter_cs_pusat', 'all') }}">
                         @endif
@@ -451,7 +451,7 @@
                         </div>
 
                         {{-- Level Filter (Linda Only) --}}
-                        @if(auth()->user()->name === 'Linda')
+                        @if(auth()->user()->hasSubrole('spp_admin') || auth()->user()->name === 'Linda')
                         <div class="d-flex flex-column" style="gap: 2px;">
                             <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">LEVEL</label>
                             <select form="sppFilterForm" name="filter_level" id="smi_filter_level" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light text-primary font-weight-bold" style="width: 110px; font-size: 0.75rem; height: 30px;">
@@ -1821,7 +1821,7 @@
     </script>
 
     {{-- ====== MODAL DETAIL TRANSAKSI (Linda) ====== --}}
-    @if(auth()->check() && auth()->user()->name === 'Linda')
+    @if(auth()->check() && (auth()->user()->hasSubrole('spp_admin') || auth()->user()->name === 'Linda'))
     <div class="modal fade" id="modalDetailTransaksi" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">

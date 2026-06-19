@@ -146,7 +146,7 @@ class AgendaController extends Controller
         );
 
         // Determine user's division list
-        if (strtolower($user->name) === 'linda') {
+        if ($user->hasSubrole('spp_admin') || strtolower($user->name) === 'linda') {
             $divisiList = self::DIVISI_LIST;
         } else {
             $divisiName = 'Sales & Marketing'; // fallback
@@ -478,7 +478,7 @@ class AgendaController extends Controller
         $user = Auth::user();
 
         // Security: only Yasmin or administrator
-        if (strtolower($user->name) !== 'yasmin' && strtolower($user->role) !== 'administrator') {
+        if (!$user->hasSubrole('hrd_settings') && strtolower($user->name) !== 'yasmin' && strtolower($user->role) !== 'administrator') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 

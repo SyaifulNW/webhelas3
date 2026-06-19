@@ -108,9 +108,9 @@ class PenilaianController extends Controller
         // ============================
         // Hitung skor rata-rata dari semua kategori daily activity
         $dayQuery = Activity::where('role', 'cs');
-        if (strtolower($user->name) === 'nisa') {
+        if ($user->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
             $dayQuery->whereIn('categories_id', [6, 7]);
-        } elseif (strtolower($user->name) === 'felmi') {
+        } elseif ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
             $dayQuery->whereHas('kategori', function($q) { $q->where('nama', 'LIKE', '%INTAKE%'); });
         } else {
             $dayQuery->whereIn('categories_id', [1, 2, 3, 4, 5])
@@ -276,9 +276,10 @@ class PenilaianController extends Controller
 
         // INTAKE (20%)
         $dayQuery = Activity::where('role', 'cs');
-        if (strtolower($namaUserData) === 'nisa') {
+        $checkUser = \App\Models\User::find($csId);
+        if ($checkUser && $checkUser->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
             $dayQuery->whereIn('categories_id', [6, 7]);
-        } elseif (strtolower($namaUserData) === 'felmi') {
+        } elseif ($checkUser && $checkUser->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
             $dayQuery->whereHas('kategori', function($q) { $q->where('nama', 'LIKE', '%INTAKE%'); });
         } else {
             $dayQuery->whereIn('categories_id', [1, 2, 3, 4, 5])

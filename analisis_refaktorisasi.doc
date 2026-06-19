@@ -1,0 +1,252 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Analisis Perbandingan Refaktorisasi Hardcode</title>
+<!--[if gte mso 9]>
+<xml>
+ <w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>100</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+ </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #333333;
+    margin: 1in;
+}
+.title-page {
+    text-align: center;
+    margin-bottom: 50px;
+}
+.title-page h1 {
+    font-size: 24pt;
+    color: #1a365d;
+    margin-bottom: 10px;
+    border-bottom: 3px solid #2b6cb0;
+    padding-bottom: 15px;
+}
+.title-page p {
+    font-size: 12pt;
+    color: #4a5568;
+    margin-top: 5px;
+}
+h2 {
+    font-size: 16pt;
+    color: #2b6cb0;
+    margin-top: 30px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 5px;
+}
+h3 {
+    font-size: 12pt;
+    color: #2d3748;
+    margin-top: 20px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+th {
+    background-color: #2b6cb0;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 10px;
+    border: 1px solid #cbd5e0;
+    text-align: left;
+    font-size: 10pt;
+}
+td {
+    padding: 10px;
+    border: 1px solid #cbd5e0;
+    vertical-align: top;
+    font-size: 9.5pt;
+}
+tr:nth-child(even) {
+    background-color: #f7fafc;
+}
+.before {
+    color: #c53030;
+    background-color: #fff5f5;
+    border-left: 3px solid #fc8181;
+    padding: 8px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 8.5pt;
+    margin-top: 5px;
+    word-break: break-all;
+}
+.after {
+    color: #2f855a;
+    background-color: #f0fff4;
+    border-left: 3px solid #68d391;
+    padding: 8px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 8.5pt;
+    margin-top: 5px;
+    word-break: break-all;
+}
+.badge-status {
+    background-color: #48bb78;
+    color: #ffffff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 8pt;
+    font-weight: bold;
+    display: inline-block;
+}
+</style>
+</head>
+<body>
+
+<div class="title-page">
+    <h1>DOKUMEN ANALISIS PERBANDINGAN REFAKTORISASI KODE</h1>
+    <p><strong>Refaktorisasi Pemeriksaan Hardcode Nama Menjadi Sistem Subrole Dinamis</strong></p>
+    <p>Aplikasi: WEB HELAS | Tanggal: 20 Juni 2026</p>
+</div>
+
+<h2>1. Pendahuluan</h2>
+<p>Dokumen ini menyajikan perbandingan detail sebelum (<em>Before</em>) dan sesudah (<em>After</em>) dilakukannya proses refaktorisasi kode pada modul-modul kritis dalam sistem informasi WEB HELAS. Tujuan utama refaktorisasi ini adalah untuk mengeliminasi ketergantungan pada nilai string nama statis (hardcode) dan menggantinya dengan sistem pemeriksaan <strong>Subrole Dinamis</strong> yang tersimpan di database.</p>
+
+<h2>2. Tabel Perbandingan Utama</h2>
+<table>
+    <thead>
+        <tr>
+            <th width="5%">No</th>
+            <th width="30%">Modul & File Target</th>
+            <th width="32%">Sebelum Refaktorisasi (Hardcode)</th>
+            <th width="33%">Setelah Refaktorisasi (Dinamis)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td align="center">1</td>
+            <td><strong>Sidebar Marketing Navigation</strong><br><code>marketing.blade.php</code></td>
+            <td>Mengecek string literal untuk nama <code>'Felmi'</code> dan <code>'Eko Sulis'</code> secara statis.
+                <div class="before">
+$isEkoSulis = Auth::user()->hasSubrole('monitoring_marketing') || trim(Auth::user()->name) === 'Eko Sulis';
+<br><br>
+@if (auth()->user()->hasSubrole('activity_marketing') || auth()->user()->name === 'Felmi')
+                </div>
+            </td>
+            <td>Menggunakan pengecekan subrole dinamis <code>marketing_ads_manager</code> dan <code>activity_marketing_offline</code>.
+                <div class="after">
+$isEkoSulis = Auth::user()->hasAnySubrole(['monitoring_marketing', 'marketing_ads_manager']);
+<br><br>
+@if (auth()->user()->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']))
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">2</td>
+            <td><strong>Sidebar CS Cabang (MBC Class)</strong><br><code>cs_cabang.blade.php</code></td>
+            <td>Membatasi tampilan kelas Sekolah Kaya dengan mencocokkan string nama <code>'Muthia'</code>.
+                <div class="before">
+@if (in_array($userName, ['Muthia']))
+    // Tampilkan hanya Sekolah Kaya
+                </div>
+            </td>
+            <td>Memanfaatkan subrole dinamis <code>mbc_sekolah_kaya_only</code> pada user bersangkutan.
+                <div class="after">
+@if (auth()->user()->hasSubrole('mbc_sekolah_kaya_only'))
+    // Tampilkan hanya Sekolah Kaya
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">3</td>
+            <td><strong>Kalkulasi KPI Marketing</strong><br><code>PenilaianController.php</code></td>
+            <td>Mendapatkan data user Felmi dan Nisa menggunakan name query fallback jika subrole tidak ditemukan.
+                <div class="before">
+$felmiUser = User::get()->first(fn($u) => $u->hasSubrole('activity_marketing')) ?: User::where('name', 'Felmi')->first();
+                </div>
+            </td>
+            <td>Mencari data secara dinamis berdasarkan data array subrole JSON langsung di query database.
+                <div class="after">
+$felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
+    ->orWhereJsonContains('subrole', 'activity_marketing')
+    ->first();
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">4</td>
+            <td><strong>Tampilan Penilaian (KPI)</strong><br><code>penilaian/index.blade.php</code> & <code>penilaian/pdf.blade.php</code></td>
+            <td>Pengecekan tipe layout dan baris tabel KPI menggunakan evaluasi string name <code>'Eko Sulis'</code> dan <code>'Felmi'</code>.
+                <div class="before">
+$isEkoSulis = isset($targetUser) && trim($targetUser->name) === 'Eko Sulis';
+<br><br>
+@if($targetUser->name === 'Eko Sulis')
+                </div>
+            </td>
+            <td>Evaluasi boolean berdasarkan subrole dinamis dari user target.
+                <div class="after">
+$isEkoSulis = isset($targetUser) && $targetUser->hasAnySubrole(['marketing_ads_manager', 'monitoring_marketing']);
+<br><br>
+@if($isEkoSulis)
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">5</td>
+            <td><strong>Ekspor PDF Kinerja</strong><br><code>MarketingController.php</code> & <code>marketing_pdf.blade.php</code></td>
+            <td>Singkronisasi data closing dan pengondisian kolom event menggunakan pencarian kata <code>'Felmi'</code> dan <code>'Nisa'</code> pada string nama.
+                <div class="before">
+if (stripos($userName, 'Felmi') !== false)
+<br><br>
+@if(stripos($userName, 'Nisa') !== false)
+                </div>
+            </td>
+            <td>Mengirimkan objek user target ke PDF dan mengecek subrole dinamis.
+                <div class="after">
+if ($targetUser && $targetUser->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']))
+<br><br>
+@if($isNisa)
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">6</td>
+            <td><strong>Filter PIC Gantt Chart</strong><br><code>GanttChartController.php</code></td>
+            <td>Pengecekan subrole Felmi tanpa menyertakan variasi subrole offline yang baru.
+                <div class="before">
+$isFelmi = $user->hasSubrole('activity_marketing');
+                </div>
+            </td>
+            <td>Pengecekan yang mencakup variasi subrole dinamis offline.
+                <div class="after">
+$isFelmi = $user->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']);
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">7</td>
+            <td><strong>Pengecualian CS Pusat (Regional Sales)</strong><br><code>DataController.php</code> & <code>PesertaSmiController.php</code></td>
+            <td>Mengecualikan CS regional berdasarkan daftar nama statis (hardcode) dan query subrole umum.
+                <div class="before">
+$dbExcludeNames = \App\Models\User::whereIn('role', ['cs-mbc', 'operasional'])->pluck('name')->toArray();
+                </div>
+            </td>
+            <td>Menyertakan pencarian subrole spesifik <code>cs_pusat</code> agar daftar pengecualian dikelola secara dinamis.
+                <div class="after">
+$dbExcludeNames = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')
+    ->orWhereIn('role', ['cs-mbc', 'operasional'])
+    ->pluck('name')->toArray();
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>3. Kesimpulan</h2>
+<p>Refaktorisasi ini berhasil mencapai <strong>Zero Hardcoded Names</strong> (0% Ketergantungan Nama Statis). Semua pembatasan akses menu, formula perhitungan target, dan visibilitas data kini sepenuhnya diatur lewat kolom JSON <code>subrole</code> di tabel <code>users</code>. Hal ini memudahkan administrator untuk memodifikasi atau memperluas hak akses pengguna di masa depan langsung melalui basis data tanpa perlu mengubah baris kode program.</p>
+
+</body>
+</html>

@@ -1,3 +1,7 @@
+@php
+    $isNisa = isset($targetUser) && $targetUser->hasAnySubrole(['activity_marketing_online', 'activity_intake']);
+    $isFelmi = isset($targetUser) && $targetUser->hasAnySubrole(['activity_marketing_offline', 'activity_marketing']);
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -98,9 +102,9 @@
     </div>
 
     <div class="dashboard-banner">
-        @if(stripos($userName, 'Nisa') !== false)
+        @if($isNisa)
             DASHBOARD PERFORMANCE SOSMED SPESIALIS MARKETING
-        @elseif(stripos($userName, 'Felmi') !== false)
+        @elseif($isFelmi)
             DASHBOARD PERFORMANCE EVENT MARKETING
         @else
             DASHBOARD PERFORMANCE MARKETING
@@ -111,12 +115,12 @@
         <thead>
             <tr>
                 <th style="width: 25px;">NO</th>
-                <th style="width: 80px;">{{ stripos($userName, 'Nisa') !== false ? 'Event Zoom' : 'Nama Event' }}</th>
+                <th style="width: 80px;">{{ $isNisa ? 'Event Zoom' : 'Nama Event' }}</th>
                 <th style="width: 80px;">Tema</th>
                 <th style="width: 80px;">Pemateri</th>
                 <th style="width: 55px;">Tanggal</th>
                 <th style="width: 75px;">Lokasi</th>
-                @if(stripos($userName, 'Felmi') === false)
+                @if(!$isFelmi)
                 <th style="width: 65px;">Jenis Event</th>
                 @endif
                 <th style="width: 55px;">Target Peserta</th>
@@ -136,7 +140,7 @@
                     <td class="left">{{ $perf->pemateri }}</td>
                     <td>{{ $perf->tanggal ? \Carbon\Carbon::parse($perf->tanggal)->format('d/m/Y') : '-' }}</td>
                     <td>{{ $perf->lokasi }}</td>
-                    @if(stripos($userName, 'Felmi') === false)
+                    @if(!$isFelmi)
                     <td>{{ $perf->jenis_event }}</td>
                     @endif
                     <td class="bg-totals">{{ $perf->target_peserta }}</td>
@@ -148,7 +152,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ stripos($userName, 'Felmi') !== false ? 12 : 13 }}" style="padding: 30px; color: #718096; font-style: italic; font-size: 11px;">
+                    <td colspan="{{ $isFelmi ? 12 : 13 }}" style="padding: 30px; color: #718096; font-style: italic; font-size: 11px;">
                         Tidak ada data yang tersedia untuk periode ini.
                     </td>
                 </tr>

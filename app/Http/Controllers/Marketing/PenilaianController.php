@@ -100,8 +100,12 @@ $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
 $nilaiRoas = $persenRoas; // This seems redundant with persenRoas, but keeping for consistency if needed elsewhere
 $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            $felmiUser = User::where('name', 'Felmi')->first();
-            $nisaUser = User::where('name', 'Nisa')->first();
+            $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
+                ->orWhereJsonContains('subrole', 'activity_marketing')
+                ->first();
+            $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
+                ->orWhereJsonContains('subrole', 'activity_intake')
+                ->first();
 
             // 1. LEADS ADS (20%)
             $leadsAds = Data::whereYear('created_at', $tahun)
@@ -596,8 +600,12 @@ $targetRoas = 10;
 $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
 $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-        $felmiUser = User::where('name', 'Felmi')->first();
-        $nisaUser = User::where('name', 'Nisa')->first();
+        $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
+            ->orWhereJsonContains('subrole', 'activity_marketing')
+            ->first();
+        $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
+            ->orWhereJsonContains('subrole', 'activity_intake')
+            ->first();
 
         // 1. LEADS ADS (20%)
         $leadsAdsCount = Data::whereYear('created_at', $tahun)->whereMonth('created_at', $bulan)->where('leads', 'like', '%Iklan%')->whereIn('created_by', array_merge($csMBC, $csSMI))->count();
@@ -733,8 +741,12 @@ $targetRoas = 10;
 $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
 $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-        $felmiUser = User::where('name', 'Felmi')->first();
-        $nisaUser = User::where('name', 'Nisa')->first();
+        $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
+            ->orWhereJsonContains('subrole', 'activity_marketing')
+            ->first();
+        $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
+            ->orWhereJsonContains('subrole', 'activity_intake')
+            ->first();
 
         // 1. Leads ADS (20%)
         $leadsAds = Data::whereYear('created_at', $tahun)->whereMonth('created_at', $bulanNum)->where('leads', 'like', '%Iklan%')->whereIn('created_by', array_merge($csMBC, $csSMI))->count();

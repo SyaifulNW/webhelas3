@@ -124,7 +124,7 @@
 
                                 <h6 class="collapse-header">Daftar Kelas MBC:</h6>
 
-                                @if (in_array($userName, ['Muthia']))
+                                @if (auth()->user()->hasSubrole('mbc_sekolah_kaya_only'))
                                     <a class="collapse-item {{ request('kelas') == 'Sekolah Kaya' ? 'active' : '' }}"
                                         href="{{ route('admin.salesplan.index', ['kelas' => 'Sekolah Kaya', 'type' => 'mbc']) }}">
                                         Sekolah Kaya

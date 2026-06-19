@@ -153,12 +153,17 @@
         </div>
 
         @php
-            $csNames = ['Yasmin', 'Linda', 'Shafa'];
-            $isCsPusat = false;
-            foreach ($csNames as $csName) {
-                if (stripos($user->name, $csName) !== false) {
-                    $isCsPusat = true;
-                    break;
+            $isCsPusat = $user->hasAnySubrole(['spp_admin', 'cs_supervisor', 'cs_pusat']) || 
+                         in_array(strtolower($user->role ?? ''), ['administrator', 'marketing', 'manager']);
+            
+            // Fallback hardcode name check
+            if (!$isCsPusat) {
+                $csNames = ['Yasmin', 'Linda', 'Shafa'];
+                foreach ($csNames as $csName) {
+                    if (stripos($user->name ?? '', $csName) !== false) {
+                        $isCsPusat = true;
+                        break;
+                    }
                 }
             }
         @endphp

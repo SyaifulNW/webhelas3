@@ -335,7 +335,7 @@
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">
-        {{ in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']) ? 'DATA PESERTA' : 'PROSPEK' }} 
+        {{ (auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_admin']) || in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra'])) ? 'DATA PESERTA' : 'PROSPEK' }} 
         @if(request('type') == 'mbc' || ($isCsMbc && request('type') != 'smi'))
             MBC
         @endif
@@ -347,7 +347,7 @@
     <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-            <li class="breadcrumb-item">{{ in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']) ? 'DATA PESERTA' : 'PROSPEK' }}</li>
+            <li class="breadcrumb-item">{{ (auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_admin']) || in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra'])) ? 'DATA PESERTA' : 'PROSPEK' }}</li>
             @if($kelasFilter)
             <li class="breadcrumb-item active">{{ $kelasFilter == 'Start-Up Muslim Indonesia' ? 'M1T' : $kelasFilter }}</li>
             @endif
@@ -392,7 +392,7 @@
 
 <!-- Filter Container -->
 @php
-    $isAdminView = (auth()->id() == 1 || auth()->id() == 13 || (auth()->user()->name == 'Linda' && empty($isRestrictedView)));
+    $isAdminView = (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnySubrole(['spp_admin', 'sales_admin', 'cs_supervisor']) || auth()->id() == 1 || auth()->id() == 13 || (auth()->user()->name == 'Linda' && empty($isRestrictedView)));
     $isCsMbc = (strtolower(auth()->user()->role) === 'cs-mbc');
 @endphp
 @if($isAdminView || $isCsMbc)
@@ -508,7 +508,7 @@
     <select name="created_by" id="cs_filter" class="form-select filter-select">
         <option value="">-- Semua Tim --</option>
         @foreach($csList as $cs)
-            @if((auth()->id() == 1) || (auth()->id() == 13 && $cs->name === 'Puput') || (auth()->user()->name == 'Linda'))
+            @if(strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnySubrole(['spp_admin', 'sales_admin', 'cs_supervisor']) || (auth()->id() == 1) || ((auth()->user()->hasSubrole('young_startup_admin') || auth()->id() == 13) && $cs->name === 'Puput') || (auth()->user()->name == 'Linda'))
                 <option value="{{ $cs->id }}" {{ request('created_by') == $cs->id ? 'selected' : '' }}>
                     {{ $cs->name }}
                 </option>
@@ -519,7 +519,7 @@
 @endif
 
 @if($kelasFilter != 'Start-Up Muslim Indonesia')
-@if(auth()->id() != 13)
+@if(!(auth()->user()->hasSubrole('young_startup_admin') || auth()->id() == 13))
 {{-- ✅ Filter Kelas --}}
 <div class="filter-group">
     <label for="kelas_filter" class="filter-label" title="Kelas"><i class="fas fa-chalkboard-teacher text-success"></i></label>
@@ -530,9 +530,9 @@
                 @continue
             @endif
             @if(
-                (auth()->id() == 1 && !in_array($kelas->nama_kelas, ['Start-Up Muda Indonesia', 'Sekolah Kaya', 'Start-Up Muslim Indonesia'])) ||
-                         (auth()->id() == 13 && $kelas->nama_kelas == 'Start-Up Muda Indonesia') ||
-                (auth()->user()->name == 'Linda') ||
+                ((strtolower(auth()->user()->role) === 'administrator' || auth()->id() == 1) && !in_array($kelas->nama_kelas, ['Start-Up Muda Indonesia', 'Sekolah Kaya', 'Start-Up Muslim Indonesia'])) ||
+                ((auth()->user()->hasSubrole('young_startup_admin') || auth()->id() == 13) && $kelas->nama_kelas == 'Start-Up Muda Indonesia') ||
+                (auth()->user()->hasSubrole('spp_admin') || auth()->user()->name == 'Linda') ||
                 (strtolower(auth()->user()->role) === 'cs-mbc')
             )
                 <option value="{{ $kelas->nama_kelas }}" {{ request('kelas') == $kelas->nama_kelas ? 'selected' : '' }}>
@@ -737,7 +737,7 @@
         }
     }
 @endphp
-@if(strtolower(Auth::user()->role) !== 'administrator' && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
+@if(strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor']) && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
     <div class="card shadow-lg border-0 rounded-lg mb-4">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0"><i class="fas fa-chart-line"></i> Daftar PROSPEK</h5>
@@ -1054,7 +1054,7 @@ $(document).ready(function() {
 
 </div>
 
-            @if(!in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
+            @if(!auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor']) && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
             <div class="table-responsive table-scroll">
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="text-white" style="background-color:#25799E;">
@@ -1897,7 +1897,7 @@ $(document).ready(function() {
     </script>
 
 
-@if(strtolower(Auth::user()->role) !== 'administrator' && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
+@if(strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor']) && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <span class="badge bg-warning text-white p-2 me-2 fs-6" style="font-size: 13px">
@@ -1937,7 +1937,7 @@ $(document).ready(function() {
         @endif
     </h4>
 
-    @if($kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || (in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']) && (request('type') == 'mbc' || request('type') == 'smi')))
+    @if($kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || ((auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor']) || in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra'])) && (request('type') == 'mbc' || request('type') == 'smi')))
     <div class="d-flex gap-3 align-items-center">
         {{-- Filter Bulan (SMI Bawah) --}}
         <div class="d-flex align-items-center gap-2">

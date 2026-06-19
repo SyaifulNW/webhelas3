@@ -1,3 +1,7 @@
+@php
+    $isEkoSulis = isset($user) && $user->hasAnySubrole(['marketing_ads_manager', 'monitoring_marketing']);
+    $isFelmi = isset($user) && $user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing']);
+@endphp
 <!DOCTYPE html>
 <html>
 
@@ -137,7 +141,7 @@
                 @endforeach
             @else
                 {{-- DEFAULT / EKO SULIS --}}
-                @if($user->name === 'Eko Sulis')
+                @if($isEkoSulis)
                     {{-- EKO SULIS TABLE --}}
                     <tr>
                         <td class="center">1</td>
@@ -181,7 +185,7 @@
                         <td class="center">(Ref)</td>
                         <td class="center">{{ number_format($dailyTotalKpi ?? 0, 0) }}</td>
                     </tr>
-                @elseif($user->name === 'Felmi')
+                @elseif($isFelmi)
                     {{-- FELMI TABLE --}}
                     <tr>
                         <td class="center">1</td>

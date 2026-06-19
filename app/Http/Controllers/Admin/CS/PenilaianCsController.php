@@ -293,8 +293,12 @@ public function store(Request $request)
             $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
             $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            $felmiUser = User::get()->first(fn($u) => $u->hasSubrole('activity_marketing'));
-            $nisaUser = User::get()->first(fn($u) => $u->hasSubrole('activity_intake'));
+            $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
+                ->orWhereJsonContains('subrole', 'activity_marketing')
+                ->first();
+            $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
+                ->orWhereJsonContains('subrole', 'activity_intake')
+                ->first();
 
             // 1. LEADS ADS (20%)
             $leadsAds = Data::whereYear('created_at', $tahun)
@@ -521,8 +525,12 @@ public function store(Request $request)
             $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
             $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            $felmiUser = User::get()->first(fn($u) => $u->hasSubrole('activity_marketing'));
-            $nisaUser = User::get()->first(fn($u) => $u->hasSubrole('activity_intake'));
+            $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
+                ->orWhereJsonContains('subrole', 'activity_marketing')
+                ->first();
+            $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
+                ->orWhereJsonContains('subrole', 'activity_intake')
+                ->first();
 
             // 1. LEADS ADS (20%)
             $leadsAds = Data::whereYear('created_at', $tahun)

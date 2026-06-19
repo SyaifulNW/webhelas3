@@ -1722,7 +1722,14 @@ class PesertaSmiController extends Controller
 
                 if ($chapterName) {
                     $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
-                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $dbExcludeNames = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')
+                        ->orWhereIn('role', ['cs-mbc', 'operasional'])
+                        ->orWhere(function($sq) {
+                            $sq->whereNotNull('subrole')->where('subrole', '!=', '[]');
+                        })
+                        ->pluck('name')
+                        ->toArray();
+                    $excludeNames = array_unique(array_merge($dbExcludeNames, ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan']));
 
                     $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
                         $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {

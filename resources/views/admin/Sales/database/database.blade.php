@@ -754,6 +754,7 @@
                                 'marketing',
                                 'operasional',
                             ]) ||
+                            $user->hasSubrole('spp_admin') ||
                             $user->name === 'Linda'
                         ) {
                             $csList = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'customer_service'])
@@ -1121,7 +1122,7 @@
                         @if (
                             !in_array($userRole, ['administrator', 'manager', 'marketing']) &&
                                 !($userRole === 'operasional' && stripos(auth()->user()->name, 'Rafi') === false) &&
-                                !(auth()->user()->name === 'Linda' && request('view') !== 'me'))
+                                !((auth()->user()->hasSubrole('spp_admin') || auth()->user()->name === 'Linda') && request('view') !== 'me'))
                             @php
                                 $slugName =
                                     $userRole === 'chapter' && !empty(auth()->user()->chapter)
@@ -4727,7 +4728,7 @@
             @php
                 $userName = auth()->user()->name;
                 $userRole = strtolower(auth()->user()->role);
-                $isTargetUser = (in_array($userName, ['Linda', 'Yasmin']) && $userRole === 'cs-mbc') || $userRole === 'administrator';
+                $isTargetUser = ((auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings']) || in_array($userName, ['Linda', 'Yasmin'])) && $userRole === 'cs-mbc') || $userRole === 'administrator';
             @endphp
 
             @if ($isTargetUser)

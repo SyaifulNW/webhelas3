@@ -57,7 +57,7 @@
                     </button>
                 </form>
                  <br>
-                  @if(trim($namaUser) === 'Eko Sulis')
+                  @if(auth()->user()->hasSubrole('monitoring_marketing') || trim($namaUser) === 'Eko Sulis')
                   <a href="{{ route('admin.ads-activity.export-pdf', ['bulan' => $bulan, 'tahun' => $tahun, 'user_id' => $userId]) }}" class="btn btn-danger btn-block" target="_blank">
                      <i class="fas fa-file-pdf mr-1"></i> Export PDF Daily Activity
                   </a>
@@ -68,7 +68,7 @@
                   @endif
 
                   
-                  @if(in_array(trim($namaUser), ['Rofi', 'Linda', 'Yasmin', 'Felmi']))
+                  @if(auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'activity_marketing']) || in_array(trim($namaUser), ['Rofi', 'Linda', 'Yasmin', 'Felmi']))
                   <div class="row mt-2">
                       <div class="col">
                           {{-- Hanya Gantt Chart saja sesuai request --}}

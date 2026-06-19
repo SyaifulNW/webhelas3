@@ -44,8 +44,8 @@
 </style>
 
 @php
-    $isEkoSulis = isset($targetUser) && trim($targetUser->name) === 'Eko Sulis';
-    $isFelmi = isset($targetUser) && trim($targetUser->name) === 'Felmi';
+    $isEkoSulis = isset($targetUser) && $targetUser->hasAnySubrole(['marketing_ads_manager', 'monitoring_marketing']);
+    $isFelmi = isset($targetUser) && $targetUser->hasAnySubrole(['activity_marketing_offline', 'activity_marketing']);
     $isAdminOrManager = in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'admin']);
     $mainColClass = ($isFelmi && !$isAdminOrManager) ? 'col-lg-12' : 'col-lg-6';
 @endphp
@@ -321,7 +321,7 @@
                 @endphp
                 
                 <div class="row g-3">
-                    @if($targetUser->name === 'Eko Sulis')
+                    @if($isEkoSulis)
                     {{-- CARDS EKO SULIS --}}
                     <div class="col-12 col-md-4">
                         <div class="card shadow-sm border-0 h-100 card-hover">
@@ -387,7 +387,7 @@
                         </div>
                     </div>
 
-                    @elseif($targetUser->name === 'Felmi')
+                    @elseif($isFelmi)
                     {{-- CARDS FELMI --}}
                     <div class="col-12 col-md-4">
                         <div class="card shadow-sm border-0 h-100 card-hover">
@@ -510,7 +510,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if($targetUser->name === 'Eko Sulis')
+                            @if($isEkoSulis)
                             {{-- TABEL EKO SULIS --}}
                             <tr>
                                 <td>1</td>
@@ -544,7 +544,7 @@
                                 <td>{{ $leadsNisa }}</td>
                                 <td>{{ $nilaiLeadsNisa }}</td>
                             </tr>
-                            @elseif($targetUser->name === 'Felmi')
+                            @elseif($isFelmi)
                             {{-- TABEL FELMI --}}
                             <tr>
                                 <td>1</td>
@@ -591,7 +591,7 @@
                             @endif
 
                             <tr>
-                                <td>{{ ($targetUser->name === 'Eko Sulis') ? 5 : (($targetUser->name === 'Felmi') ? 4 : 3) }}</td>
+                                <td>{{ $isEkoSulis ? 5 : ($isFelmi ? 4 : 3) }}</td>
                                 <td>Penilaian Atasan</td>
                                 <td>Input Oleh Atasan</td>
                                 <td>10%</td>
@@ -599,7 +599,7 @@
                                 <td>{{ $nilaiManualPart }}</td>
                             </tr>
                             <tr>
-                                <td>{{ ($targetUser->name === 'Eko Sulis') ? 6 : (($targetUser->name === 'Felmi') ? 5 : 4) }}</td>
+                                <td>{{ $isEkoSulis ? 6 : ($isFelmi ? 5 : 4) }}</td>
                                 <td>Daily Activity</td>
                                 <td>Pencapaian KPI Harian</td>
                                 <td>(Ref)</td>

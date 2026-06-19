@@ -28,12 +28,13 @@ class MarketingController extends Controller
         if ($isAdministrator) {
             $marketingUsers = \App\Models\User::whereIn('role', ['marketing'])->where('is_active', 1)->get();
             if (!$selectedMarketingUserId && $marketingUsers->isNotEmpty()) {
-                $selectedMarketingUserId = $marketingUsers->firstWhere('name', 'Felmi')->id ?? $marketingUsers->first()->id;
+                $selectedMarketingUserId = $marketingUsers->first(fn($u) => $u->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']))->id ?? $marketingUsers->first()->id;
             }
             $targetUser = \App\Models\User::find($selectedMarketingUserId);
             $query = MarketingPerformance::where('user_id', $selectedMarketingUserId);
             $userName = $targetUser ? $targetUser->name : 'Unknown';
         } else {
+            $targetUser = $user;
             $query = MarketingPerformance::where('user_id', $user->id);
             $userName = $user->name;
             $selectedMarketingUserId = $user->id;
@@ -52,7 +53,7 @@ class MarketingController extends Controller
         $performances = $query->orderBy('tanggal', 'asc')->get();
 
         // Sync Real Closing for Felmi
-        if (stripos($userName, 'Felmi') !== false) {
+        if ($targetUser && $targetUser->hasAnySubrole(['activity_marketing', 'activity_marketing_offline'])) {
             foreach ($performances as $perf) {
                 $perfDate = \Carbon\Carbon::parse($perf->tanggal);
                 $closingCount = \App\Models\SalesPlan::where('status', 'sudah_transfer')
@@ -73,7 +74,7 @@ class MarketingController extends Controller
 
         // Seed example data if empty to match requirements for first time
         if ($performances->isEmpty() && !request()->has('bulan')) {
-             if (stripos($userName, 'Nisa') !== false) {
+             if ($targetUser && $targetUser->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
                  MarketingPerformance::create([
                      'user_id' => $selectedMarketingUserId,
                      'event_name' => 'E- Forum',
@@ -84,7 +85,7 @@ class MarketingController extends Controller
                      'target_closing' => 10,
                      'status' => 'Terlaksana',
                  ]);
-             } elseif (stripos($userName, 'Felmi') !== false) {
+             } elseif ($targetUser && $targetUser->hasAnySubrole(['activity_marketing', 'activity_marketing_offline'])) {
                  MarketingPerformance::create([
                      'user_id' => $selectedMarketingUserId,
                      'event_name' => 'Zoom',
@@ -106,7 +107,7 @@ class MarketingController extends Controller
         ];
         $years = range(now()->year - 2, now()->year + 1);
 
-        return view('marketing.dashboard', compact('performances', 'bulan', 'tahun', 'status', 'userName', 'months', 'years', 'isAdministrator', 'marketingUsers', 'selectedMarketingUserId'));
+        return view('marketing.dashboard', compact('performances', 'bulan', 'tahun', 'status', 'userName', 'months', 'years', 'isAdministrator', 'marketingUsers', 'selectedMarketingUserId', 'targetUser'));
     }
 
     public function store(Request $request)
@@ -195,6 +196,7 @@ class MarketingController extends Controller
             $query = MarketingPerformance::where('user_id', $selectedMarketingUserId);
             $userName = $targetUser ? $targetUser->name : 'Unknown';
         } else {
+            $targetUser = $user;
             $query = MarketingPerformance::where('user_id', $user->id);
             $userName = $user->name;
         }
@@ -212,7 +214,7 @@ class MarketingController extends Controller
         $performances = $query->orderBy('tanggal', 'asc')->get();
 
         // Sync Real Closing for Felmi in PDF
-        if (stripos($userName, 'Felmi') !== false) {
+        if ($targetUser && $targetUser->hasAnySubrole(['activity_marketing', 'activity_marketing_offline'])) {
             foreach ($performances as $perf) {
                 $perfDate = \Carbon\Carbon::parse($perf->tanggal);
                 $closingCount = \App\Models\SalesPlan::where('status', 'sudah_transfer')
@@ -232,7 +234,7 @@ class MarketingController extends Controller
         }
         $monthName = ($bulan === 'all') ? 'Semua Bulan' : \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('marketing.marketing_pdf', compact('performances', 'bulan', 'tahun', 'userName', 'monthName'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('marketing.marketing_pdf', compact('performances', 'bulan', 'tahun', 'userName', 'monthName', 'targetUser'));
         $pdf->setPaper('A4', 'landscape');
 
         return $pdf->download("Performance_Marketing_{$userName}_{$monthName}_{$tahun}.pdf");

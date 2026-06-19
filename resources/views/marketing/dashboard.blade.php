@@ -1,6 +1,10 @@
 @extends('layouts.masteradmin')
 
 @section('content')
+@php
+    $isFelmi = isset($targetUser) && $targetUser->hasAnySubrole(['activity_marketing_offline', 'activity_marketing']);
+    $isNisa = isset($targetUser) && $targetUser->hasAnySubrole(['activity_marketing_online', 'activity_intake']);
+@endphp
 <div class="container-fluid py-4">
 
     {{-- Header --}}
@@ -14,7 +18,7 @@
         </span>
     </div>
 
-    @if(stripos($userName, 'Felmi') !== false)
+    @if($isFelmi)
     <!-- Dual Panel Navigation Pills (Only for Felmi) -->
     <div class="mb-4">
         <ul class="nav nav-pills shadow-sm p-1 bg-white rounded-pill border" style="width: fit-content;" id="performanceTabs" role="tablist">
@@ -32,7 +36,7 @@
     </div>
     @endif
 
-    @if(stripos($userName, 'Felmi') !== false)
+    @if($isFelmi)
     <div class="tab-content" id="performanceTabContent">
         <!-- PANEL 1: Marketing Performance Dashboard -->
         <div class="tab-pane fade show active" id="performance-panel" role="tabpanel" aria-labelledby="performance-tab">
@@ -114,9 +118,9 @@
     <div class="card shadow-lg rounded-4 overflow-hidden mb-5 border-0">
         <div class="card-header py-4 text-center" style="background: linear-gradient(135deg, #ffff00, #ffec00); border-bottom: 2px solid #eee;">
             <h5 class="mb-0 fw-bolder text-dark letter-spacing-2 text-uppercase">
-                @if(stripos($userName, 'Nisa') !== false)
+                @if($isNisa)
                     DASHBOARD PERFORMANCE SOSMED SPESIALIS MARKETING ({{ $userName }})
-                @elseif(stripos($userName, 'Felmi') !== false)
+                @elseif($isFelmi)
                     DASHBOARD PERFORMANCE EVENT MARKETING ({{ $userName }})
                 @else
                     DASHBOARD PERFORMANCE MARKETING ({{ $userName }})
@@ -129,7 +133,7 @@
                     <thead>
                         <tr class="fw-bold bg-light-blue text-dark text-uppercase small letter-spacing-1">
                             <th style="width: 50px;">NO</th>
-                            <th>{{ stripos($userName, 'Nisa') !== false ? 'Event Zoom' : 'Nama Event' }}</th>
+                            <th>{{ $isNisa ? 'Event Zoom' : 'Nama Event' }}</th>
                             <th>Tema</th>
                             <th class="sortable" data-column="3" style="cursor: pointer;">
                                 Pemateri <i class="fa-solid fa-sort ms-1 opacity-50"></i>
@@ -138,7 +142,7 @@
                                 Tanggal <i class="fa-solid fa-sort ms-1 opacity-50"></i>
                             </th>
                             <th>Lokasi</th>
-                            @if(stripos($userName, 'Felmi') === false)
+                            @if(!$isFelmi)
                             <th>Jenis Event</th>
                             @endif
                             <th style="width: 100px;">Target Peserta</th>
@@ -155,7 +159,7 @@
                         @forelse($performances as $i => $perf)
                         <tr data-id="{{ $perf->id }}">
                             <td class="bg-light fw-bold text-muted row-number">{{ $i + 1 }}</td>
-                            @if(stripos($userName, 'Felmi') !== false)
+                            @if($isFelmi)
                             <td class="p-1">
                                 <select class="form-select form-select-sm border-0 fw-bold event-name-select" data-field="event_name" {{ $isAdministrator ? 'disabled' : '' }}>
                                     <option value="E-Fest" {{ $perf->event_name == 'E-Fest' ? 'selected' : '' }}>E-Fest</option>
@@ -173,13 +177,13 @@
                                        data-field="tanggal" {{ $isAdministrator ? 'disabled' : '' }}>
                             </td>
                             <td class="{{ !$isAdministrator ? 'editable' : '' }}" data-field="lokasi" {{ !$isAdministrator ? 'contenteditable=true' : '' }}>{{ $perf->lokasi }}</td>
-                            @if(stripos($userName, 'Felmi') === false)
+                            @if(!$isFelmi)
                             <td class="{{ !$isAdministrator ? 'editable' : '' }}" data-field="jenis_event" {{ !$isAdministrator ? 'contenteditable=true' : '' }}>{{ $perf->jenis_event }}</td>
                             @endif
                             <td class="bg-soft-yellow fw-bold">{{ $perf->target_peserta }}</td>
                             <td class="{{ !$isAdministrator ? 'editable' : '' }}" data-field="peserta_hadir" {{ !$isAdministrator ? 'contenteditable=true' : '' }}>{{ $perf->peserta_hadir ?: '' }}</td>
                             <td class="bg-soft-yellow fw-bold">{{ $perf->target_closing }}</td>
-                            @if(stripos($userName, 'Felmi') !== false)
+                            @if($isFelmi)
                                 <td class="fw-bold text-primary">{{ $perf->real_closing ?: '0' }}</td>
                             @else
                                 <td class="{{ !$isAdministrator ? 'editable' : '' }} fw-bold text-primary" data-field="real_closing" {{ !$isAdministrator ? 'contenteditable=true' : '' }}>{{ $perf->real_closing ?: '' }}</td>
@@ -217,7 +221,7 @@
                         </tr>
                         @empty
                         <tr class="empty-row text-center">
-                            <td colspan="{{ stripos($userName, 'Felmi') !== false ? 12 : 13 }}" class="py-5 text-muted">
+                            <td colspan="{{ $isFelmi ? 12 : 13 }}" class="py-5 text-muted">
                                 <div class="d-flex flex-column align-items-center">
                                     <i class="fa-solid fa-calendar-plus fa-3x mb-3 opacity-25"></i>
                                     <span class="fs-5">Belum ada data performance di periode ini.</span>
@@ -235,7 +239,7 @@
         </div>
     </div>
 
-    @if(stripos($userName, 'Felmi') !== false)
+    @if($isFelmi)
         </div> {{-- End of PANEL 1 --}}
         
         <!-- PANEL 2: Key Performance Index (Felmi Only) -->
@@ -629,7 +633,7 @@
         
         const btnAddRow = document.getElementById('btnAddRow');
         const tableBody = document.querySelector('#performanceTable tbody');
-        const isFelmi = {{ stripos($userName, 'Felmi') !== false ? 'true' : 'false' }};
+        const isFelmi = {{ $isFelmi ? 'true' : 'false' }};
         const isAdministrator = {{ $isAdministrator ? 'true' : 'false' }};
 
         if (btnAddRow) {

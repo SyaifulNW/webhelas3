@@ -32,8 +32,8 @@ class AlumniController extends Controller
         // Filter status_peserta alumni
 
 
-        // Filter role
-        if ($user->email !== 'mbchamasah@gmail.com') {
+        // Hanya user dengan subrole 'alumni_admin' bisa lihat semua data alumni
+        if (!$user->hasSubrole('alumni_admin')) {
             $query->where('created_by', $user->name);
         }
 
