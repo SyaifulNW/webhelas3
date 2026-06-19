@@ -397,7 +397,7 @@
         .check-circle {
             width: 32px;
             height: 32px;
-            border-radius: 50%;
+            border-radius: 4px;
             border: 2px solid #d1d5db;
             background: transparent;
             cursor: pointer;
@@ -440,6 +440,42 @@
             background: rgba(239, 68, 68, .08);
             border-color: #fca5a5;
             color: #ef4444;
+        }
+
+        .btn-action-icon {
+            width: 28px !important;
+            height: 28px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.75rem !important;
+            border-radius: 6px !important;
+        }
+
+        .live-edit-input {
+            background: transparent;
+            border: 1px solid transparent;
+            box-shadow: none;
+            width: 100%;
+            padding: 4px 6px;
+            transition: all 0.15s ease-in-out;
+            border-radius: 4px;
+            outline: none;
+        }
+        .live-edit-input:hover {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: #e3e6f0;
+        }
+        .live-edit-input:focus {
+            background: #fff;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+        .todo-row.done .live-edit-input {
+            text-decoration: line-through;
+            color: #adadad;
+            opacity: 0.7;
         }
 
         /* ── Modal inputs ───────────────────────────────────────────── */
@@ -620,20 +656,28 @@
                                             <tr>
                                                 <th class="col-no">No</th>
                                                 <th>Deskripsi Pekerjaan</th>
+                                                <th style="width: 20%; text-align: center;">Target</th>
+                                                <th style="width: 20%; text-align: center;">Realisasi</th>
                                                 <th class="col-check" style="text-align:center;">Checklist</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach ($tplGroup->values() as $i => $tpl)
                                                 <tr class="{{ $tpl->log && $tpl->log->is_done ? 'done' : '' }}">
-                                                    <td class="col-no">{{ $i + 1 }}</td>
-                                                    <td>
+                                                    <td class="col-no" style="vertical-align: middle;">{{ $i + 1 }}</td>
+                                                    <td style="vertical-align: middle;">
                                                         <div class="judul">{{ $tpl->judul }}</div>
                                                         @if ($tpl->deskripsi)
                                                             <div class="deskripsi">{{ $tpl->deskripsi }}</div>
                                                         @endif
                                                     </td>
-                                                    <td class="col-check">
+                                                    <td class="text-center font-weight-bold" style="font-size: 0.9rem; color: #333; vertical-align: middle;">
+                                                        {{ $tpl->target ?? '-' }}
+                                                    </td>
+                                                    <td class="text-center font-weight-bold" style="font-size: 0.9rem; color: #333; vertical-align: middle;">
+                                                        {{ $tpl->log ? ($tpl->log->realisasi ?? '-') : '-' }}
+                                                    </td>
+                                                    <td class="col-check" style="vertical-align: middle;">
                                                         <button
                                                             class="check-circle {{ $tpl->log && $tpl->log->is_done ? 'checked' : '' }}"
                                                             disabled>
@@ -661,15 +705,22 @@
                 ];
                 $firstDivisi = $divisiList[0];
             @endphp
-            <div class="divisi-tabs" id="divisiTabs">
-                @foreach ($divisiList as $idx => $divisi)
-                    <button class="divisi-tab-btn {{ $idx === 0 ? 'active' : '' }}" data-divisi="{{ $divisi }}"
-                        data-idx="{{ $idx }}" onclick="switchDivisi('{{ $divisi }}', this)">
-                        <i class="fas {{ $divisiIcons[$divisi] ?? 'fa-layer-group' }}"></i>
-                        {{ $divisi }}
-                    </button>
-                @endforeach
-            </div>
+            @if (count($divisiList) > 1)
+                <div class="divisi-tabs" id="divisiTabs">
+                    @foreach ($divisiList as $idx => $divisi)
+                        <button class="divisi-tab-btn {{ $idx === 0 ? 'active' : '' }}" data-divisi="{{ $divisi }}"
+                            data-idx="{{ $idx }}" onclick="switchDivisi('{{ $divisi }}', this)">
+                            <i class="fas {{ $divisiIcons[$divisi] ?? 'fa-layer-group' }}"></i>
+                            {{ $divisi }}
+                        </button>
+                    @endforeach
+                </div>
+            @else
+                <div class="divisi-header-label" style="margin: 16px 0 20px; font-weight: 700; color: #4f46e5; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas {{ $divisiIcons[$divisiList[0]] ?? 'fa-layer-group' }}"></i>
+                    <span>{{ $divisiList[0] }}</span>
+                </div>
+            @endif
 
             {{-- ── DIVISI PANELS ── --}}
             @foreach ($divisiList as $idx => $divisi)
@@ -713,97 +764,218 @@
                         <div class="progress-pct" id="progressPct-{{ $divisiSlug }}">{{ $persen }}%</div>
                     </div>
 
-                    {{-- Filter Bar --}}
-                    <div class="filter-bar">
-                        <div class="tab-group" id="tabGroup-{{ $divisiSlug }}">
-                            <button class="tab-btn active" data-filter="semua"
-                                onclick="setFilter('semua',   this,'{{ $divisiSlug }}')">Semua</button>
-                            <button class="tab-btn" data-filter="harian"
-                                onclick="setFilter('harian',  this,'{{ $divisiSlug }}')">Harian</button>
-                            <button class="tab-btn"
-                                data-filter="mingguan"onclick="setFilter('mingguan',this,'{{ $divisiSlug }}')">Mingguan</button>
-                            <button class="tab-btn" data-filter="bulanan"
-                                onclick="setFilter('bulanan', this,'{{ $divisiSlug }}')">Bulanan</button>
-                        </div>
-                        <div class="search-wrap">
-                            <i class="fas fa-search"></i>
-                            <input type="text" class="search-box" id="searchBox-{{ $divisiSlug }}"
-                                placeholder="Cari agenda..." oninput="doSearch(this.value, '{{ $divisiSlug }}')">
-                        </div>
-                        <button class="btn-tambah" onclick="showAddModal('{{ $divisi }}')">
-                            <i class="fas fa-plus mr-1"></i> Tambah agenda
+                    {{-- Main Sub Tabs (Hari Ini / Riwayat) --}}
+                    <div class="main-sub-tabs mb-4 d-flex justify-content-start gap-2">
+                        <button class="divisi-tab-btn active sub-tab-btn" id="btn-hari-ini-{{ $divisiSlug }}" onclick="switchSubTab('{{ $divisiSlug }}', 'hari-ini', this)">
+                            <i class="fas fa-calendar-day mr-1"></i> Hari Ini
+                        </button>
+                        <button class="divisi-tab-btn sub-tab-btn" id="btn-riwayat-{{ $divisiSlug }}" onclick="switchSubTab('{{ $divisiSlug }}', 'riwayat', this); loadRiwayat('{{ $divisi }}', '{{ $divisiSlug }}')">
+                            <i class="fas fa-history mr-1"></i> Riwayat
                         </button>
                     </div>
 
-                    {{-- Periode Cards --}}
-                    @foreach (['harian', 'mingguan', 'bulanan'] as $tipe)
-                        @php
-                            $tplGroup = $grouped->get($tipe, collect());
-                            $pi = $periodeInfo[$tipe];
-                        @endphp
-                        <div class="periode-card" data-tipe="{{ $tipe }}"
-                            id="card-{{ $divisiSlug }}-{{ $tipe }}">
-                            <div class="periode-card-header">
-                                <div class="left">
-                                    <span class="tipe-chip chip-{{ $tipe }}">{{ ucfirst($tipe) }}</span>
-                                    <span class="periode-range">{{ $pi['range'] }}</span>
+                    {{-- Panel Hari Ini --}}
+                    <div id="sub-panel-hari-ini-{{ $divisiSlug }}">
+                        {{-- Filter Bar --}}
+                        <div class="filter-bar">
+                            <div class="tab-group" id="tabGroup-{{ $divisiSlug }}">
+                                <button class="tab-btn active" data-filter="semua"
+                                    onclick="setFilter('semua',   this,'{{ $divisiSlug }}')">Semua</button>
+                                <button class="tab-btn" data-filter="harian"
+                                    onclick="setFilter('harian',  this,'{{ $divisiSlug }}')">Harian</button>
+                                <button class="tab-btn"
+                                    data-filter="mingguan"onclick="setFilter('mingguan',this,'{{ $divisiSlug }}')">Mingguan</button>
+                                <button class="tab-btn" data-filter="bulanan"
+                                    onclick="setFilter('bulanan', this,'{{ $divisiSlug }}')">Bulanan</button>
+                            </div>
+                            <div class="search-wrap">
+                                <i class="fas fa-search"></i>
+                                <input type="text" class="search-box" id="searchBox-{{ $divisiSlug }}"
+                                    placeholder="Cari agenda..." oninput="doSearch(this.value, '{{ $divisiSlug }}')">
+                            </div>
+                            <button class="btn-tambah" onclick="showAddModal('{{ $divisi }}')">
+                                <i class="fas fa-plus mr-1"></i> Tambah agenda
+                            </button>
+                        </div>
+
+                        {{-- Periode Cards --}}
+                        @foreach (['harian', 'mingguan', 'bulanan'] as $tipe)
+                            @php
+                                $tplGroup = $grouped->get($tipe, collect());
+                                $pi = $periodeInfo[$tipe] ?? ['range' => '', 'reset_label' => '', 'reset_info' => ''];
+                            @endphp
+                            <div class="periode-card" data-tipe="{{ $tipe }}"
+                                id="card-{{ $divisiSlug }}-{{ $tipe }}">
+                                <div class="periode-card-header">
+                                    <div class="left">
+                                        <span class="tipe-chip chip-{{ $tipe }}">{{ ucfirst($tipe) }}</span>
+                                        <span class="periode-range">{{ $pi['range'] }}</span>
+                                    </div>
+                                    <div class="reset-info"><i class="fas fa-sync-alt"></i> Reset: {{ $pi['reset_label'] }}
+                                    </div>
                                 </div>
-                                <div class="reset-info"><i class="fas fa-sync-alt"></i> Reset: {{ $pi['reset_label'] }}
+                                <div class="reset-note"><i class="fas fa-info-circle"></i> {{ $pi['reset_info'] }}</div>
+                                <table class="agenda-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-no">No</th>
+                                            <th>Deskripsi Pekerjaan</th>
+                                            <th style="width: 18%; text-align: center;">Target</th>
+                                            <th style="width: 18%; text-align: center;">Realisasi</th>
+                                            <th class="col-check">Checklist</th>
+                                            <th class="col-action">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-{{ $divisiSlug }}-{{ $tipe }}">
+                                        @forelse($tplGroup->values() as $i => $tpl)
+                                            <tr class="todo-row {{ $tpl->log && $tpl->log->is_done ? 'done' : '' }}"
+                                                id="row-{{ $tpl->id }}" data-tipe="{{ $tipe }}"
+                                                data-divisi="{{ $divisiSlug }}"
+                                                data-judul="{{ strtolower($tpl->judul) }}">
+                                                <td class="col-no" style="vertical-align: middle;">{{ $i + 1 }}</td>
+                                                <td style="vertical-align: middle;">
+                                                    <div class="judul font-weight-bold" style="font-size: 0.9rem; color: #333;">{{ $tpl->judul }}</div>
+                                                    @if ($tpl->deskripsi)
+                                                        <div class="deskripsi text-muted" style="font-size: 0.78rem; margin-top: 2px;">{{ $tpl->deskripsi }}</div>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center" style="vertical-align: middle; width: 18%;">
+                                                    <input type="text" class="live-edit-input live-todo-target font-weight-bold text-center" value="{{ $tpl->target ?? '' }}" data-template-id="{{ $tpl->id }}" placeholder="Target...">
+                                                </td>
+                                                <td class="text-center" style="vertical-align: middle; width: 18%;">
+                                                    <input type="text" class="live-edit-input live-todo-realisasi font-weight-bold text-center" value="{{ $tpl->log ? $tpl->log->realisasi : '' }}" data-log-id="{{ $tpl->log ? $tpl->log->id : '' }}" placeholder="Realisasi..." {{ $tpl->log ? '' : 'disabled' }}>
+                                                </td>
+                                                <td class="col-check" style="vertical-align: middle;">
+                                                    @if ($tpl->log)
+                                                        <button class="check-circle {{ $tpl->log->is_done ? 'checked' : '' }}"
+                                                            onclick="toggleCheck({{ $tpl->log->id }}, this, '{{ $divisiSlug }}')"
+                                                            title="{{ $tpl->log->is_done ? 'Tandai belum selesai' : 'Tandai selesai' }}">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    @endif
+                                                </td>
+                                                <td class="col-action" style="vertical-align: middle;">
+                                                    <button class="del-btn"
+                                                        onclick="deleteAgenda({{ $tpl->id }}, '{{ $divisiSlug }}')"
+                                                        title="Hapus">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr class="empty-row-{{ $divisiSlug }}-{{ $tipe }}">
+                                                <td colspan="4" class="empty-state" style="padding:24px;">
+                                                    <i class="fas fa-inbox"
+                                                        style="font-size:1.5rem;margin-bottom:6px;display:block;"></i>
+                                                    Belum ada agenda {{ $tipe }}.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endforeach
+
+                        {{-- Tugas Harian Beda --}}
+                        <div class="periode-card" data-tipe="harian_beda" id="card-{{ $divisiSlug }}-harian_beda">
+                            <div class="periode-card-header" style="background: #fafbff;">
+                                <div class="left">
+                                    <span class="tipe-chip" style="background: rgba(232, 62, 140, 0.1); color: #e83e8c; border: 1px solid rgba(232, 62, 140, 0.25);">Tugas Harian Beda</span>
+                                    <span class="periode-range">Manual Input</span>
+                                </div>
+                                <div class="reset-info" style="color:#e83e8c;">
+                                    <i class="fas fa-info-circle"></i> Tidak reset otomatis & arsip permanen
                                 </div>
                             </div>
-                            <div class="reset-note"><i class="fas fa-info-circle"></i> {{ $pi['reset_info'] }}</div>
+                            <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between" style="background: #f8f9fc;">
+                                <span class="text-muted small"><i class="fas fa-keyboard"></i> Diinput manual per hari. Tugas yang sudah selesai akan masuk ke Riwayat.</span>
+                                <button class="btn btn-sm btn-primary btn-add-daily-task-{{ $divisiSlug }} py-1 px-3" onclick="addDailyTaskLive('{{ $divisi }}', '{{ $divisiSlug }}')" style="font-size: 0.82rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-plus"></i> Tambah Tugas Harian
+                                </button>
+                            </div>
+
                             <table class="agenda-table">
                                 <thead>
                                     <tr>
-                                        <th class="col-no">No</th>
-                                        <th>Deskripsi Pekerjaan</th>
-                                        <th class="col-check">Checklist</th>
-                                        <th class="col-action">Aksi</th>
+                                        <th class="col-no" style="width: 5%; text-align: center;">No</th>
+                                        <th>Deskripsi Tugas</th>
+                                        <th style="width: 15%; text-align: center;">Target</th>
+                                        <th style="width: 15%; text-align: center;">Realisasi</th>
+                                        <th style="width: 12%; text-align: center;">Deadline</th>
+                                        <th class="col-check" style="width: 10%; text-align: center;">Checklist</th>
+                                        <th class="col-action" style="width: 10%; text-align: center;">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tbody-{{ $divisiSlug }}-{{ $tipe }}">
-                                    @forelse($tplGroup->values() as $i => $tpl)
-                                        <tr class="todo-row {{ $tpl->log && $tpl->log->is_done ? 'done' : '' }}"
-                                            id="row-{{ $tpl->id }}" data-tipe="{{ $tipe }}"
-                                            data-divisi="{{ $divisiSlug }}"
-                                            data-judul="{{ strtolower($tpl->judul) }}">
-                                            <td class="col-no">{{ $i + 1 }}</td>
-                                            <td>
-                                                <div class="judul">{{ $tpl->judul }}</div>
-                                                @if ($tpl->deskripsi)
-                                                    <div class="deskripsi">{{ $tpl->deskripsi }}</div>
-                                                @endif
+                                <tbody id="tbody-{{ $divisiSlug }}-harian_beda">
+                                    @php
+                                        $divisiTasks = isset($dailyTasks) ? $dailyTasks->filter(fn($task) => $task->divisi === $divisi)->values() : collect();
+                                    @endphp
+                                    @foreach($divisiTasks as $i => $task)
+                                        <tr class="todo-row {{ $task->is_done ? 'done' : '' }}"
+                                            id="daily-row-{{ $task->id }}" data-divisi="{{ $divisiSlug }}">
+                                            <td class="col-no" style="vertical-align: middle;">{{ $i + 1 }}</td>
+                                            <td class="col-task-content" style="vertical-align: middle;">
+                                                <input type="text" class="live-edit-input live-task-judul font-weight-bold" value="{{ $task->judul }}" data-task-id="{{ $task->id }}" placeholder="Nama tugas..." style="font-size: 0.9rem; color: #333;">
+                                                <input type="text" class="live-edit-input live-task-deskripsi text-muted small mt-1" value="{{ $task->deskripsi ?? '' }}" data-task-id="{{ $task->id }}" placeholder="Catatan tambahan (optional)..." style="font-size: 0.78rem;">
                                             </td>
-                                            <td class="col-check">
-                                                @if ($tpl->log)
-                                                    <button class="check-circle {{ $tpl->log->is_done ? 'checked' : '' }}"
-                                                        onclick="toggleCheck({{ $tpl->log->id }}, this, '{{ $divisiSlug }}')"
-                                                        title="{{ $tpl->log->is_done ? 'Tandai belum selesai' : 'Tandai selesai' }}">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                @endif
+                                            <td class="text-center" style="vertical-align: middle;">
+                                                <input type="text" class="live-edit-input live-task-target font-weight-bold text-center" value="{{ $task->target ?? '' }}" data-task-id="{{ $task->id }}" placeholder="Target...">
                                             </td>
-                                            <td class="col-action">
-                                                <button class="del-btn"
-                                                    onclick="deleteAgenda({{ $tpl->id }}, '{{ $divisiSlug }}')"
-                                                    title="Hapus">
+                                            <td class="text-center" style="vertical-align: middle;">
+                                                <input type="text" class="live-edit-input live-task-realisasi font-weight-bold text-center" value="{{ $task->realisasi ?? '' }}" data-task-id="{{ $task->id }}" placeholder="Realisasi...">
+                                            </td>
+                                            <td class="col-task-deadline text-center" style="vertical-align: middle;">
+                                                <input type="date" class="live-edit-input live-task-deadline text-center text-danger font-weight-bold" value="{{ $task->deadline ?? '' }}" data-task-id="{{ $task->id }}">
+                                            </td>
+                                            <td class="col-check text-center" style="vertical-align: middle;">
+                                                <button class="check-circle {{ $task->is_done ? 'checked' : '' }}"
+                                                    onclick="toggleDailyTaskCheck({{ $task->id }}, this, '{{ $divisiSlug }}')"
+                                                    title="{{ $task->is_done ? 'Tandai belum selesai' : 'Tandai selesai' }}">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </td>
+                                            <td class="col-action text-center" style="vertical-align: middle;">
+                                                <button class="del-btn btn-sm btn-action-icon" onclick="deleteDailyTask({{ $task->id }}, '{{ $divisiSlug }}')" title="Hapus">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </td>
                                         </tr>
-                                    @empty
-                                        <tr class="empty-row-{{ $divisiSlug }}-{{ $tipe }}">
-                                            <td colspan="4" class="empty-state" style="padding:24px;">
-                                                <i class="fas fa-inbox"
-                                                    style="font-size:1.5rem;margin-bottom:6px;display:block;"></i>
-                                                Belum ada agenda {{ $tipe }}.
-                                            </td>
-                                        </tr>
-                                    @endforelse
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
-                    @endforeach
+                    </div>
+
+                    {{-- Panel Riwayat --}}
+                    <div id="sub-panel-riwayat-{{ $divisiSlug }}" style="display: none;">
+                        <div class="card p-3 mb-3 border border-light shadow-sm" style="background: #fafbff; border-radius: 12px;">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label font-weight-bold small text-muted mb-1" style="font-size: 0.75rem;">Cari Kata Kunci</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" id="history-search-{{ $divisiSlug }}" class="form-control" placeholder="Ketik kata kunci..." oninput="filterRiwayat('{{ $divisi }}', '{{ $divisiSlug }}')">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label font-weight-bold small text-muted mb-1" style="font-size: 0.75rem;">Dari Tanggal</label>
+                                    <input type="date" id="history-dari-{{ $divisiSlug }}" class="form-control form-control-sm" onchange="filterRiwayat('{{ $divisi }}', '{{ $divisiSlug }}')">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label font-weight-bold small text-muted mb-1" style="font-size: 0.75rem;">Sampai Tanggal</label>
+                                    <input type="date" id="history-sampai-{{ $divisiSlug }}" class="form-control form-control-sm" onchange="filterRiwayat('{{ $divisi }}', '{{ $divisiSlug }}')">
+                                </div>
+                                <div class="col-md-2 d-grid">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="resetRiwayatFilters('{{ $divisi }}', '{{ $divisiSlug }}')">
+                                        <i class="fas fa-sync-alt"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="history-list-{{ $divisiSlug }}" class="history-list">
+                            {{-- Loaded via AJAX --}}
+                        </div>
+                    </div>
 
                 </div>{{-- /divisi-panel --}}
             @endforeach
@@ -1015,17 +1187,23 @@
             tr.dataset.divisi = divisiSlug;
             tr.dataset.judul = res.judul.toLowerCase();
             tr.innerHTML = `
-            <td class="col-no">${no}</td>
-            <td>
-                <div class="judul">${escHtml(res.judul)}</div>
-                ${res.deskripsi ? `<div class="deskripsi">${escHtml(res.deskripsi)}</div>` : ''}
+            <td class="col-no" style="vertical-align: middle;">${no}</td>
+            <td style="vertical-align: middle;">
+                <div class="judul font-weight-bold" style="font-size: 0.9rem; color: #333;">${escHtml(res.judul)}</div>
+                ${res.deskripsi ? `<div class="deskripsi text-muted" style="font-size: 0.78rem; margin-top: 2px;">${escHtml(res.deskripsi)}</div>` : ''}
             </td>
-            <td class="col-check">
+            <td class="text-center" style="vertical-align: middle; width: 18%;">
+                <input type="text" class="live-edit-input live-todo-target font-weight-bold text-center" value="${res.target ? escHtml(res.target) : ''}" data-template-id="${res.template_id}" placeholder="Target...">
+            </td>
+            <td class="text-center" style="vertical-align: middle; width: 18%;">
+                <input type="text" class="live-edit-input live-todo-realisasi font-weight-bold text-center" value="${res.realisasi ? escHtml(res.realisasi) : ''}" data-log-id="${res.log_id}" placeholder="Realisasi...">
+            </td>
+            <td class="col-check" style="vertical-align: middle;">
                 <button class="check-circle" onclick="toggleCheck(${res.log_id}, this, '${divisiSlug}')" title="Tandai selesai">
                     <i class="fas fa-check"></i>
                 </button>
             </td>
-            <td class="col-action">
+            <td class="col-action" style="vertical-align: middle;">
                 <button class="del-btn" onclick="deleteAgenda(${res.template_id}, '${divisiSlug}')" title="Hapus">
                     <i class="fas fa-trash-alt"></i>
                 </button>
@@ -1053,6 +1231,430 @@
                         updateStats(0, -1, divisiSlug);
                     }
                 });
+        }
+
+        /* ======= SUB-TABS (HARI INI / RIWAYAT) ======= */
+        function switchSubTab(divisiSlug, mode, btn) {
+            $('#panel-' + divisiSlug + ' .sub-tab-btn').removeClass('active');
+            $(btn).addClass('active');
+
+            if (mode === 'hari-ini') {
+                $('#sub-panel-hari-ini-' + divisiSlug).show();
+                $('#sub-panel-riwayat-' + divisiSlug).hide();
+            } else {
+                $('#sub-panel-hari-ini-' + divisiSlug).hide();
+                $('#sub-panel-riwayat-' + divisiSlug).show();
+            }
+        }
+
+        /* ======= DAILY TASK (TUGAS HARIAN BEDA) LOGIC (LIVE EDIT & AUTOSAVE) ======= */
+        let isAddingDailyTask = false;
+        function addDailyTaskLive(divisi, divisiSlug) {
+            if (isAddingDailyTask) return;
+            isAddingDailyTask = true;
+            
+            $.post('{{ route('agenda.daily-task.store') }}', {
+                _token: CSRF,
+                divisi: divisi
+            })
+            .done(res => {
+                if (res.success) {
+                    const tbody = document.getElementById('tbody-' + divisiSlug + '-harian_beda');
+                    const newRowHtml = renderTaskRowHtml(res.task, divisiSlug);
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'todo-row';
+                    newRow.id = 'daily-row-' + res.task.id;
+                    newRow.dataset.divisi = divisiSlug;
+                    newRow.innerHTML = newRowHtml;
+
+                    tbody.appendChild(newRow);
+                    reindexRows(divisiSlug);
+
+                    setTimeout(() => {
+                        $(`#daily-row-${res.task.id} .live-task-judul`).focus();
+                    }, 100);
+
+                    showToast('Tugas harian baru ditambahkan.');
+                } else {
+                    showToast('Gagal menambahkan tugas harian.');
+                }
+            })
+            .fail(() => {
+                showToast('Terjadi kesalahan, coba lagi.');
+            })
+            .always(() => {
+                isAddingDailyTask = false;
+            });
+        }
+
+
+
+        // Save existing tasks when blurred and changed
+        $(document).on('focus', '.live-edit-input, .live-todo-target, .live-todo-realisasi', function() {
+            $(this).data('prev-val', $(this).val());
+        });
+
+        $(document).on('change', 'input[type="date"].live-edit-input', function() {
+            const prevVal = $(this).data('prev-val');
+            const currVal = $(this).val();
+            if (prevVal !== undefined && prevVal === currVal) {
+                return;
+            }
+            $(this).data('prev-val', currVal);
+            const taskId = $(this).data('task-id');
+            if (taskId) {
+                saveTaskLive(taskId, $(this).closest('tr'));
+            }
+        });
+
+        $(document).on('blur', '.live-edit-input', function() {
+            const prevVal = $(this).data('prev-val');
+            const currVal = $(this).val();
+            if (prevVal !== undefined && prevVal === currVal) {
+                return;
+            }
+            const taskId = $(this).data('task-id');
+            if (taskId) {
+                saveTaskLive(taskId, $(this).closest('tr'));
+            }
+        });
+
+        $(document).on('blur', '.live-todo-target', function() {
+            const prevVal = $(this).data('prev-val');
+            const currVal = $(this).val();
+            if (prevVal !== undefined && prevVal === currVal) {
+                return;
+            }
+            const templateId = $(this).data('template-id');
+            const target = currVal;
+            
+            $.ajax({
+                url: '{{ url('agenda/todo-template') }}/' + templateId + '/target',
+                type: 'PUT',
+                data: {
+                    _token: CSRF,
+                    target: target
+                },
+                success: res => {
+                    if (res.success) {
+                        showToast('Target disimpan.');
+                    }
+                }
+            });
+        });
+
+        $(document).on('blur', '.live-todo-realisasi', function() {
+            const prevVal = $(this).data('prev-val');
+            const currVal = $(this).val();
+            if (prevVal !== undefined && prevVal === currVal) {
+                return;
+            }
+            const logId = $(this).data('log-id');
+            const realisasi = currVal;
+            
+            if (!logId) return;
+
+            $.ajax({
+                url: '{{ url('agenda/todo-log') }}/' + logId + '/realisasi',
+                type: 'PUT',
+                data: {
+                    _token: CSRF,
+                    realisasi: realisasi
+                },
+                success: res => {
+                    if (res.success) {
+                        showToast('Realisasi disimpan.');
+                    }
+                }
+            });
+        });
+
+        $(document).on('keypress', '.live-edit-input, .live-todo-target, .live-todo-realisasi', function(e) {
+            if (e.key === 'Enter') {
+                $(this).blur();
+            }
+        });
+
+
+
+        function saveTaskLive(taskId, rowEl) {
+            const judul = rowEl.find('.live-task-judul').val()?.trim() || '';
+            const deskripsi = rowEl.find('.live-task-deskripsi').val()?.trim() || '';
+            const target = rowEl.find('.live-task-target').val()?.trim() || '';
+            const realisasi = rowEl.find('.live-task-realisasi').val()?.trim() || '';
+            const deadline = rowEl.find('.live-task-deadline').val()?.trim() || '';
+
+            $.ajax({
+                url: '{{ url('agenda/daily-task') }}/' + taskId,
+                type: 'PUT',
+                data: {
+                    _token: CSRF,
+                    judul: judul,
+                    deskripsi: deskripsi,
+                    target: target,
+                    realisasi: realisasi,
+                    deadline: deadline
+                },
+                success: res => {
+                    if (res.success) {
+                        showToast('Perubahan disimpan.');
+                    }
+                }
+            });
+        }
+
+        function toggleDailyTaskCheck(taskId, btn, divisiSlug) {
+            $.ajax({
+                url: '{{ url('agenda/daily-task') }}/' + taskId + '/done',
+                type: 'PATCH',
+                data: {
+                    _token: CSRF
+                },
+                success: res => {
+                    if (res.success) {
+                        const row = btn.closest('tr');
+                        const timeCell = row.querySelector('.done-time');
+                        if (res.is_done) {
+                            btn.classList.add('checked');
+                            row.classList.add('done');
+                            btn.title = 'Tandai belum selesai';
+                            if (timeCell) timeCell.textContent = res.done_at;
+                            showToast('Tugas selesai & diarsipkan!');
+                        } else {
+                            btn.classList.remove('checked');
+                            row.classList.remove('done');
+                            btn.title = 'Tandai selesai';
+                            if (timeCell) timeCell.textContent = '-';
+                        }
+                    }
+                }
+            });
+        }
+
+        function deleteDailyTask(taskId, divisiSlug) {
+            Swal.fire({
+                title: 'Hapus tugas ini?',
+                text: 'Tugas manual akan dihapus permanen.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#4b5563',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then(r => {
+                if (r.isConfirmed) {
+                    $.ajax({
+                        url: '{{ url('agenda/daily-task') }}/' + taskId,
+                        type: 'DELETE',
+                        data: {
+                            _token: CSRF
+                        },
+                        success: res => {
+                            if (res.success) {
+                                const row = document.getElementById('daily-row-' + taskId);
+                                if (row) {
+                                    row.style.transition = 'opacity .3s';
+                                    row.style.opacity = '0';
+                                    setTimeout(() => {
+                                        row.remove();
+                                        reindexRows(divisiSlug);
+                                    }, 300);
+                                }
+                                showToast('Tugas manual berhasil dihapus.');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function reindexRows(divisiSlug) {
+            const tbody = document.getElementById('tbody-' + divisiSlug + '-harian_beda');
+            tbody.querySelectorAll('.todo-row').forEach((r, idx) => {
+                const noCol = r.querySelector('.col-no');
+                if (noCol) noCol.textContent = idx + 1;
+            });
+        }
+
+        function renderTaskRowHtml(task, divisiSlug) {
+            return `
+                <td class="col-no" style="vertical-align: middle;"></td>
+                <td class="col-task-content" style="vertical-align: middle;">
+                    <input type="text" class="live-edit-input live-task-judul font-weight-bold" value="${task.judul ? escHtml(task.judul) : ''}" data-task-id="${task.id}" placeholder="Nama tugas..." style="font-size: 0.9rem; color: #333;">
+                    <input type="text" class="live-edit-input live-task-deskripsi text-muted small mt-1" value="${task.deskripsi ? escHtml(task.deskripsi) : ''}" data-task-id="${task.id}" placeholder="Catatan tambahan (optional)..." style="font-size: 0.78rem;">
+                </td>
+                <td class="text-center" style="vertical-align: middle;">
+                    <input type="text" class="live-edit-input live-task-target font-weight-bold text-center" value="${task.target ? escHtml(task.target) : ''}" data-task-id="${task.id}" placeholder="Target...">
+                </td>
+                <td class="text-center" style="vertical-align: middle;">
+                    <input type="text" class="live-edit-input live-task-realisasi font-weight-bold text-center" value="${task.realisasi ? escHtml(task.realisasi) : ''}" data-task-id="${task.id}" placeholder="Realisasi...">
+                </td>
+                <td class="col-task-deadline text-center" style="vertical-align: middle;">
+                    <input type="date" class="live-edit-input live-task-deadline text-center text-danger font-weight-bold" value="${task.deadline ? escHtml(task.deadline) : ''}" data-task-id="${task.id}">
+                </td>
+                <td class="col-check text-center" style="vertical-align: middle;">
+                    <button class="check-circle ${task.is_done ? 'checked' : ''}" onclick="toggleDailyTaskCheck(${task.id}, this, '${divisiSlug}')" title="${task.is_done ? 'Tandai belum selesai' : 'Tandai selesai'}">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </td>
+                <td class="col-action text-center" style="vertical-align: middle;">
+                    <button class="del-btn btn-sm btn-action-icon" onclick="deleteDailyTask(${task.id}, '${divisiSlug}')" title="Hapus">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+        }
+
+        function formatTime(dateTimeStr) {
+            if (!dateTimeStr) return '-';
+            if (dateTimeStr.length === 5 && dateTimeStr.includes(':')) return dateTimeStr;
+            try {
+                const d = new Date(dateTimeStr);
+                const h = String(d.getHours()).padStart(2, '0');
+                const m = String(d.getMinutes()).padStart(2, '0');
+                return `${h}:${m}`;
+            } catch(e) {
+                return '-';
+            }
+        }
+
+        /* ======= RIWAYAT (HISTORY) LOGIC ======= */
+        function filterRiwayat(divisi, divisiSlug) {
+            loadRiwayat(divisi, divisiSlug);
+        }
+
+        function resetRiwayatFilters(divisi, divisiSlug) {
+            document.getElementById('history-search-' + divisiSlug).value = '';
+            const dariEl = document.getElementById('history-dari-' + divisiSlug);
+            const sampaiEl = document.getElementById('history-sampai-' + divisiSlug);
+            if (dariEl) dariEl.value = '';
+            if (sampaiEl) sampaiEl.value = '';
+            loadRiwayat(divisi, divisiSlug);
+        }
+
+        function loadRiwayat(divisi, divisiSlug) {
+            const q = document.getElementById('history-search-' + divisiSlug).value.trim();
+            const dariEl = document.getElementById('history-dari-' + divisiSlug);
+            const sampaiEl = document.getElementById('history-sampai-' + divisiSlug);
+            const dari = dariEl ? dariEl.value : '';
+            const sampai = sampaiEl ? sampaiEl.value : '';
+
+            const container = document.getElementById('history-list-' + divisiSlug);
+            container.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat riwayat...</div>';
+
+            $.ajax({
+                url: '{{ route('agenda.riwayat') }}',
+                type: 'GET',
+                data: {
+                    divisi: divisi,
+                    q: q,
+                    dari: dari,
+                    sampai: sampai
+                },
+                success: res => {
+                    if (!res.success || !res.data || res.data.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state py-5 text-center text-muted">
+                                <i class="fas fa-history" style="font-size:2rem;margin-bottom:8px;display:block;"></i>
+                                Tidak ada riwayat ditemukan.
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = '';
+                    res.data.forEach(group => {
+                        html += `
+                            <div class="history-group mb-4">
+                                <!-- Group Header: Date and Count -->
+                                <div class="d-flex align-items-center justify-content-between mb-2 px-1" style="font-size: 0.8rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    <span class="text-secondary"><i class="far fa-calendar-alt mr-1"></i> ${group.date_label}</span>
+                                    <span class="flex-grow-1 mx-3" style="border-bottom: 2px solid #e2e8f0; height: 1px;"></span>
+                                    <span style="color: #4f46e5; font-weight: 800;">${group.items.length} SELESAI</span>
+                                </div>
+                                
+                                <!-- Items List -->
+                                <div class="bg-white shadow-sm border border-light" style="border-radius: 12px; overflow: hidden;">
+                        `;
+
+                        group.items.forEach((item, idx) => {
+                            const timeStr = item.done_at ? new Date(item.done_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '-';
+                            
+                            let badgeStyle = '';
+                            let badgeLabel = '';
+
+                            if (item.source === 'daily') {
+                                badgeStyle = 'background-color: #fdf2f8; color: #db2777; border: 1px solid #fce7f3;';
+                                badgeLabel = 'Harian Beda';
+                            } else {
+                                const tipe = String(item.tipe).toLowerCase();
+                                if (tipe === 'harian') {
+                                    badgeStyle = 'background-color: #e6fffa; color: #0d9488; border: 1px solid #ccfbf1;';
+                                    badgeLabel = 'Harian';
+                                } else if (tipe === 'mingguan') {
+                                    badgeStyle = 'background-color: #fffbeb; color: #d97706; border: 1px solid #fef3c7;';
+                                    badgeLabel = 'Mingguan';
+                                } else if (tipe === 'bulanan') {
+                                    badgeStyle = 'background-color: #f5f3ff; color: #7c3aed; border: 1px solid #ede9fe;';
+                                    badgeLabel = 'Bulanan';
+                                } else {
+                                    badgeStyle = 'background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb;';
+                                    badgeLabel = item.tipe;
+                                }
+                            }
+
+                            const sourceChip = `<span class="badge px-2 py-1 mr-2" style="font-size: 0.72rem; border-radius: 4px; ${badgeStyle}">${badgeLabel}</span>`;
+                            const highlightedJudul = highlightText(item.judul, q);
+                            const highlightedDeskripsi = item.deskripsi ? highlightText(item.deskripsi, q) : '';
+                            
+                            const isLast = (idx === group.items.length - 1);
+                            const borderStyle = isLast ? 'border-bottom: none !important;' : 'border-bottom: 1px solid #f1f3f9;';
+
+                            html += `
+                                <div class="d-flex align-items-center justify-content-between px-3 py-3" style="font-size: 0.88rem; transition: background 0.15s; ${borderStyle} text-align: left;">
+                                    <!-- Left Section: Badge + Title/Desc -->
+                                    <div class="d-flex align-items-center flex-grow-1 min-width-0">
+                                        ${sourceChip}
+                                        <div class="min-width-0 text-left" style="text-align: left;">
+                                            <span class="font-weight-bold text-dark text-truncate d-block" style="font-size: 0.88rem; text-align: left;">${highlightedJudul}</span>
+                                            ${highlightedDeskripsi ? `<span class="text-muted small text-truncate d-block" style="font-size: 0.76rem; margin-top: 1px; text-align: left;">${highlightedDeskripsi}</span>` : ''}
+                                        </div>
+                                    </div>
+                                    <!-- Right Section: Completion Time -->
+                                    <div class="text-end text-success font-weight-bold shrink-0 ml-3" style="font-size: 0.82rem; white-space: nowrap;">
+                                        <i class="fas fa-check mr-1" style="font-size: 0.78rem;"></i> ${timeStr}
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+                },
+                error: () => {
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> Gagal memuat riwayat. Silakan coba lagi.
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function highlightText(text, keyword) {
+            if (!keyword || !text) return escHtml(text);
+            const escapedKeyword = escapeRegExp(keyword);
+            const regex = new RegExp(`(${escapedKeyword})`, 'gi');
+            return escHtml(text).replace(regex, '<mark class="p-0 bg-warning text-dark">$1</mark>');
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // ── Delete ─────────────────────────────────────────────────────────────────

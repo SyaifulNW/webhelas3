@@ -466,7 +466,7 @@
                                 <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6610f2;">
                                     <i class="fas fa-bullseye mr-1"></i> Target Peserta Open House
                                 </div>
-                                <div class="h2 mb-0 font-weight-bold text-gray-800" id="openhouse-target-card">{{ $targetOpenHouse }}</div>
+                                <div class="h2 mb-0 font-weight-bold text-gray-800" id="openhouse-target-card">{{ $totalTargetOpenHouse }}</div>
                                 <div class="text-xs text-muted mt-1">peserta bulan ini</div>
                             </div>
                         </div>
@@ -590,7 +590,8 @@
                                                 <input type="date" class="form-control-inline date-val" value="{{ $act->tanggal }}" onchange="updateActivityInline({{ $act->id }}, 'tanggal', this.value)" style="width: 140px !important;">
                                             </td>
                                             <td style="text-align: center;">
-                                                <input type="number" class="activity-input target-val" value="{{ $act->target }}" min="0" onchange="updateActivityInline({{ $act->id }}, 'target', this.value)">
+                                                <span class="font-weight-bold text-dark target-text">{{ $targetOpenHouse }}</span>
+                                                <input type="hidden" class="target-val" value="{{ $targetOpenHouse }}">
                                             </td>
                                             <td style="text-align: center;">
                                                 <input type="number" class="activity-input realisasi-val" value="{{ $act->realisasi }}" min="0" onchange="updateActivityInline({{ $act->id }}, 'realisasi', this.value)">
@@ -1035,14 +1036,27 @@
             const targetInput = tabEl.querySelector('input[name="target"]');
             const targetValue = parseInt(targetInput ? targetInput.value : '0') || 0;
 
+            if (type === 'openhouse') {
+                const tableTargets = tabEl.querySelectorAll('.target-val');
+                tableTargets.forEach(t => t.value = targetValue);
+                const tableTargetTexts = tabEl.querySelectorAll('.target-text');
+                tableTargetTexts.forEach(t => t.textContent = targetValue);
+            }
+
+            let calculatedTarget = targetValue;
+            if (type === 'openhouse') {
+                const rows = tabEl.querySelectorAll('tbody tr[id^="activity-row-"]');
+                calculatedTarget = targetValue * rows.length;
+            }
+
             let totalRealisasi = 0;
             const realisasiInputs = tabEl.querySelectorAll('.realisasi-val');
             realisasiInputs.forEach(input => {
                 totalRealisasi += parseInt(input.value) || 0;
             });
 
-            const shortage = Math.max(0, targetValue - totalRealisasi);
-            const shortagePercent = targetValue > 0 ? Math.round((shortage / targetValue) * 100) : 0;
+            const shortage = Math.max(0, calculatedTarget - totalRealisasi);
+            const shortagePercent = calculatedTarget > 0 ? Math.round((shortage / calculatedTarget) * 100) : 0;
 
             const targetCard = document.getElementById(`${type}-target-card`);
             const realisasiCard = document.getElementById(`${type}-realisasi-card`);
@@ -1050,7 +1064,7 @@
             const kurangDetailCard = document.getElementById(`${type}-kurang-detail-card`);
             const progressBar = document.getElementById(`${type}-progress-bar`);
 
-            if (targetCard) targetCard.textContent = targetValue;
+            if (targetCard) targetCard.textContent = calculatedTarget;
             if (realisasiCard) realisasiCard.textContent = totalRealisasi;
             if (kurangPersenCard) kurangPersenCard.textContent = shortagePercent + '%';
             if (kurangDetailCard) kurangDetailCard.textContent = shortage + ' peserta masih kurang';
@@ -1293,12 +1307,13 @@
 
         // ---- Add activity row (Instantly creates inline) ----
         function addActivityRow(type) {
+            const startTarget = type === 'open_house' ? parseInt(document.querySelector('#tab-openhouse input[name="target"]').value) || 0 : 0;
             $.post('{{ route("admin.monitoring-chapter.activity.store") }}', {
                 _token: '{{ csrf_token() }}',
                 type: type,
                 chapter_id: '',
                 tanggal: '{{ date("Y-m-d") }}',
-                target: 0,
+                target: startTarget,
                 realisasi: 0,
                 evaluasi: 'Belum ada peserta',
                 periode: '{{ $periode }}'
@@ -1327,7 +1342,10 @@
                                     <input type="date" class="form-control-inline date-val" value="${activity.tanggal}" onchange="updateActivityInline(${activity.id}, 'tanggal', this.value)" style="width: 140px !important;">
                                 </td>
                                 <td style="text-align: center;">
-                                    <input type="number" class="activity-input target-val" value="${activity.target}" min="0" onchange="updateActivityInline(${activity.id}, 'target', this.value)">
+                                    ${type === 'open_house' ? 
+                                        `<span class="font-weight-bold text-dark target-text">${activity.target}</span><input type="hidden" class="target-val" value="${activity.target}">` :
+                                        `<input type="number" class="activity-input target-val" value="${activity.target}" min="0" onchange="updateActivityInline(${activity.id}, 'target', this.value)">`
+                                    }
                                 </td>
                                 <td style="text-align: center;">
                                     <input type="number" class="activity-input realisasi-val" value="${activity.realisasi}" min="0" onchange="updateActivityInline(${activity.id}, 'realisasi', this.value)">

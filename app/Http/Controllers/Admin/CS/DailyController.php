@@ -91,9 +91,72 @@ class DailyController extends Controller
         $totalNilai = $kpiCalculated['totalNilai'];
         $totalBobot = $kpiCalculated['totalBobot'];
 
+        // Load agenda data for CS users
+        $isCs = in_array($userRole, ['cs-mbc', 'cs-smi']);
+        $divisiList = [];
+        $divisiData = [];
+        $periodeInfo = [];
+
+        if ($isCs) {
+            if (strtolower($userName) === 'linda') {
+                $divisiList = ['Divisi Keuangan', 'Sales & Marketing'];
+            } elseif (strtolower($userName) === 'yasmin') {
+                $divisiList = ['Sales & Marketing'];
+            } else {
+                $divisiName = 'Sales & Marketing'; // fallback
+                if ($user->divisi) {
+                    if (stripos($user->divisi, 'Keuangan') !== false) {
+                        $divisiName = 'Divisi Keuangan';
+                    } elseif (stripos($user->divisi, 'Sales') !== false || stripos($user->divisi, 'Marketing') !== false) {
+                        $divisiName = 'Sales & Marketing';
+                    } else {
+                        $divisiName = $user->divisi;
+                    }
+                }
+                $divisiList = [$divisiName];
+            }
+
+            $this->generateLogs($userId);
+
+            $allTemplates = $this->attachLogs(
+                \App\Models\TodoTemplate::where('created_by', $userId)
+                    ->where('is_active', true)
+                    ->orderBy('divisi')->orderBy('tipe')->orderBy('created_at')->get(),
+                $userId
+            );
+
+            foreach ($divisiList as $divisi) {
+                $templates = $allTemplates->filter(fn($t) => ($t->divisi ?? 'Divisi Keuangan') === $divisi)->values();
+                $total   = $templates->count();
+                $selesai = $templates->filter(fn($t) => $t->log && $t->log->is_done)->count();
+                $tersisa = $total - $selesai;
+                $persen  = $total > 0 ? round(($selesai / $total) * 100) : 0;
+                $divisiData[$divisi] = [
+                    'templates'  => $templates,
+                    'grouped'    => $templates->groupBy('tipe'),
+                    'total'      => $total,
+                    'selesai'    => $selesai,
+                    'tersisa'    => $tersisa,
+                    'persen'     => $persen,
+                ];
+            }
+
+            $periodeInfo = [
+                'harian'   => \App\Http\Controllers\Common\AgendaController::getPeriodeInfo('harian'),
+                'mingguan' => \App\Http\Controllers\Common\AgendaController::getPeriodeInfo('mingguan'),
+                'bulanan'  => \App\Http\Controllers\Common\AgendaController::getPeriodeInfo('bulanan'),
+            ];
+            $dailyTasks = \App\Models\DailyTask::where('user_id', $userId)
+                ->whereDate('tanggal', $tanggal)
+                ->get();
+        } else {
+            $dailyTasks = collect();
+        }
+
         return view('admin.CS.dailyactivity.index', compact(
             'activities', 'daily', 'tanggal',
-            'kpiData', 'totalNilai', 'totalBobot', 'automatedIds'
+            'kpiData', 'totalNilai', 'totalBobot', 'automatedIds',
+            'isCs', 'divisiList', 'divisiData', 'periodeInfo', 'dailyTasks'
         ));
     }
 
@@ -402,5 +465,43 @@ class DailyController extends Controller
 
     return $pdf->download("Laporan_Activity_KPI_{$bulan}_{$csName}.pdf");
 }
+
+    private function getPeriode(string $tipe): string
+    {
+        $now = \Carbon\Carbon::now();
+        return match ($tipe) {
+            'harian'   => $now->toDateString(),
+            'mingguan' => $now->format('o-W'),
+            'bulanan'  => $now->format('Y-m'),
+            default    => $now->toDateString(),
+        };
+    }
+
+    private function generateLogs(int $userId): void
+    {
+        $templates = \App\Models\TodoTemplate::where('created_by', $userId)
+            ->where('is_active', true)->get();
+        foreach ($templates as $tpl) {
+            \App\Models\TodoLog::firstOrCreate(
+                ['template_id' => $tpl->id, 'user_id' => $userId, 'periode' => $this->getPeriode($tpl->tipe)],
+                ['is_done' => false]
+            );
+        }
+    }
+
+    private function attachLogs($templates, int $userId)
+    {
+        return $templates->map(function ($tpl) use ($userId) {
+            $periode  = $this->getPeriode($tpl->tipe);
+            $log      = \App\Models\TodoLog::where('template_id', $tpl->id)
+                ->where('user_id', $userId)
+                ->where('periode', $periode)
+                ->first();
+            $tpl->log          = $log;
+            $tpl->periode      = $periode;
+            $tpl->periode_info = \App\Http\Controllers\Common\AgendaController::getPeriodeInfo($tpl->tipe);
+            return $tpl;
+        });
+    }
 
 }

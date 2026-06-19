@@ -1547,12 +1547,15 @@
                     </li>
                 @endif
 
-                {{-- Menu Agenda (hanya Linda) --}}
-                @if (auth()->user()->name === 'Linda')
+                {{-- Menu Activity/ToDoList (Untuk divisi selain CS, Admin, Chapter, Agen, Reseller) --}}
+                @if (
+                    !in_array($userRole, ['administrator', 'cs-mbc', 'cs-smi', 'chapter', 'reseller', 'agen']) &&
+                    !str_starts_with($userRole, 'chapter_')
+                )
                     <li class="nav-item {{ request()->routeIs('agenda.index') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('agenda.index') }}" title="AGENDA">
-                            <i class="fas fa-fw fa-calendar-check"></i>
-                            <span><strong>AGENDA</strong></span>
+                        <a class="nav-link" href="{{ route('agenda.index') }}" title="Activity/ToDoList">
+                            <i class="fas fa-fw fa-tasks"></i>
+                            <span><strong>Activity/ToDoList</strong></span>
                         </a>
                     </li>
                 @endif
