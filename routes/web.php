@@ -190,6 +190,16 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/agenda/store', [App\Http\Controllers\Common\AgendaController::class, 'store'])->name('agenda.store');
         Route::post('/agenda/toggle/{logId}', [App\Http\Controllers\Common\AgendaController::class, 'toggleCheck'])->name('agenda.toggle');
         Route::delete('/agenda/{id}', [App\Http\Controllers\Common\AgendaController::class, 'destroy'])->name('agenda.destroy');
+        Route::put('/agenda/todo-template/{id}/target', [App\Http\Controllers\Common\AgendaController::class, 'updateTarget'])->name('agenda.todo-template.target');
+        Route::put('/agenda/todo-log/{id}/realisasi', [App\Http\Controllers\Common\AgendaController::class, 'updateRealisasi'])->name('agenda.todo-log.realisasi');
+
+        // Fitur Baru: Daily Tasks (Tugas Harian Beda) & Riwayat
+        Route::get('/agenda/riwayat', [App\Http\Controllers\Common\AgendaController::class, 'riwayat'])->name('agenda.riwayat');
+        Route::get('/agenda/rekap', [App\Http\Controllers\Common\AgendaController::class, 'rekap'])->name('agenda.rekap');
+        Route::post('/agenda/daily-task', [App\Http\Controllers\Common\AgendaController::class, 'storeDailyTask'])->name('agenda.daily-task.store');
+        Route::put('/agenda/daily-task/{id}', [App\Http\Controllers\Common\AgendaController::class, 'updateDailyTask'])->name('agenda.daily-task.update');
+        Route::patch('/agenda/daily-task/{id}/done', [App\Http\Controllers\Common\AgendaController::class, 'doneDailyTask'])->name('agenda.daily-task.done');
+        Route::delete('/agenda/daily-task/{id}', [App\Http\Controllers\Common\AgendaController::class, 'deleteDailyTask'])->name('agenda.daily-task.destroy');
     });
     Route::get('/administrator', [AdminController::class, 'index'])->name('administrator');
     Route::get('/marketing', [MarketingController::class, 'index'])->name('marketing');

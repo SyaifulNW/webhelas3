@@ -63,7 +63,7 @@ class MonitoringChapterController extends Controller
         $realisasiEvent = SalesPlan::join('peserta_smis', 'salesplans.id', '=', 'peserta_smis.sales_plan_id')
             ->where('salesplans.status', 'sudah_transfer')
             ->where('peserta_smis.approval_status', 'Approved')
-            ->whereBetween('salesplans.updated_at', [$startOfMonth, $endOfMonth])
+            ->whereBetween('peserta_smis.tanggal_masuk', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
             ->whereIn('salesplans.created_by', function ($query) {
                 $query->select('id')->from('users')->whereIn('role', ['chapter', 'reseller']);
             })
@@ -89,7 +89,7 @@ class MonitoringChapterController extends Controller
             $chClosingBulanIni = SalesPlan::join('peserta_smis', 'salesplans.id', '=', 'peserta_smis.sales_plan_id')
                 ->where('salesplans.status', 'sudah_transfer')
                 ->where('peserta_smis.approval_status', 'Approved')
-                ->whereBetween('salesplans.updated_at', [$startOfMonth, $endOfMonth])
+                ->whereBetween('peserta_smis.tanggal_masuk', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
                 ->whereIn('salesplans.created_by', $allTeamIds)
                 ->count();
 
@@ -108,7 +108,7 @@ class MonitoringChapterController extends Controller
                 $agClosingBulanIni = SalesPlan::join('peserta_smis', 'salesplans.id', '=', 'peserta_smis.sales_plan_id')
                     ->where('salesplans.status', 'sudah_transfer')
                     ->where('peserta_smis.approval_status', 'Approved')
-                    ->whereBetween('salesplans.updated_at', [$startOfMonth, $endOfMonth])
+                    ->whereBetween('peserta_smis.tanggal_masuk', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
                     ->where('salesplans.created_by', $ag->id)
                     ->count();
 
@@ -157,7 +157,7 @@ class MonitoringChapterController extends Controller
             $apClosingBulanIni = SalesPlan::join('peserta_smis', 'salesplans.id', '=', 'peserta_smis.sales_plan_id')
                 ->where('salesplans.status', 'sudah_transfer')
                 ->where('peserta_smis.approval_status', 'Approved')
-                ->whereBetween('salesplans.updated_at', [$startOfMonth, $endOfMonth])
+                ->whereBetween('peserta_smis.tanggal_masuk', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
                 ->where('salesplans.created_by', $ap->id)
                 ->count();
 
@@ -199,11 +199,12 @@ class MonitoringChapterController extends Controller
             ->orderBy('tanggal', 'asc')
             ->get();
 
+        $totalTargetOpenHouse = $targetOpenHouse * $openHouseActivities->count();
         $realisasiOpenHouse = $openHouseActivities->sum('realisasi');
         $realisasiAutoPilot = $autoPilotActivities->sum('realisasi');
 
-        $kurangOpenHouse = max(0, $targetOpenHouse - $realisasiOpenHouse);
-        $kurangOpenHousePersen = $targetOpenHouse > 0 ? round(($kurangOpenHouse / $targetOpenHouse) * 100) : 0;
+        $kurangOpenHouse = max(0, $totalTargetOpenHouse - $realisasiOpenHouse);
+        $kurangOpenHousePersen = $totalTargetOpenHouse > 0 ? round(($kurangOpenHouse / $totalTargetOpenHouse) * 100) : 0;
 
         $kurangAutoPilot = max(0, $targetAutoPilot - $realisasiAutoPilot);
         $kurangAutoPilotPersen = $targetAutoPilot > 0 ? round(($kurangAutoPilot / $targetAutoPilot) * 100) : 0;
@@ -226,7 +227,7 @@ class MonitoringChapterController extends Controller
         return view('operasional.monitoring.chapter', compact(
             'targetEvent', 'realisasiEvent', 'chaptersData', 'agenPusatData',
             'periode', 'allChaptersList', 'periodsList',
-            'targetOpenHouse', 'realisasiOpenHouse', 'kurangOpenHouse', 'kurangOpenHousePersen', 'openHouseActivities',
+            'targetOpenHouse', 'totalTargetOpenHouse', 'realisasiOpenHouse', 'kurangOpenHouse', 'kurangOpenHousePersen', 'openHouseActivities',
             'targetAutoPilot', 'realisasiAutoPilot', 'kurangAutoPilot', 'kurangAutoPilotPersen', 'autoPilotActivities'
         ));
     }
@@ -247,6 +248,12 @@ class MonitoringChapterController extends Controller
             ['value' => $request->target]
         );
 
+        if ($request->type === 'open_house') {
+            ChapterActivity::where('type', 'open_house')
+                ->where('periode', $request->periode)
+                ->update(['target' => $request->target]);
+        }
+
         return redirect()->back()->with('success', 'Target berhasil diperbarui.');
     }
 
@@ -265,9 +272,16 @@ class MonitoringChapterController extends Controller
             'periode' => 'required|string|max:7',
         ]);
 
-        $activity = ChapterActivity::create($request->only([
+        $data = $request->only([
             'type', 'chapter_id', 'tanggal', 'target', 'realisasi', 'evaluasi', 'periode'
-        ]));
+        ]);
+
+        if ($request->type === 'open_house') {
+            $targetOpenHouse = Setting::where('key', 'target_open_house_' . $request->periode)->value('value') ?? 0;
+            $data['target'] = $targetOpenHouse;
+        }
+
+        $activity = ChapterActivity::create($data);
 
         if ($request->ajax()) {
             return response()->json([
@@ -294,7 +308,14 @@ class MonitoringChapterController extends Controller
             'evaluasi' => 'nullable|string|max:255',
         ]);
 
-        $activity->update($request->only(['chapter_id', 'tanggal', 'target', 'realisasi', 'evaluasi']));
+        $data = $request->only(['chapter_id', 'tanggal', 'target', 'realisasi', 'evaluasi']);
+
+        if ($activity->type === 'open_house') {
+            $targetOpenHouse = Setting::where('key', 'target_open_house_' . $activity->periode)->value('value') ?? 0;
+            $data['target'] = $targetOpenHouse;
+        }
+
+        $activity->update($data);
 
         return response()->json(['success' => true]);
     }

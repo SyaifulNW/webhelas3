@@ -481,6 +481,7 @@
                     });
                 @endphp
 
+<<<<<<< HEAD
                 @include('layouts.partials.sidebar.brand')
 
                 <!-- 1. Menu Administrator -->
@@ -506,6 +507,19 @@
                 <!-- 6. Menu Default (CS & Jaringan Jualan Cabang) -->
                 @else
                     @include('layouts.partials.sidebar.cs_cabang')
+                @endif
+
+                {{-- Menu Activity/ToDoList (Untuk divisi selain CS, Admin, Chapter, Agen, Reseller) --}}
+                @if (
+                    !in_array($userRole, ['administrator', 'cs-mbc', 'cs-smi', 'chapter', 'reseller', 'agen']) &&
+                    !str_starts_with($userRole, 'chapter_')
+                )
+                    <li class="nav-item {{ request()->routeIs('agenda.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('agenda.index') }}" title="Activity/ToDoList">
+                            <i class="fas fa-fw fa-tasks"></i>
+                            <span><strong>Activity/ToDoList</strong></span>
+                        </a>
+                    </li>
                 @endif
 
                 <!-- 7. Menu Shared / Bersama -->

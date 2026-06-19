@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TodoLog extends Model
 {
-    protected $fillable = ['template_id', 'user_id', 'periode', 'is_done', 'done_at'];
+    protected $fillable = ['template_id', 'user_id', 'periode', 'is_done', 'done_at', 'realisasi'];
 
     public function template()
     {
