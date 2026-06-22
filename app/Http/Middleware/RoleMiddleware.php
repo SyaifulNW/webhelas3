@@ -29,8 +29,13 @@ class RoleMiddleware
             }
         }
 
+<<<<<<< Updated upstream
         // Special case: allow cs_supervisor to access administrator routes
         if (Auth::user()->hasHakAkses('cs_supervisor') && in_array('administrator', $allowedRoles)) {
+=======
+        // Special case: allow hrd to access administrator routes
+        if (Auth::user()->hasSubrole('hrd') && in_array('administrator', $allowedRoles)) {
+>>>>>>> Stashed changes
             return $next($request);
         }
 

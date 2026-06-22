@@ -43,4 +43,12 @@ class PengajuanAnggaran extends Model
     {
         return $this->hasOne(\App\Models\PengadaanBarang::class);
     }
+
+    /**
+     * Relasi ke MonitoringPerbaikan yang memicu pengajuan ini.
+     */
+    public function monitoringPerbaikan()
+    {
+        return $this->hasOne(\App\Models\MonitoringPerbaikan::class);
+    }
 }

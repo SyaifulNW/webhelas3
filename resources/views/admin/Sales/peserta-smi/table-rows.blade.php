@@ -46,7 +46,11 @@
                 $creatorRole = strtolower($item->closingCs->role ?? $item->createdBy->role ?? $item->salesPlan->createdBy->role ?? '');
                 $showApproval = in_array($creatorRole, ['reseller', 'chapter', 'agen']);
                 $userRole = strtolower(auth()->user()->role);
+<<<<<<< Updated upstream
                 $isAdmin = (in_array($userRole, ['administrator', 'pusat', 'admin']) || auth()->user()->hasHakAkses('spp_admin'));
+=======
+                $isAdmin = (in_array($userRole, ['administrator', 'pusat', 'admin']) || auth()->user()->hasAnySubrole(['spp_admin', 'sales_marketing']));
+>>>>>>> Stashed changes
              @endphp
             <div class="d-flex align-items-center">
                 <input form="form-update-{{ $item->id }}" type="text" name="nama"
@@ -55,7 +59,11 @@
             </div>
 
             {{-- Level Selection (Linda Only) --}}
+<<<<<<< Updated upstream
             @if(auth()->user()->hasHakAkses('spp_admin'))
+=======
+            @if(auth()->user()->hasAnySubrole(['spp_admin', 'sales_marketing']))
+>>>>>>> Stashed changes
             <div class="mt-1 px-1 d-flex align-items-center" style="gap: 4px;">
                 <select class="form-control form-control-sm" 
                     style="font-size: 0.65rem; height: 18px; width: 80px; padding: 0 4px; border-radius: 4px; border: 1px solid #d1d3e2; background-color: #f8f9fc; color: #4e73df; font-weight: bold;" 
@@ -360,7 +368,11 @@
                             }
                         @endphp
                         @php
+<<<<<<< Updated upstream
                             $canCheckSpp = (auth()->user()->hasHakAkses('spp_admin') || strtolower(auth()->user()->role) === 'administrator');
+=======
+                            $canCheckSpp = (auth()->user()->hasAnySubrole(['spp_admin', 'sales_marketing']) || strtolower(auth()->user()->role) === 'administrator');
+>>>>>>> Stashed changes
                         @endphp
                         <input type="checkbox" class="spp-checkbox" data-id="{{ $item->id }}" data-month="{{ $i }}"
                             data-planned-nominal="{{ $plannedNominal }}" data-level-nominal="{{ $levelNominal }}"

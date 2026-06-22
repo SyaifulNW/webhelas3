@@ -300,7 +300,11 @@
         </td> --}}
     @endif
 
+<<<<<<< Updated upstream
     @if(in_array($userRole, ['administrator', 'manager', 'marketing', 'agen', 'operasional']) || auth()->user()->hasHakAkses('spp_admin'))
+=======
+    @if(in_array($userRole, ['administrator', 'manager', 'marketing', 'agen', 'operasional']) || auth()->user()->hasSubrole('spp_admin') || auth()->user()->hasSubrole('sales_marketing'))
+>>>>>>> Stashed changes
         <td>{{ $item->createdBy->name ?? $item->created_by }}</td>
 
 

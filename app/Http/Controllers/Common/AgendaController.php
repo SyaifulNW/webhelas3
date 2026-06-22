@@ -146,7 +146,11 @@ class AgendaController extends Controller
         );
 
         // Determine user's division list
+<<<<<<< Updated upstream
         if ($user->hasAnyHakAkses(['spp_admin', 'finance_access'])) {
+=======
+        if ($user->hasAnySubrole(['spp_admin', 'sales_marketing', 'keuangan'])) {
+>>>>>>> Stashed changes
             $divisiList = self::DIVISI_LIST;
         } else {
             $divisiName = 'Sales & Marketing'; // fallback
@@ -477,8 +481,13 @@ class AgendaController extends Controller
     {
         $user = Auth::user();
 
+<<<<<<< Updated upstream
         // Security: only Yasmin or administrator
         if (!$user->hasHakAkses('hrd_settings') && strtolower($user->role) !== 'administrator') {
+=======
+        // Security: only hrd_settings / hrd or administrator
+        if (!$user->hasAnySubrole(['hrd_settings', 'hrd']) && strtolower($user->role) !== 'administrator') {
+>>>>>>> Stashed changes
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 

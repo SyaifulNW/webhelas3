@@ -335,7 +335,11 @@
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">
+<<<<<<< Updated upstream
         {{ (request()->has('embed') || auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_admin', 'sales_full_view'])) ? 'DATA PESERTA' : 'PROSPEK' }} 
+=======
+        {{ (auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'hrd', 'sales_admin', 'sales_marketing', 'keuangan']) || in_array(strtolower(auth()->user()->role), ['cs-mbc', 'cs-smi'])) ? 'DATA PESERTA' : 'PROSPEK' }} 
+>>>>>>> Stashed changes
         @if(request('type') == 'mbc' || ($isCsMbc && request('type') != 'smi'))
             MBC
         @endif
@@ -347,7 +351,11 @@
     <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+<<<<<<< Updated upstream
             <li class="breadcrumb-item">{{ (request()->has('embed') || auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_admin', 'sales_full_view'])) ? 'DATA PESERTA' : 'PROSPEK' }}</li>
+=======
+            <li class="breadcrumb-item">{{ (auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'hrd', 'sales_admin', 'sales_marketing', 'keuangan']) || in_array(strtolower(auth()->user()->role), ['cs-mbc', 'cs-smi'])) ? 'DATA PESERTA' : 'PROSPEK' }}</li>
+>>>>>>> Stashed changes
             @if($kelasFilter)
             <li class="breadcrumb-item active">{{ $kelasFilter == 'Start-Up Muslim Indonesia' ? 'M1T' : $kelasFilter }}</li>
             @endif
@@ -381,7 +389,11 @@
 
 <!-- Filter Container -->
 @php
+<<<<<<< Updated upstream
     $isAdminView = (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnyHakAkses(['spp_admin', 'sales_admin', 'cs_supervisor', 'sales_full_view', 'sales_all_view', 'young_startup_admin']));
+=======
+    $isAdminView = (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnySubrole(['spp_admin', 'sales_admin', 'hrd']) || auth()->id() == 1 || auth()->id() == 13 || (auth()->user()->hasSubrole('sales_marketing') && empty($isRestrictedView)));
+>>>>>>> Stashed changes
     $isCsMbc = (strtolower(auth()->user()->role) === 'cs-mbc');
 @endphp
 @if($isAdminView || $isCsMbc)
@@ -497,7 +509,11 @@
     <select name="created_by" id="cs_filter" class="form-select filter-select">
         <option value="">-- Semua Tim --</option>
         @foreach($csList as $cs)
+<<<<<<< Updated upstream
             @if(strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnyHakAkses(['spp_admin', 'sales_admin', 'cs_supervisor', 'sales_full_view', 'sales_all_view']) || (auth()->user()->hasHakAkses('young_startup_admin') && $cs->hasHakAkses('young_startup_cs')))
+=======
+            @if(strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnySubrole(['spp_admin', 'sales_admin', 'hrd']) || (auth()->id() == 1) || ((auth()->user()->hasSubrole('young_startup_admin') || auth()->id() == 13) && $cs->name === 'Puput') || (auth()->user()->hasSubrole('sales_marketing')))
+>>>>>>> Stashed changes
                 <option value="{{ $cs->id }}" {{ request('created_by') == $cs->id ? 'selected' : '' }}>
                     {{ $cs->name }}
                 </option>
@@ -519,9 +535,15 @@
                 @continue
             @endif
             @if(
+<<<<<<< Updated upstream
                 ((strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasHakAkses('sales_all_view')) && !in_array($kelas->nama_kelas, ['Start-Up Muda Indonesia', 'Sekolah Kaya', 'Start-Up Muslim Indonesia'])) ||
                 (auth()->user()->hasHakAkses('young_startup_admin') && $kelas->nama_kelas == 'Start-Up Muda Indonesia') ||
                 auth()->user()->hasHakAkses('spp_admin') ||
+=======
+                ((strtolower(auth()->user()->role) === 'administrator' || auth()->id() == 1) && !in_array($kelas->nama_kelas, ['Start-Up Muda Indonesia', 'Sekolah Kaya', 'Start-Up Muslim Indonesia'])) ||
+                ((auth()->user()->hasSubrole('young_startup_admin') || auth()->id() == 13) && $kelas->nama_kelas == 'Start-Up Muda Indonesia') ||
+                (auth()->user()->hasSubrole('spp_admin') || auth()->user()->hasSubrole('sales_marketing')) ||
+>>>>>>> Stashed changes
                 (strtolower(auth()->user()->role) === 'cs-mbc')
             )
                 <option value="{{ $kelas->nama_kelas }}" {{ request('kelas') == $kelas->nama_kelas ? 'selected' : '' }}>
@@ -726,8 +748,18 @@
         }
     }
 @endphp
+<<<<<<< Updated upstream
 @php
     // Pre-calculate status counts (always available)
+=======
+@if(strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'hrd', 'sales_admin', 'sales_marketing', 'keuangan']) && !in_array(strtolower(Auth::user()->role), ['cs-mbc', 'cs-smi']))
+    <div class="card shadow-lg border-0 rounded-lg mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-chart-line"></i> Daftar PROSPEK</h5>
+        </div>
+        <div class="card-body">
+     @php
+>>>>>>> Stashed changes
     $countTertarik = $salesplans->where('status', 'tertarik')->count();
     $countMauTransfer = $salesplans->where('status', 'mau_transfer')->count();
     $countNo = $salesplans->where('status', 'no')->count();
@@ -1042,7 +1074,11 @@ $(document).ready(function() {
 
 </div>
 
+<<<<<<< Updated upstream
             @if(!auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_full_view']))
+=======
+            @if(!auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'hrd', 'sales_admin', 'sales_marketing', 'keuangan']) && !in_array(strtolower(auth()->user()->role), ['cs-mbc', 'cs-smi']))
+>>>>>>> Stashed changes
             <div class="table-responsive table-scroll">
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="text-white" style="background-color:#25799E;">
@@ -1885,7 +1921,11 @@ $(document).ready(function() {
     </script>
 
 
+<<<<<<< Updated upstream
 @if(strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_full_view']))
+=======
+@if(strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'hrd', 'sales_admin', 'sales_marketing', 'keuangan']) && !in_array(strtolower(Auth::user()->role), ['cs-mbc', 'cs-smi']))
+>>>>>>> Stashed changes
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <span class="badge bg-warning text-white p-2 me-2 fs-6" style="font-size: 13px">
@@ -1925,7 +1965,11 @@ $(document).ready(function() {
         @endif
     </h4>
 
+<<<<<<< Updated upstream
     @if($kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || ((auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_full_view']) || auth()->user()->hasHakAkses('spp_admin')) && (request('type') == 'mbc' || request('type') == 'smi')))
+=======
+    @if($kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || ((auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'hrd', 'sales_admin', 'sales_marketing', 'keuangan']) || in_array(strtolower(auth()->user()->role), ['cs-mbc', 'cs-smi'])) && (request('type') == 'mbc' || request('type') == 'smi')))
+>>>>>>> Stashed changes
     <div class="d-flex gap-3 align-items-center">
         {{-- Filter Bulan (SMI Bawah) --}}
         <div class="d-flex align-items-center gap-2">

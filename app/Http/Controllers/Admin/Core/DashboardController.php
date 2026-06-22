@@ -890,10 +890,14 @@ class DashboardController extends Controller
 
     public function storeLabaRugi(Request $request)
     {
-        // Allow Linda and Yasmin via finance_access / cs_supervisor subroles even if role is administrator
+        // Allow Linda and Yasmin via keuangan / hrd subroles even if role is administrator
         $user = Auth::user();
         $isAdmin = strtolower($user->role ?? '') === 'administrator';
+<<<<<<< Updated upstream
         $hasFinanceAccess = $user->hasAnyHakAkses(['finance_access', 'cs_supervisor']);
+=======
+        $hasFinanceAccess = $user->hasAnySubrole(['keuangan', 'hrd']);
+>>>>>>> Stashed changes
 
         if ($isAdmin && !$hasFinanceAccess) {
             if ($request->ajax()) {
@@ -998,7 +1002,11 @@ class DashboardController extends Controller
     public function destroyLabaRugi($id)
     {
         $user = Auth::user();
+<<<<<<< Updated upstream
         $hasFinanceAccess = $user->hasAnyHakAkses(['finance_access', 'cs_supervisor']);
+=======
+        $hasFinanceAccess = $user->hasAnySubrole(['keuangan', 'hrd']);
+>>>>>>> Stashed changes
         if (strtolower($user->role) === 'administrator' && !$hasFinanceAccess) {
             if (request()->ajax()) {
                 return response()->json([
@@ -1038,7 +1046,11 @@ class DashboardController extends Controller
     public function storeKas(Request $request)
     {
         $user = Auth::user();
+<<<<<<< Updated upstream
         $hasFinanceAccess = $user->hasAnyHakAkses(['finance_access', 'cs_supervisor']);
+=======
+        $hasFinanceAccess = $user->hasAnySubrole(['keuangan', 'hrd']);
+>>>>>>> Stashed changes
         $isManager = strtolower($user->role ?? '') === 'manager';
         $isAdmin = strtolower($user->role ?? '') === 'administrator';
 
@@ -1071,7 +1083,11 @@ class DashboardController extends Controller
     public function destroyKas($id)
     {
         $user = Auth::user();
+<<<<<<< Updated upstream
         $hasFinanceAccess = $user->hasAnyHakAkses(['finance_access', 'cs_supervisor']);
+=======
+        $hasFinanceAccess = $user->hasAnySubrole(['keuangan', 'hrd']);
+>>>>>>> Stashed changes
 
         if (!$hasFinanceAccess && strtolower($user->role) === 'administrator') {
             return redirect()->back()->with('error', 'Hanya pengguna dengan Akses Keuangan atau Supervisor CS yang dapat menghapus data kas.');

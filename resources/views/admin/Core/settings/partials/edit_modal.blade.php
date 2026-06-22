@@ -99,6 +99,7 @@
                         </div>
                     </div>
                     @if(!$isOperasional)
+<<<<<<< Updated upstream
                     {{-- Named Sub-Roles (hanya untuk CS-MBC) --}}
                     <div class="form-group font-weight-bold named-subrole-section" style="display: {{ strtolower($u->role) === 'cs-mbc' ? 'block' : 'none' }};">
                         <label class="mb-1"><i class="fas fa-layer-group mr-1 text-primary"></i>Sub-Role CS-MBC</label>
@@ -117,6 +118,54 @@
                                     ];
                                 @endphp
                                 {{ $menuLabels[$subName] ?? implode(', ', $flags) }}
+=======
+                    <div class="form-group font-weight-bold">
+                        <label>Sub-Roles (Akses Khusus)</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="hrd" class="custom-control-input" id="subrole_supervisor_{{ $u->id }}" {{ $u->hasSubrole('hrd') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_supervisor_{{ $u->id }}">HRD (Akses Admin)</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="sales_marketing" class="custom-control-input" id="subrole_sales_all_{{ $u->id }}" {{ $u->hasSubrole('sales_marketing') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_sales_all_{{ $u->id }}">Sales & Marketing</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="manager_smi" class="custom-control-input" id="subrole_gantt_{{ $u->id }}" {{ $u->hasSubrole('manager_smi') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_gantt_{{ $u->id }}">Manager SMI</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="keuangan" class="custom-control-input" id="subrole_finance_{{ $u->id }}" {{ $u->hasSubrole('keuangan') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_finance_{{ $u->id }}">Akses Keuangan Besar</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="finance_kecil" class="custom-control-input" id="subrole_finance_kecil_{{ $u->id }}" {{ $u->hasSubrole('finance_kecil') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_finance_kecil_{{ $u->id }}">Akses Keuangan Kecil</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="clinic_access" class="custom-control-input" id="subrole_clinic_{{ $u->id }}" {{ $u->hasSubrole('clinic_access') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_clinic_{{ $u->id }}">Akses Klinik (MoM)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="cs_pusat" class="custom-control-input" id="subrole_cs_pusat_{{ $u->id }}" {{ $u->hasSubrole('cs_pusat') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_cs_pusat_{{ $u->id }}">CS Pusat</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="cs_rotasi" class="custom-control-input" id="subrole_cs_rotasi_{{ $u->id }}" {{ $u->hasSubrole('cs_rotasi') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_cs_rotasi_{{ $u->id }}">CS Rotasi Lead</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="exempt_transfer" class="custom-control-input" id="subrole_exempt_{{ $u->id }}" {{ $u->hasSubrole('exempt_transfer') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_exempt_{{ $u->id }}">Exempt Transfer (CEO/Owner)</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" name="subrole[]" value="operasional_rafi" class="custom-control-input" id="subrole_rafi_{{ $u->id }}" {{ $u->hasSubrole('operasional_rafi') ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-normal" for="subrole_rafi_{{ $u->id }}">Operasional (Rafi)</label>
+                                </div>
+>>>>>>> Stashed changes
                             </div>
                         </div>
                         @endforeach

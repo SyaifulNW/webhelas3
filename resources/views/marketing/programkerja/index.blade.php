@@ -312,9 +312,15 @@
         $isFelmi = $currentUser->hasHakAkses('activity_marketing');
         $isChapter = $userRole === 'chapter';
         $isOperasional = $userRole === 'operasional';
+<<<<<<< Updated upstream
         $isRofi = $currentUser->hasHakAkses('gantt_marketing_view');
         $isRafi = $currentUser->hasHakAkses('operasional_rafi');
         $isYasminLinda = $currentUser->hasHakAkses('gantt_cross_view');
+=======
+        $isRofi = $currentUser->hasSubrole('gantt_marketing_view');
+        $isRafi = $currentUser->hasSubrole('operasional_rafi');
+        $isYasminLinda = $currentUser->hasAnySubrole(['hrd', 'keuangan', 'sales_marketing']);
+>>>>>>> Stashed changes
 
         // $isProduksi: menentukan FORMAT KOLOM yang ditampilkan (kolom produksi vs marketing)
         // Rofi (produksi) dan Rafi (operasional) keduanya melihat kolom MARKETING, bukan kolom produksi

@@ -125,7 +125,11 @@
                             class="collapse {{ request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia') ? 'show' : '' }}"
                             aria-labelledby="headingMBC" data-parent="#accordionSidebar">
                             <div class="bg-white py-2 collapse-inner rounded">
+<<<<<<< Updated upstream
                                 @if (Auth::user()->hasHakAkses('sales_all_view'))
+=======
+                                @if (Auth::user()->hasSubrole('sales_marketing'))
+>>>>>>> Stashed changes
                                     <a class="collapse-item {{ request('type') == 'mbc' && !request('kelas') ? 'active' : '' }}"
                                         href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}">DATA
                                         PESERTA ALL</a>
@@ -156,11 +160,19 @@
 
             {{-- SALES PLAN SMI / M1T (LAINNYA) --}}
             @if (in_array($userRole, ['cs-smi', 'cs-mbc']) ||
+<<<<<<< Updated upstream
                     Auth::user()->hasAnyHakAkses(['sales_all_view', 'exempt_transfer']))
                 {{-- Operasional handled in its own block --}}
                 @if ($userRole === 'operasional')
                     {{-- Do nothing --}}
                 @elseif(Auth::user()->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']))
+=======
+                    Auth::user()->hasAnySubrole(['sales_marketing', 'exempt_transfer']))
+                {{-- Operasional handled in its own block --}}
+                @if ($userRole === 'operasional')
+                    {{-- Do nothing --}}
+                @elseif(Auth::user()->hasAnySubrole(['sales_marketing', 'hrd']))
+>>>>>>> Stashed changes
                     {{-- 1. DATA PESERTA M1T (Sales Plan) --}}
                     @if ($userRole !== 'cs-mbc')
                         <li
@@ -190,7 +202,11 @@
                     </li>
 
                     {{-- PENARIKAN DOMPET (KHUSUS LINDA) --}}
+<<<<<<< Updated upstream
                     @if (Auth::user()->hasHakAkses('sales_all_view'))
+=======
+                    @if (Auth::user()->hasSubrole('sales_marketing'))
+>>>>>>> Stashed changes
                         @php
                             $pendingWalletWD = \App\Models\WalletTransaction::where(
                                 'type',
@@ -214,7 +230,11 @@
                             </a>
                         </li>
                     @endif
+<<<<<<< Updated upstream
                 @elseif(Auth::user()->hasHakAkses('cs_pusat') && !Auth::user()->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']))
+=======
+                @elseif(Auth::user()->hasSubrole('cs_pusat') && !Auth::user()->hasAnySubrole(['sales_marketing', 'hrd']))
+>>>>>>> Stashed changes
                     <li
                         class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('peserta-smi.index') }}"
@@ -252,7 +272,11 @@
         @endif
 
         {{-- Menu Keuangan Linda --}}
+<<<<<<< Updated upstream
         @if (\App\Models\Menu::isActive('keuangan_besar') && Auth::user()->hasHakAkses('finance_access'))
+=======
+        @if (\App\Models\Menu::isActive('keuangan_besar') && Auth::user()->hasSubrole('keuangan'))
+>>>>>>> Stashed changes
             <li
                 class="nav-item {{ request()->routeIs(['admin.keuangan.laba-rugi', 'admin.keuangan.kas', 'admin.keuangan.pengajuan-anggaran', 'admin.keuangan.zakat']) ? 'active' : '' }}">
                 <a class="nav-link collapsed" href="#" data-toggle="collapse"

@@ -40,8 +40,13 @@ class MomController extends Controller
     {
         $user = Auth::user();
         $role = strtolower(trim($user->role ?? ''));
+<<<<<<< Updated upstream
         $hasSupervisorAccess = $user->hasHakAkses('cs_supervisor');
         $hasClinicAccess = $user->hasHakAkses('clinic_access');
+=======
+        $hasSupervisorAccess = $user->hasSubrole('hrd');
+        $hasClinicAccess = $user->hasSubrole('clinic_access');
+>>>>>>> Stashed changes
 
         // Blocked roles – should never reach here if route middleware is applied
         if (in_array($role, self::BLOCKED_ROLES) || str_starts_with($role, 'chapter_')) {
@@ -66,7 +71,7 @@ class MomController extends Controller
         }
 
         // CS roles – full edit, own data only
-        // Clinic panel only for users with clinic_access or cs_supervisor subroles
+        // Clinic panel only for users with clinic_access or hrd subroles
         if (in_array($role, self::MULTI_UNIT_ROLES)) {
             $canAccessClinic = $hasClinicAccess || $hasSupervisorAccess;
             return [
@@ -79,7 +84,7 @@ class MomController extends Controller
         }
 
         // All other internal staff – full edit, own data only
-        // CS Supervisor or Clinic Access gets access to all units and can delete any record
+        // hrd or Clinic Access gets access to all units and can delete any record
         $canAccessClinic = $hasClinicAccess || $hasSupervisorAccess;
         return [
             'canAccessUnits' => $canAccessClinic ? self::UNITS : ['Helas Corp'],
@@ -144,7 +149,7 @@ class MomController extends Controller
             $query->whereDate('deadline', $request->deadline_filter);
         }
 
-        // For admin/Yasmin: eager-load creator
+        // For admin/hrd: eager-load creator
         if ($permissions['seeAllData']) {
             $query->with('creator');
         }
@@ -163,7 +168,7 @@ class MomController extends Controller
 
         $moms = $query->get();
 
-        // Group by creator for CS Yasmin (grouped view)
+        // Group by creator for CS hrd (grouped view)
         $groupView = $permissions['seeAllData'] && (strtolower(trim(Auth::user()->role)) !== 'administrator');
         $groupedMoms = null;
         if ($groupView) {
@@ -364,7 +369,7 @@ class MomController extends Controller
     {
         $permissions = self::getMomPermissions();
 
-        // canDelete overrides canEdit — Yasmin always has delete rights
+        // canDelete overrides canEdit — hrd always has delete rights
         $hasDeleteAccess = ($permissions['canEdit'] ?? false) || ($permissions['canDelete'] ?? false);
 
         if (!$hasDeleteAccess) {

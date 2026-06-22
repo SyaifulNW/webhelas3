@@ -26,7 +26,11 @@ class SalesPlanController extends Controller
         $csFilter = $request->input('created_by');
         $typeFilter = $request->input('type'); // mbc or smi
 
+<<<<<<< Updated upstream
         if (auth()->check() && auth()->user()->hasHakAkses('smi_class_only')) {
+=======
+        if (auth()->check() && auth()->user()->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
             $kelasFilter = 'Start-Up Muslim Indonesia';
         }
 
@@ -82,8 +86,13 @@ class SalesPlanController extends Controller
         $csList = User::orderBy('name', 'asc')->get();
 
         // Filter CS List for Admin Dropdown (Specific Request)
+<<<<<<< Updated upstream
         if (auth()->user()->isRole('administrator') || auth()->user()->hasAnyHakAkses(['cs_supervisor', 'sales_all_view'])) {
             $csList = User::whereJsonContains('hak_akses', 'cs_pusat')
+=======
+        if (auth()->user()->isRole('administrator') || auth()->user()->hasAnySubrole(['hrd', 'sales_marketing'])) {
+            $csList = User::whereJsonContains('subrole', 'cs_pusat')
+>>>>>>> Stashed changes
                 ->orderBy('name', 'asc')
                 ->get();
         } else {
@@ -149,8 +158,13 @@ class SalesPlanController extends Controller
 
 
         // Determine if user is exempt from created_by filter
+<<<<<<< Updated upstream
         $isExempt = auth()->user()->hasHakAkses('exempt_transfer') || 
             ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasHakAkses('sales_all_view'));
+=======
+        $isExempt = auth()->user()->hasSubrole('exempt_transfer') || 
+            ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasSubrole('sales_marketing'));
+>>>>>>> Stashed changes
 
         // Clone query logic untuk statistik agar menyertakan semua data (tidak terpotong pagination)
         $salesplanStats = SalesPlan::where('status', 'sudah_transfer')
@@ -758,8 +772,13 @@ class SalesPlanController extends Controller
 
         $userId = auth()->id();
         $isAdmin = in_array($userId, [1]);
+<<<<<<< Updated upstream
         $isExempt = auth()->user()->hasHakAkses('exempt_transfer') || 
             ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasHakAkses('sales_all_view'));
+=======
+        $isExempt = auth()->user()->hasSubrole('exempt_transfer') || 
+            ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasSubrole('sales_marketing'));
+>>>>>>> Stashed changes
 
         $query = SalesPlan::with(['kelas'])
             ->when($kelasFilter, function ($query) use ($kelasFilter) {
@@ -908,8 +927,13 @@ class SalesPlanController extends Controller
 
             $userRole = strtolower($user->role ?? '');
             $isAdmin = in_array($userRole, ['administrator']);
+<<<<<<< Updated upstream
             $isExempt = $user->hasHakAkses('exempt_transfer') || 
                 ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && $user->hasHakAkses('sales_all_view'));
+=======
+            $isExempt = $user->hasSubrole('exempt_transfer') || 
+                ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && $user->hasSubrole('sales_marketing'));
+>>>>>>> Stashed changes
 
             $query = SalesPlan::query();
 

@@ -29,7 +29,11 @@ class AdminActivityController extends Controller
         // ==============================
         $csQuery = User::query();
 
+<<<<<<< Updated upstream
         if ($user->role === 'administrator' || $user->hasAnyHakAkses(['cs_supervisor', 'sales_all_view'])) {
+=======
+        if ($user->role === 'administrator' || $user->hasAnySubrole(['hrd', 'sales_marketing'])) {
+>>>>>>> Stashed changes
              // Admin & CS Supervisors can see CS MBC + their team
              $csQuery->where(function($q) {
                  $q->whereIn('role', ['cs-mbc', 'marketing', 'advertising', 'produksi']);

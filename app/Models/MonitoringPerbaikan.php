@@ -20,10 +20,16 @@ class MonitoringPerbaikan extends Model
         'realisasi_dana',
         'tanggal_selesai',
         'bukti_transfer',
+        'pengajuan_anggaran_id',
     ];
 
     public function inventaris()
     {
         return $this->belongsTo(InventarisKantor::class, 'inventaris_id');
+    }
+
+    public function pengajuanAnggaran()
+    {
+        return $this->belongsTo(PengajuanAnggaran::class);
     }
 }

@@ -38,6 +38,24 @@ class MonitoringPerbaikanController extends Controller
 
         $item = MonitoringPerbaikan::create($validated);
         $item->load('inventaris');
+
+        // Otomatis buat PengajuanAnggaran
+        $user = auth()->user();
+        $facilityName = $item->fasilitas_manual ?: ($item->inventaris ? $item->inventaris->nama_peralatan : 'Perbaikan');
+
+        $pengajuan = \App\Models\PengajuanAnggaran::create([
+            'tanggal_pengajuan' => \Carbon\Carbon::now(),
+            'nama_pengajuan'    => $facilityName . ' (Perbaikan)',
+            'jumlah_biaya'      => is_numeric($item->budget) ? $item->budget : 0,
+            'user_id'           => $user ? $user->id : null,
+            'diajukan_oleh'     => $user ? $user->name : 'Operasional',
+            'status'            => 'pending',
+            'keterangan'        => 'Otomatis dikirim dari monitoring perbaikan operasional. Kerusakan: ' . ($item->kerusakan ?? '-'),
+            'is_recurring'      => false,
+        ]);
+
+        $item->update(['pengajuan_anggaran_id' => $pengajuan->id]);
+
         return response()->json(['success' => true, 'message' => 'Data berhasil ditambahkan.', 'data' => $item]);
     }
 
@@ -71,12 +89,43 @@ class MonitoringPerbaikanController extends Controller
         $item = MonitoringPerbaikan::findOrFail($id);
         $item->update($validated);
 
+        // Jika nama_barang atau budget berubah, sync ke pengajuan anggaran terkait
+        if ($item->pengajuan_anggaran_id) {
+            $pengajuan = \App\Models\PengajuanAnggaran::find($item->pengajuan_anggaran_id);
+            if ($pengajuan && $pengajuan->status === 'pending') {
+                $syncData = [];
+                if (isset($validated['budget'])) {
+                    $syncData['jumlah_biaya'] = $validated['budget'];
+                }
+                if (isset($validated['fasilitas_manual']) || isset($validated['inventaris_id'])) {
+                    $item->load('inventaris');
+                    $facilityName = $item->fasilitas_manual ?: ($item->inventaris ? $item->inventaris->nama_peralatan : 'Perbaikan');
+                    $syncData['nama_pengajuan'] = $facilityName . ' (Perbaikan)';
+                }
+                if (isset($validated['kerusakan'])) {
+                    $syncData['keterangan'] = 'Otomatis dikirim dari monitoring perbaikan operasional. Kerusakan: ' . ($validated['kerusakan'] ?? '-');
+                }
+                if (!empty($syncData)) {
+                    $pengajuan->update($syncData);
+                }
+            }
+        }
+
         return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui.']);
     }
 
     public function destroy($id)
     {
         $item = MonitoringPerbaikan::findOrFail($id);
+
+        // Hapus juga pengajuan anggaran terkait jika masih pending
+        if ($item->pengajuan_anggaran_id) {
+            $pengajuan = \App\Models\PengajuanAnggaran::find($item->pengajuan_anggaran_id);
+            if ($pengajuan && $pengajuan->status === 'pending') {
+                $pengajuan->delete();
+            }
+        }
+
         $item->delete();
 
         return response()->json(['success' => true, 'message' => 'Data berhasil dihapus.']);

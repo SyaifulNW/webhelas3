@@ -153,7 +153,11 @@
         </div>
 
         @php
+<<<<<<< Updated upstream
             $isCsPusat = $user->hasAnyHakAkses(['spp_admin', 'cs_supervisor', 'cs_pusat']) || 
+=======
+            $isCsPusat = $user->hasAnySubrole(['spp_admin', 'hrd', 'cs_pusat']) || 
+>>>>>>> Stashed changes
                          in_array(strtolower($user->role ?? ''), ['administrator', 'marketing', 'manager']);
         @endphp
 

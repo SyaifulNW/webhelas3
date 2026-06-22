@@ -53,7 +53,11 @@
             onclick="switchSubTab('{{ $divisiSlug }}', 'riwayat', this); loadRiwayat('{{ $divisi }}', '{{ $divisiSlug }}')">
             <i class="fas fa-history mr-1"></i> Riwayat
         </button>
+<<<<<<< Updated upstream
         @if (auth()->user()->hasHakAkses('cs_supervisor'))
+=======
+        @if (auth()->user()->hasSubrole('hrd'))
+>>>>>>> Stashed changes
             <button class="divisi-tab-btn sub-tab-btn" id="btn-rekap-{{ $divisiSlug }}"
                 onclick="switchSubTab('{{ $divisiSlug }}', 'rekap', this); loadRekap('{{ $divisiSlug }}')">
                 <i class="fas fa-chart-pie mr-1"></i> Rekap Semua
@@ -310,7 +314,11 @@
     </div>
 
     {{-- Panel Rekap (hanya CS Supervisor) --}}
+<<<<<<< Updated upstream
     @if (auth()->user()->hasHakAkses('cs_supervisor'))
+=======
+    @if (auth()->user()->hasSubrole('hrd'))
+>>>>>>> Stashed changes
         <div id="sub-panel-rekap-{{ $divisiSlug }}" style="display: none;">
 
             {{-- Date Navigation Bar --}}

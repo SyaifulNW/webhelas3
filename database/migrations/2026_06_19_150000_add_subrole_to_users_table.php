@@ -28,13 +28,13 @@ class AddSubroleToUsersTable extends Migration
         // Seed initial subroles and WA numbers for existing users
         // 1. Yasmin (ID: 3)
         DB::table('users')->where('id', 3)->update([
-            'subrole' => json_encode(['cs_supervisor', 'gantt_cross_view', 'finance_access', 'cs_pusat', 'cs_rotasi']),
+            'subrole' => json_encode(['hrd', 'cs_pusat', 'cs_rotasi']),
             'wa' => '088228814769'
         ]);
 
         // 2. Linda (ID: 2)
         DB::table('users')->where('id', 2)->update([
-            'subrole' => json_encode(['sales_all_view', 'gantt_cross_view', 'cs_pusat', 'cs_rotasi']),
+            'subrole' => json_encode(['keuangan', 'sales_marketing', 'cs_pusat', 'cs_rotasi']),
             'wa' => '08561490495'
         ]);
 
@@ -57,6 +57,11 @@ class AddSubroleToUsersTable extends Migration
         // 6. Fitra Jaya Saleh (ID: 1)
         DB::table('users')->where('id', 1)->update([
             'subrole' => json_encode(['exempt_transfer'])
+        ]);
+
+        // 7. Agus Setyo
+        DB::table('users')->where('name', 'Agus Setyo')->update([
+            'subrole' => json_encode(['manager_smi'])
         ]);
     }
 

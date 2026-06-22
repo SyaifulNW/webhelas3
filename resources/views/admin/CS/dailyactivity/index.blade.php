@@ -817,17 +817,29 @@
                 <button class="divisi-tab-btn active" onclick="switchMainTab('pane-activity-cs', this)">
                     <i class="fas fa-clipboard-list"></i> Activity CS
                 </button>
+<<<<<<< Updated upstream
                 @if (auth()->user()->hasHakAkses('finance_access'))
+=======
+                @if (auth()->user()->hasSubrole('keuangan'))
+>>>>>>> Stashed changes
                     <button class="divisi-tab-btn" onclick="switchMainTab('pane-activity-keuangan', this)">
                         <i class="fas fa-wallet"></i> Activity Keuangan
                     </button>
                 @endif
+<<<<<<< Updated upstream
                 @if (auth()->user()->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']))
+=======
+                @if (auth()->user()->hasAnySubrole(['sales_marketing', 'hrd']))
+>>>>>>> Stashed changes
                     <button class="divisi-tab-btn" onclick="switchMainTab('pane-activity-sales', this)">
                         <i class="fas fa-bullhorn"></i> Activity Sales&Marketing
                     </button>
                 @endif
+<<<<<<< Updated upstream
                 @if (!auth()->user()->hasHakAkses('finance_access') && !auth()->user()->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']))
+=======
+                @if (!auth()->user()->hasSubrole('keuangan') && !auth()->user()->hasAnySubrole(['sales_marketing', 'hrd']))
+>>>>>>> Stashed changes
                     <button class="divisi-tab-btn" onclick="switchMainTab('pane-activity-todo', this)">
                         <i class="fas fa-tasks"></i> Activity/ToDoList
                     </button>
@@ -842,13 +854,22 @@
             </div>
 
             {{-- Agenda Panes --}}
+<<<<<<< Updated upstream
             @if (auth()->user()->hasHakAkses('finance_access') || auth()->user()->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']))
                 @if (auth()->user()->hasHakAkses('finance_access'))
+=======
+            @if (auth()->user()->hasSubrole('keuangan') || auth()->user()->hasAnySubrole(['sales_marketing', 'hrd']))
+                @if (auth()->user()->hasSubrole('keuangan'))
+>>>>>>> Stashed changes
                     <div class="main-pane" id="pane-activity-keuangan">
                         @include('admin.CS.dailyactivity.agenda_pane', ['divisi' => 'Divisi Keuangan'])
                     </div>
                 @endif
+<<<<<<< Updated upstream
                 @if (auth()->user()->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']))
+=======
+                @if (auth()->user()->hasAnySubrole(['sales_marketing', 'hrd']))
+>>>>>>> Stashed changes
                     <div class="main-pane" id="pane-activity-sales">
                         @include('admin.CS.dailyactivity.agenda_pane', ['divisi' => 'Sales & Marketing'])
                     </div>

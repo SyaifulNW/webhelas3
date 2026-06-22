@@ -1722,6 +1722,7 @@ class PesertaSmiController extends Controller
 
                 if ($chapterName) {
                     $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
+<<<<<<< Updated upstream
                     $dbExcludeNames = \App\Models\User::whereJsonContains('hak_akses', 'cs_pusat')
                         ->orWhereIn('role', ['cs-mbc', 'operasional'])
                         ->orWhere(function($sq) {
@@ -1731,6 +1732,9 @@ class PesertaSmiController extends Controller
                         ->pluck('name')
                         ->toArray();
                     $excludeNames = array_unique($dbExcludeNames);
+=======
+                    $excludeNames = \App\Models\User::whereNotIn('role', ['chapter', 'reseller', 'agen'])->pluck('name')->toArray();
+>>>>>>> Stashed changes
 
                     $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
                         $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {

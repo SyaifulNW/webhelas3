@@ -502,6 +502,7 @@
                             </div>
                         </div>
                         @if(!$isOperasional)
+<<<<<<< Updated upstream
                         {{-- Named Sub-Roles (hanya untuk CS-MBC) --}}
                         <div class="form-group named-subrole-section" style="display: none;">
                             <label class="font-weight-bold mb-1"><i class="fas fa-layer-group mr-1 text-primary"></i>Sub-Role CS-MBC</label>
@@ -520,6 +521,54 @@
                                         ];
                                     @endphp
                                     {{ $menuLabels[$subName] ?? implode(', ', $flags) }}
+=======
+                        <div class="form-group">
+                            <label class="font-weight-bold">Sub-Roles (Akses Khusus)</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="hrd" class="custom-control-input" id="subrole_supervisor_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_supervisor_new">HRD (Akses Admin)</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="sales_marketing" class="custom-control-input" id="subrole_sales_all_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_sales_all_new">Sales & Marketing</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="manager_smi" class="custom-control-input" id="subrole_gantt_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_gantt_new">Manager SMI</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="keuangan" class="custom-control-input" id="subrole_finance_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_finance_new">Akses Keuangan Besar</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="finance_kecil" class="custom-control-input" id="subrole_finance_kecil_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_finance_kecil_new">Akses Keuangan Kecil</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="clinic_access" class="custom-control-input" id="subrole_clinic_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_clinic_new">Akses Klinik (MoM)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="cs_pusat" class="custom-control-input" id="subrole_cs_pusat_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_cs_pusat_new">CS Pusat</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="cs_rotasi" class="custom-control-input" id="subrole_cs_rotasi_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_cs_rotasi_new">CS Rotasi Lead</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="exempt_transfer" class="custom-control-input" id="subrole_exempt_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_exempt_new">Exempt Transfer (CEO/Owner)</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" name="subrole[]" value="operasional_rafi" class="custom-control-input" id="subrole_rafi_new">
+                                        <label class="custom-control-label font-weight-normal" for="subrole_rafi_new">Operasional (Rafi)</label>
+                                    </div>
+>>>>>>> Stashed changes
                                 </div>
                             </div>
                             @endforeach

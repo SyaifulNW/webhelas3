@@ -119,13 +119,22 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         $userRole = strtolower($user->role);
 
         // --- Admin MBC Khusus ---
+<<<<<<< Updated upstream
         $adminMbcIds = User::whereJsonContains('hak_akses', 'cs_supervisor')->pluck('id')->toArray();
         $allowedCsNames = User::whereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
+=======
+        $adminMbcIds = User::whereJsonContains('subrole', 'hrd')->pluck('id')->toArray();
+        $allowedCsNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
+>>>>>>> Stashed changes
 
         // --- Ambil daftar CS sesuai role ---
         $csQuery = \App\Models\User::query();
 
+<<<<<<< Updated upstream
         if (auth()->user()->hasHakAkses('cs_supervisor')) {
+=======
+        if (auth()->user()->hasSubrole('hrd')) {
+>>>>>>> Stashed changes
             // Admin MBC hanya bisa lihat CS tertentu
             $csQuery->whereIn('name', $allowedCsNames);
         } elseif ($userRole === 'manager') {
@@ -212,16 +221,24 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
             }
             $query->where('created_by_role', 'cs-mbc');
+<<<<<<< Updated upstream
         } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnyHakAkses(['smi_class_only', 'cs_manager_smi'])) {
+=======
+        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
             $query->where('created_by', $user->name);
         }
 
         // Apply regional/role restrictions before calculating absolute total database
         // Chapter Role – filter by user's chapter city OR own created data, and exclude certain CS-MBC names
         if ($userRole === 'chapter') {
+<<<<<<< Updated upstream
             $excludeNames = \App\Models\User::whereNotIn('role', ['chapter', 'reseller', 'agen'])
                 ->pluck('name')
                 ->toArray();
+=======
+            $excludeNames = \App\Models\User::whereNotIn('role', ['chapter', 'reseller', 'agen'])->pluck('name')->toArray();
+>>>>>>> Stashed changes
             $query->where(function($q) use ($user, $excludeNames) {
                 $q->where('created_by', $user->name)
                   ->orWhere(function($subQ) use ($user, $excludeNames) {
@@ -242,7 +259,12 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $query->whereIn('created_by', $viewNames);
         }
 
+<<<<<<< Updated upstream
         if ($user->hasHakAkses('smi_class_only')) {
+=======
+        // Khusus Agus Setyo: Hanya kelas Start-Up Muslim/Muda Indonesia
+        if ($user->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
             $query->whereHas('kelas', function($q) {
                 $q->where('nama_kelas', 'Start-Up Muda Indonesia')
                 ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
@@ -546,7 +568,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         }
         // Strict CS View
         // Strict CS View
+<<<<<<< Updated upstream
         if (($user->hasHakAkses('spp_admin') && $forceMyData) || (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnyHakAkses(['spp_admin', 'sales_admin', 'smi_class_only', 'sales_full_view', 'cs_manager_smi']))) {
+=======
+        if (($user->hasSubrole('spp_admin') && $forceMyData) || ($user->hasAnySubrole(['sales_marketing', 'keuangan']) && $forceMyData) || (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnySubrole(['spp_admin', 'sales_admin']) && !$user->hasSubrole('manager_smi') && !$user->hasAnySubrole(['sales_marketing', 'keuangan']))) {
+>>>>>>> Stashed changes
             $kpiQuery->where('created_by', $user->name);
         }
         
@@ -576,7 +602,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $kpiQuery->where('created_by_role', 'cs-mbc');
         }
 
+<<<<<<< Updated upstream
         if ($user->hasHakAkses('smi_class_only')) {
+=======
+        if ($user->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
             $kpiQuery->whereHas('kelas', function($q) {
                 $q->where('nama_kelas', 'Start-Up Muda Indonesia')
                 ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
@@ -1467,7 +1497,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $query = Data::query();
 
             // Admin & Manager Logic
+<<<<<<< Updated upstream
             if (in_array($userRole, ['administrator', 'manager']) || $user->hasHakAkses('cs_manager_smi')) {
+=======
+            if (in_array($userRole, ['administrator', 'manager']) || $user->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
                 if (!empty($filterUser)) {
                     $query->where('created_by', $filterUser);
                 }
@@ -1476,7 +1510,12 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 $query->where('created_by', $user->name);
             }
 
+<<<<<<< Updated upstream
             if ($user->hasHakAkses('smi_class_only')) {
+=======
+            // Agus Setyo Filter
+            if ($user->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
                 $query->whereHas('kelas', function($q) {
                     $q->where('nama_kelas', 'Start-Up Muda Indonesia')
                     ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
@@ -1730,7 +1769,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
             }
             $query->where('created_by_role', 'cs-mbc');
+<<<<<<< Updated upstream
         } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnyHakAkses(['smi_class_only', 'cs_manager_smi'])) {
+=======
+        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
             $query->where('created_by', $user->name);
         }
 
@@ -1875,9 +1918,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
         // Chapter Role
         if ($userRole === 'chapter') {
+<<<<<<< Updated upstream
             $excludeNames = User::whereNotIn('role', ['chapter', 'reseller', 'agen'])
                 ->pluck('name')
                 ->toArray();
+=======
+            $excludeNames = User::whereNotIn('role', ['chapter', 'reseller', 'agen'])->pluck('name')->toArray();
+>>>>>>> Stashed changes
             $query->where(function($q) use ($user, $excludeNames) {
                 $q->where('created_by', $user->name)
                   ->orWhere(function($subQ) use ($user, $excludeNames) {
@@ -1895,7 +1942,12 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $query->whereIn('created_by', $viewNames);
         }
 
+<<<<<<< Updated upstream
         if ($user->hasHakAkses('smi_class_only')) {
+=======
+        // Khusus Agus Setyo
+        if ($user->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
             $query->whereHas('kelas', function($q) {
                 $q->where('nama_kelas', 'Start-Up Muda Indonesia')
                 ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
@@ -1962,7 +2014,14 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 ->toArray();
             
             if (empty($sequence)) {
+<<<<<<< Updated upstream
                 $sequence = \App\Models\User::where('role', 'cs-mbc')->where('is_active', 1)->pluck('name')->toArray();
+=======
+                $sequence = \App\Models\User::where('role', 'cs-mbc')
+                    ->where('is_active', 1)
+                    ->pluck('name')
+                    ->toArray();
+>>>>>>> Stashed changes
             }
             
             // Get the last lead submitted by one of these CSs to find who was assigned last
@@ -2326,7 +2385,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
             }
             $query->where('created_by_role', 'cs-mbc');
+<<<<<<< Updated upstream
         } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnyHakAkses(['smi_class_only', 'cs_manager_smi'])) {
+=======
+        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasSubrole('manager_smi')) {
+>>>>>>> Stashed changes
             $query->where('created_by', $user->name);
         }
 

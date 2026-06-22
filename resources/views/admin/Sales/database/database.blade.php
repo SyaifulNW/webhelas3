@@ -754,8 +754,13 @@
                                 'marketing',
                                 'operasional',
                             ]) ||
+<<<<<<< Updated upstream
                             $user->hasHakAkses('spp_admin') ||
                             $user->hasHakAkses('spp_admin')
+=======
+                            $user->hasSubrole('spp_admin') ||
+                            $user->hasSubrole('sales_marketing')
+>>>>>>> Stashed changes
                         ) {
                             $csList = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'customer_service'])
                                 ->where('is_active', 1)
@@ -1121,8 +1126,13 @@
                     <div class="d-flex align-items-center">
                         @if (
                             !in_array($userRole, ['administrator', 'manager', 'marketing']) &&
+<<<<<<< Updated upstream
                                 !($userRole === 'operasional' && !auth()->user()->hasHakAkses('operasional_rafi')) &&
                                 !((auth()->user()->hasHakAkses('spp_admin')) && request('view') !== 'me'))
+=======
+                                !($userRole === 'operasional' && stripos(auth()->user()->name, 'Rafi') === false) &&
+                                !((auth()->user()->hasSubrole('spp_admin') || auth()->user()->hasSubrole('sales_marketing')) && request('view') !== 'me'))
+>>>>>>> Stashed changes
                             @php
                                 $slugName =
                                     $userRole === 'chapter' && !empty(auth()->user()->chapter)
@@ -4727,7 +4737,12 @@
         $(document).on('submit', '.delete-form', function(e) {
             @php
                 $userName = auth()->user()->name;
+<<<<<<< Updated upstream
                 $isTargetUser = ((auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'sales_full_view'])) && $userRole === 'cs-mbc') || $userRole === 'administrator';
+=======
+                $userRole = strtolower(auth()->user()->role);
+                $isTargetUser = ((auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'hrd', 'keuangan', 'sales_marketing'])) && $userRole === 'cs-mbc') || $userRole === 'administrator';
+>>>>>>> Stashed changes
             @endphp
 
             @if ($isTargetUser)

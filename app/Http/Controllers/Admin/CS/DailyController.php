@@ -98,8 +98,13 @@ class DailyController extends Controller
         $periodeInfo = [];
 
         if ($isCs) {
+<<<<<<< Updated upstream
             $hasFinance = $user->hasHakAkses('finance_access');
             $hasSales = $user->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']);
+=======
+            $hasFinance = $user->hasSubrole('keuangan');
+            $hasSales = $user->hasAnySubrole(['sales_marketing', 'hrd']);
+>>>>>>> Stashed changes
 
             if ($hasFinance && $hasSales) {
                 $divisiList = ['Divisi Keuangan', 'Sales & Marketing'];

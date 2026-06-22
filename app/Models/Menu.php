@@ -19,13 +19,22 @@ class Menu extends Model
         return \Cache::remember($cacheKey, 3600, function() use ($name) {
             $menu = self::where('name', $name)->first();
             if ($menu) {
+<<<<<<< Updated upstream
                 // Special case for settings menu for finance_access
                 if (in_array($name, ['settings', 'keuangan_besar']) && auth()->check() && auth()->user()->hasHakAkses('finance_access')) {
+=======
+                // Special case for settings menu for keuangan and hrd
+                if (in_array($name, ['settings', 'keuangan_besar']) && auth()->check() && auth()->user()->hasAnySubrole(['keuangan', 'hrd'])) {
+>>>>>>> Stashed changes
                     return true;
                 }
 
                 // Special case for keuangan_kecil
+<<<<<<< Updated upstream
                 if ($name === 'keuangan_kecil' && auth()->check() && auth()->user()->hasAnyHakAkses(['finance_kecil', 'cs_supervisor'])) {
+=======
+                if ($name === 'keuangan_kecil' && auth()->check() && auth()->user()->hasAnySubrole(['finance_kecil', 'hrd'])) {
+>>>>>>> Stashed changes
                     return true;
                 }
                 

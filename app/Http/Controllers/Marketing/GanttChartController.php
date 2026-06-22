@@ -66,8 +66,13 @@ class GanttChartController extends Controller
                 });
             }
             $programs = $query->get();
+<<<<<<< Updated upstream
         } elseif ($user->hasHakAkses('gantt_cross_view')) {
             // User dengan subrole gantt_cross_view bisa lihat punya sendiri + orang lain yang diijinkan
+=======
+        } elseif ($user->hasAnySubrole(['hrd', 'keuangan', 'sales_marketing'])) {
+            // User dengan subrole hrd/keuangan/sales_marketing bisa lihat punya sendiri + orang lain yang diijinkan
+>>>>>>> Stashed changes
             $programs = ProgramKerja::with([
                 'inisiatifs' => function ($sub) use ($user, $targetUser, $targetUserId) {
                     $sub->where(function ($q) use ($user, $targetUser) {

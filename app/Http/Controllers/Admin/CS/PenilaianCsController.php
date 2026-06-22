@@ -22,7 +22,11 @@ class PenilaianCsController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
+<<<<<<< Updated upstream
         $isSupervisor = $user->hasAnyHakAkses(['cs_supervisor', 'sales_all_view']);
+=======
+        $isSupervisor = $user->hasAnySubrole(['hrd', 'sales_marketing']);
+>>>>>>> Stashed changes
         
         $csQuery = User::whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
                        ->where('id', '!=', 1)
@@ -42,7 +46,11 @@ class PenilaianCsController extends Controller
     public function managerIndex(Request $request)
     {
         $user = auth()->user();
+<<<<<<< Updated upstream
         $isSupervisor = $user->hasAnyHakAkses(['cs_supervisor', 'sales_all_view']);
+=======
+        $isSupervisor = $user->hasAnySubrole(['hrd', 'sales_marketing']);
+>>>>>>> Stashed changes
         
         $csQuery = User::whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
                        ->where('id', '!=', 1)
@@ -206,8 +214,13 @@ class PenilaianCsController extends Controller
         // Determine View
         $viewName = 'admin.CS.penilaian-cs.index';
         
+<<<<<<< Updated upstream
         // Jika target user login dan melihat datanya sendiri serta memiliki subrole cs_manager_smi -> Tampilkan Self View
         if (isset($targetUser) && $targetUser->id === auth()->id() && $targetUser->hasHakAkses('cs_manager_smi')) {
+=======
+        // Jika user dengan subrole manager_smi melihat datanya sendiri -> Tampilkan Self View
+        if ($targetUser && $targetUser->hasSubrole('manager_smi') && auth()->id() === $targetUser->id) {
+>>>>>>> Stashed changes
             $viewName = 'admin.CS.penilaian-cs.self';
         }
 

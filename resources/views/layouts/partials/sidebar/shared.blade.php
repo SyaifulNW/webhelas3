@@ -1,5 +1,10 @@
+<<<<<<< Updated upstream
 @if ($userRole === 'administrator' || Auth::user()->hasHakAkses('gantt_cross_view'))
     @if (Auth::user()->hasHakAkses('gantt_cross_view'))
+=======
+@if ($userRole === 'administrator' || Auth::user()->hasAnySubrole(['hrd', 'keuangan', 'sales_marketing']))
+    @if (Auth::user()->hasAnySubrole(['hrd', 'keuangan', 'sales_marketing']))
+>>>>>>> Stashed changes
         {{-- Unified Program Kerja & Gantt Chart --}}
         @if (
             (\App\Models\Menu::isActive('program_kerja') || \App\Models\Menu::isActive('ganchart')) &&
@@ -44,7 +49,11 @@
         </li>
     @endif
 
+<<<<<<< Updated upstream
     @if (Auth::user()->hasHakAkses('cs_supervisor') || Auth::user()->hasHakAkses('finance_kecil'))
+=======
+    @if (Auth::user()->hasSubrole('hrd') || Auth::user()->hasSubrole('finance_kecil'))
+>>>>>>> Stashed changes
         {{-- Menu Keuangan Kecil --}}
         @if (\App\Models\Menu::isActive('keuangan_kecil'))
             <li class="nav-item {{ request()->routeIs(['admin.keuangan.kas-kecil.index', 'admin.keuangan.zakat']) && !request()->routeIs(['admin.keuangan.laba-rugi', 'admin.keuangan.kas', 'admin.keuangan.pengajuan-anggaran']) ? 'active' : '' }}">
@@ -70,7 +79,11 @@
     @endif
 
     {{-- Minutes of Meeting (MoM) — untuk Linda, Yasmin --}}
+<<<<<<< Updated upstream
     @if (Auth::user()->hasHakAkses('gantt_cross_view'))
+=======
+    @if (Auth::user()->hasAnySubrole(['hrd', 'keuangan', 'sales_marketing']))
+>>>>>>> Stashed changes
         <li class="nav-item {{ request()->routeIs('admin.mom.index') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('admin.mom.index') }}"
                 title="Minutes of Meeting (MoM)">
@@ -83,8 +96,13 @@
     {{-- Penilaian Karyawan (HRD) --}}
     @if (
         \App\Models\Menu::isActive('penilaian_karyawan') &&
+<<<<<<< Updated upstream
             ($userRole !== 'administrator' || Auth::user()->hasHakAkses('cs_supervisor')) &&
             !Auth::user()->hasHakAkses('gantt_cross_view'))
+=======
+            ($userRole !== 'administrator' || Auth::user()->hasSubrole('hrd')) &&
+            !Auth::user()->hasAnySubrole(['hrd', 'keuangan', 'sales_marketing']))
+>>>>>>> Stashed changes
         <li
             class="nav-item {{ request()->routeIs('hr.dashboard') || request()->routeIs('manager.penilaian-cs.index') ? 'active' : '' }}">
             <a class="nav-link text-white" href="{{ route('hr.dashboard') }}">
@@ -99,7 +117,11 @@
         strtolower(auth()->user()->role) !== 'produksi' &&
         strtolower(auth()->user()->role) !== 'operasional' &&
         !in_array($userRole, ['reseller', 'chapter', 'agen']) &&
+<<<<<<< Updated upstream
         !Auth::user()->hasHakAkses('sales_all_view'))
+=======
+        !Auth::user()->hasSubrole('sales_marketing'))
+>>>>>>> Stashed changes
     <li
         class="nav-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('admin.keuangan.pengajuan-anggaran') }}">
@@ -109,7 +131,11 @@
     </li>
 @endif
 
+<<<<<<< Updated upstream
 @if (Auth::user()->hasHakAkses('cs_supervisor') && \App\Models\Menu::isActive('settings'))
+=======
+@if (Auth::user()->hasSubrole('hrd') && \App\Models\Menu::isActive('settings'))
+>>>>>>> Stashed changes
     <li class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('admin.settings.index') }}" title="SETTING">
             <i class="fas fa-fw fa-cog"></i>
@@ -119,7 +145,11 @@
 @endif
 
 {{-- Menu SDM khusus Yasmin --}}
+<<<<<<< Updated upstream
 @if (Auth::user()->hasHakAkses('cs_supervisor'))
+=======
+@if (Auth::user()->hasSubrole('hrd'))
+>>>>>>> Stashed changes
     <li class="nav-item {{ request()->routeIs(['hr', 'admin.penilaian-cs.index']) ? 'active' : '' }}">
         <a class="nav-link collapsed" href="#" data-toggle="collapse"
             data-target="#collapseSdmYasmin"
@@ -159,7 +189,11 @@
     $momUserRole = strtolower(trim(auth()->user()->role ?? ''));
     $momBlocked =
         $momUserRole === 'administrator' ||
+<<<<<<< Updated upstream
         Auth::user()->hasHakAkses('gantt_cross_view') ||
+=======
+        Auth::user()->hasAnySubrole(['hrd', 'keuangan', 'sales_marketing']) ||
+>>>>>>> Stashed changes
         in_array($momUserRole, \App\Http\Controllers\Admin\Operations\MomController::BLOCKED_ROLES) ||
         str_starts_with($momUserRole, 'chapter_');
 @endphp
@@ -173,7 +207,11 @@
 @endif
 
 {{-- Menu Agenda (hanya Linda) --}}
+<<<<<<< Updated upstream
 @if (Auth::user()->hasHakAkses('sales_all_view'))
+=======
+@if (Auth::user()->hasSubrole('sales_marketing'))
+>>>>>>> Stashed changes
     <li class="nav-item {{ request()->routeIs('agenda.index') ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('agenda.index') }}" title="AGENDA">
             <i class="fas fa-fw fa-calendar-check"></i>

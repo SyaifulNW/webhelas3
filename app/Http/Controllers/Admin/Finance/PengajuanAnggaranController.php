@@ -20,7 +20,11 @@ class PengajuanAnggaranController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+<<<<<<< Updated upstream
         $isLinda = $user->hasHakAkses('finance_access');
+=======
+        $isLinda = $user->hasSubrole('keuangan');
+>>>>>>> Stashed changes
         $isAdmin = strtolower($user->role) === 'administrator';
 
         $sortBy = $request->get('sort_by', 'tanggal_pengajuan');
@@ -34,7 +38,7 @@ class PengajuanAnggaranController extends Controller
         $selectedApplicant = $request->get('applicant');
         $applicants = collect();
 
-        $query = PengajuanAnggaran::with(['pengadaanBarang.buktiFotos']);
+        $query = PengajuanAnggaran::with(['pengadaanBarang.buktiFotos', 'monitoringPerbaikan']);
 
         // Linda and Administrator can see all requests
         if (!($isLinda || $isAdmin)) {
@@ -47,12 +51,28 @@ class PengajuanAnggaranController extends Controller
             }
         }
 
-        if ($month && $month !== 'all') {
-            $query->whereMonth('tanggal_pengajuan', $month);
-        }
+        if ($month && $month !== 'all' && $year && $year !== 'all') {
+            $targetDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $query->where(function ($q) use ($month, $year, $targetDate) {
+                $q->whereMonth('tanggal_pengajuan', $month)
+                  ->whereYear('tanggal_pengajuan', $year)
+                  ->orWhere(function ($sub) use ($targetDate) {
+                      $sub->where('tanggal_pengajuan', '<', $targetDate)
+                          ->where('status', '!=', 'approved')
+                          ->where(function ($subSub) {
+                              $subSub->has('pengadaanBarang')
+                                     ->orHas('monitoringPerbaikan');
+                          });
+                  });
+            });
+        } else {
+            if ($month && $month !== 'all') {
+                $query->whereMonth('tanggal_pengajuan', $month);
+            }
 
-        if ($year && $year !== 'all') {
-            $query->whereYear('tanggal_pengajuan', $year);
+            if ($year && $year !== 'all') {
+                $query->whereYear('tanggal_pengajuan', $year);
+            }
         }
 
         if ($selectedStatus) {
@@ -121,7 +141,11 @@ class PengajuanAnggaranController extends Controller
     public function exportPDF(Request $request)
     {
         $user = Auth::user();
+<<<<<<< Updated upstream
         $isLinda = $user->hasHakAkses('finance_access');
+=======
+        $isLinda = $user->hasSubrole('keuangan');
+>>>>>>> Stashed changes
         $isAdmin = strtolower($user->role) === 'administrator';
 
         $month = $request->get('month', date('m'));
@@ -163,7 +187,11 @@ class PengajuanAnggaranController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
+<<<<<<< Updated upstream
         $isLinda = $user->hasHakAkses('finance_access');
+=======
+        $isLinda = $user->hasSubrole('keuangan');
+>>>>>>> Stashed changes
         $isAdmin = strtolower($user->role) === 'administrator';
 
         if ($isAdmin && !$isLinda) {
@@ -218,7 +246,11 @@ class PengajuanAnggaranController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $user = Auth::user();
+<<<<<<< Updated upstream
         $isLinda = $user->hasHakAkses('finance_access');
+=======
+        $isLinda = $user->hasSubrole('keuangan');
+>>>>>>> Stashed changes
 
         if (!$isLinda) {
             return redirect()->back()->with('error', 'Hanya Keuangan yang dapat melakukan tindakan ini.');
@@ -266,6 +298,10 @@ class PengajuanAnggaranController extends Controller
             'biaya_disetujui' => $totalApproved
         ];
 
+        if ($newStatus === 'approved' || $newStatus === 'belum_lunas') {
+            $updateData['tanggal_pengajuan'] = Carbon::now();
+        }
+
         if ($request->hasFile('bukti_transfer')) {
             $subFolder = 'uploads/bukti_transfer';
             $destinationPath = public_path($subFolder);
@@ -290,6 +326,26 @@ class PengajuanAnggaranController extends Controller
         }
 
         $anggaran->update($updateData);
+
+        // Sync status realisasi_dana dan bukti_transfer ke MonitoringPerbaikan yang terkait
+        $monitoringPerbaikan = \App\Models\MonitoringPerbaikan::where('pengajuan_anggaran_id', $anggaran->id)->first();
+        if ($monitoringPerbaikan) {
+            $syncMonitoring = [];
+            if ($newStatus === 'approved') {
+                $syncMonitoring['realisasi_dana'] = $totalApproved;
+            } elseif ($newStatus === 'belum_lunas') {
+                $syncMonitoring['realisasi_dana'] = $totalApproved;
+            } elseif ($request->status === 'rejected') {
+                $syncMonitoring['realisasi_dana'] = null;
+            }
+            // Sync bukti_transfer jika Linda upload saat approve
+            if (isset($updateData['bukti_transfer'])) {
+                $syncMonitoring['bukti_transfer'] = $updateData['bukti_transfer'];
+            }
+            if (!empty($syncMonitoring)) {
+                $monitoringPerbaikan->update($syncMonitoring);
+            }
+        }
 
         // Sync status ACC, realisasi_dana, dan bukti_transfer ke PengadaanBarang yang terkait
         $pengadaanBarang = \App\Models\PengadaanBarang::where('pengajuan_anggaran_id', $anggaran->id)->first();
@@ -341,7 +397,11 @@ class PengajuanAnggaranController extends Controller
         ]);
 
         $user = Auth::user();
+<<<<<<< Updated upstream
         $isLinda = $user->hasHakAkses('finance_access');
+=======
+        $isLinda = $user->hasSubrole('keuangan');
+>>>>>>> Stashed changes
         if (!$isLinda) {
             return redirect()->back()->with('error', 'Hanya Staff Keuangan yang dapat mengganti foto ini.');
         }
@@ -402,7 +462,11 @@ class PengajuanAnggaranController extends Controller
         $anggaran = PengajuanAnggaran::findOrFail($id);
 
         $user = Auth::user();
+<<<<<<< Updated upstream
         $isLinda = $user->hasHakAkses('finance_access');
+=======
+        $isLinda = $user->hasSubrole('keuangan');
+>>>>>>> Stashed changes
         $isAdmin = strtolower($user->role) === 'administrator';
 
         if ($isAdmin && !$isLinda) {
@@ -436,6 +500,12 @@ class PengajuanAnggaranController extends Controller
 
         // Simpan ke pengajuan_anggarans
         $anggaran->update(['bukti_transfer' => $filePath]);
+
+        // Sync ke monitoring_perbaikans yang terkait
+        $monitoringPerbaikan = \App\Models\MonitoringPerbaikan::where('pengajuan_anggaran_id', $anggaran->id)->first();
+        if ($monitoringPerbaikan) {
+            $monitoringPerbaikan->update(['bukti_transfer' => $filePath]);
+        }
 
         // Sync ke pengadaan_barangs yang terkait
         $pengadaanBarang = \App\Models\PengadaanBarang::where('pengajuan_anggaran_id', $anggaran->id)->first();
@@ -476,7 +546,11 @@ class PengajuanAnggaranController extends Controller
         ]);
 
         $user = Auth::user();
+<<<<<<< Updated upstream
         $isLinda = $user->hasHakAkses('finance_access');
+=======
+        $isLinda = $user->hasSubrole('keuangan');
+>>>>>>> Stashed changes
         $isAdmin = strtolower($user->role) === 'administrator';
 
         // Authorization: only the requester can edit
@@ -543,7 +617,11 @@ class PengajuanAnggaranController extends Controller
     {
         $pengajuan = PengajuanAnggaran::findOrFail($id);
         $user = Auth::user();
+<<<<<<< Updated upstream
         $isLinda = $user->hasHakAkses('finance_access');
+=======
+        $isLinda = $user->hasSubrole('keuangan');
+>>>>>>> Stashed changes
         $isAdmin = strtolower($user->role) === 'administrator';
 
         // Authorization check
