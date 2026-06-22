@@ -459,7 +459,7 @@
                     $pendingM1TCount = \Cache::remember('pending_m1t_count_' . Auth::id() . '_v' . $cacheVersion, 3600, function () use ($userRole, $userName) {
                         if (
                             $userRole === 'administrator' ||
-                            Auth::user()->hasSubrole('cs_pusat')
+                            Auth::user()->hasHakAkses('cs_pusat')
                         ) {
                             return \App\Models\PesertaSmi::where(function ($q) {
                                 $q->where('approval_status', 'Pending')->orWhereNull('approval_status');

@@ -16,8 +16,7 @@
 
     // Access Control
     $user = Auth::user();
-    $userName = $user->name ?? '';
-    $isLinda = stripos($userName, 'Linda') !== false;
+    $isLinda = $user->hasHakAkses('finance_access');
     $isManager = strtolower($user->role ?? '') === 'manager';
     $isAdmin = strtolower($user->role ?? '') === 'administrator';
     $canEdit = $isLinda || $isManager || $isAdmin;

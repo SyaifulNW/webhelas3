@@ -129,15 +129,16 @@ namespace App\Models;
                 return $this->createdBy->name;
             }
 
-            $names = [
-                1 => 'Administrator',
-                2 => 'Linda',
-                3 => 'Yasmin',
-                5 => 'Livia',
-                6 => 'Shafa',
-            ];
+            if (empty($this->created_by)) {
+                return '-';
+            }
 
-            return $names[$this->created_by] ?? '-';
+            $user = \App\Models\User::find($this->created_by);
+            if ($user) {
+                return $user->name;
+            }
+
+            return 'User #' . $this->created_by;
         }
 
         public function pesertaSmi()

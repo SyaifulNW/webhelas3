@@ -146,7 +146,7 @@ class AgendaController extends Controller
         );
 
         // Determine user's division list
-        if ($user->hasSubrole('spp_admin') || strtolower($user->name) === 'linda') {
+        if ($user->hasAnyHakAkses(['spp_admin', 'finance_access'])) {
             $divisiList = self::DIVISI_LIST;
         } else {
             $divisiName = 'Sales & Marketing'; // fallback
@@ -471,14 +471,14 @@ class AgendaController extends Controller
 
     /**
      * Rekap: Ringkasan todolist semua divisi untuk tanggal tertentu (max 2 hari lalu).
-     * Hanya boleh diakses oleh Yasmin (atau administrator).
+     * Hanya boleh diakses oleh HRD (atau administrator).
      */
     public function rekap(Request $request)
     {
         $user = Auth::user();
 
         // Security: only Yasmin or administrator
-        if (!$user->hasSubrole('hrd_settings') && strtolower($user->name) !== 'yasmin' && strtolower($user->role) !== 'administrator') {
+        if (!$user->hasHakAkses('hrd_settings') && strtolower($user->role) !== 'administrator') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 

@@ -309,12 +309,12 @@
         $userRole = strtolower(Auth::user()->role);
         $userName = Auth::user()->name;
         $currentUser = Auth::user();
-        $isFelmi = $currentUser->hasSubrole('activity_marketing');
+        $isFelmi = $currentUser->hasHakAkses('activity_marketing');
         $isChapter = $userRole === 'chapter';
         $isOperasional = $userRole === 'operasional';
-        $isRofi = $currentUser->hasSubrole('gantt_marketing_view');
-        $isRafi = $currentUser->hasSubrole('operasional_rafi');
-        $isYasminLinda = $currentUser->hasSubrole('gantt_cross_view');
+        $isRofi = $currentUser->hasHakAkses('gantt_marketing_view');
+        $isRafi = $currentUser->hasHakAkses('operasional_rafi');
+        $isYasminLinda = $currentUser->hasHakAkses('gantt_cross_view');
 
         // $isProduksi: menentukan FORMAT KOLOM yang ditampilkan (kolom produksi vs marketing)
         // Rofi (produksi) dan Rafi (operasional) keduanya melihat kolom MARKETING, bukan kolom produksi
@@ -415,7 +415,7 @@
                             @foreach ($programs as $index => $program)
                                 @php
                                     $userName = Auth::user()->name;
-                                    $isRofi = $currentUser->hasSubrole('gantt_marketing_view');
+                                    $isRofi = $currentUser->hasHakAkses('gantt_marketing_view');
 
                                     // Rofi dan Administrator diberikan hak akses penuh (Full Access)
                                     $isFullAccess = strtolower(Auth::user()->role) === 'administrator' || $isRofi;

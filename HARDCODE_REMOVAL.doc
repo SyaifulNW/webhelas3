@@ -1,0 +1,203 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<meta name="Originator" content="Microsoft Word 15">
+<style>
+    body { font-family: Calibri, sans-serif; font-size: 11pt; margin: 40px; line-height: 1.5; }
+    h1 { font-size: 18pt; color: #1a3a6b; border-bottom: 2px solid #1a3a6b; padding-bottom: 8px; margin-top: 0; }
+    h2 { font-size: 14pt; color: #1a3a6b; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    h3 { font-size: 12pt; color: #333; margin-top: 20px; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 10pt; }
+    th { background-color: #1a3a6b; color: white; padding: 8px 12px; text-align: left; border: 1px solid #1a3a6b; }
+    td { padding: 8px 12px; border: 1px solid #ccc; vertical-align: top; }
+    tr:nth-child(even) { background-color: #f5f8fc; }
+    code { font-family: Consolas, monospace; font-size: 9.5pt; background-color: #f0f0f0; padding: 1px 4px; border-radius: 3px; }
+    .code-block { font-family: Consolas, monospace; font-size: 9pt; background-color: #f8f8f8; border: 1px solid #ddd; border-radius: 5px; padding: 12px; margin: 8px 0; white-space: pre-wrap; line-height: 1.4; }
+    .bad { color: #c0392b; font-weight: bold; }
+    .good { color: #27ae60; font-weight: bold; }
+    .label-bad { background-color: #fdecea; color: #c0392b; padding: 2px 8px; border-radius: 3px; font-weight: bold; font-size: 9pt; }
+    .label-good { background-color: #eafaf1; color: #27ae60; padding: 2px 8px; border-radius: 3px; font-weight: bold; font-size: 9pt; }
+    .note { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 15px; margin: 15px 0; font-size: 10pt; }
+    .file-path { color: #6c3483; font-family: Consolas, monospace; font-size: 9.5pt; }
+    hr { border: none; border-top: 1px solid #ddd; margin: 25px 0; }
+</style>
+</head>
+<body>
+
+<h1>Perbandingan Sebelum &amp; Sesudah Penghapusan Hardcode</h1>
+
+<h2>Ringkasan</h2>
+<p>Semua logika akses kontrol yang sebelumnya menggunakan <b>nama orang</b> (string matching) atau <b>user ID</b> (angka statis) telah diganti menjadi <b>permission-based</b> menggunakan <code>hasHakAkses()</code> / <code>hasAnyHakAkses()</code>.</p>
+
+<h2>File yang Diubah</h2>
+<table>
+    <tr><th>No</th><th>File</th><th>Jumlah Perubahan</th><th>Jenis Hardcode</th></tr>
+    <tr><td>1</td><td class="file-path">database.blade.php</td><td>2</td><td>Nama "Rafi"</td></tr>
+    <tr><td>2</td><td class="file-path">row_chapter.blade.php</td><td>1</td><td>Nama "Rafi"</td></tr>
+    <tr><td>3</td><td class="file-path">salesplan/index.blade.php</td><td>4</td><td>User ID 1 &amp; 13</td></tr>
+</table>
+
+<hr>
+
+<h2>1. database.blade.php</h2>
+<p class="file-path">resources/views/admin/Sales/database/database.blade.php</p>
+
+<h3>Perubahan 1 — Tombol "Tambah Data" (Baris ~1124)</h3>
+<p><span class="label-bad">&#10060; SEBELUM</span> <i>Hardcode nama "Rafi"</i></p>
+<div class="code-block">@if (
+    !in_array($userRole, ['administrator', 'manager', 'marketing']) &amp;&amp;
+    <span class="bad">!($userRole === 'operasional' &amp;&amp; stripos(auth()-&gt;user()-&gt;name, 'Rafi') === false)</span> &amp;&amp;
+    !((auth()-&gt;user()-&gt;hasHakAkses('spp_admin')) &amp;&amp; request('view') !== 'me'))</div>
+
+<p><span class="label-good">&#9989; SESUDAH</span> <i>Permission-based</i></p>
+<div class="code-block">@if (
+    !in_array($userRole, ['administrator', 'manager', 'marketing']) &amp;&amp;
+    <span class="good">!($userRole === 'operasional' &amp;&amp; !auth()-&gt;user()-&gt;hasHakAkses('operasional_rafi'))</span> &amp;&amp;
+    !((auth()-&gt;user()-&gt;hasHakAkses('spp_admin')) &amp;&amp; request('view') !== 'me'))</div>
+
+<h3>Perubahan 2 — Tombol "Lihat Jadwal Zoom" (Baris ~1153)</h3>
+<p><span class="label-bad">&#10060; SEBELUM</span> <i>Hardcode nama "Rafi"</i></p>
+<div class="code-block">@if (
+    !in_array($userRole, ['chapter', 'reseller', 'agen']) &amp;&amp;
+    <span class="bad">!(auth()-&gt;user()-&gt;role === 'operasional' &amp;&amp; stripos(auth()-&gt;user()-&gt;name, 'Rafi') !== false)</span> &amp;&amp;
+    !($userRole === 'administrator' &amp;&amp; request('view_type') == 'chapter'))</div>
+
+<p><span class="label-good">&#9989; SESUDAH</span> <i>Permission-based</i></p>
+<div class="code-block">@if (
+    !in_array($userRole, ['chapter', 'reseller', 'agen']) &amp;&amp;
+    <span class="good">!(auth()-&gt;user()-&gt;role === 'operasional' &amp;&amp; auth()-&gt;user()-&gt;hasHakAkses('operasional_rafi'))</span> &amp;&amp;
+    !($userRole === 'administrator' &amp;&amp; request('view_type') == 'chapter'))</div>
+
+<hr>
+
+<h2>2. row_chapter.blade.php</h2>
+<p class="file-path">resources/views/admin/Sales/database/partials/row_chapter.blade.php</p>
+
+<h3>Perubahan — Hak Edit di Chapter View (Baris ~22)</h3>
+<p><span class="label-bad">&#10060; SEBELUM</span> <i>Hardcode nama "Rafi"</i></p>
+<div class="code-block">$authUser = auth()-&gt;user();
+$userRole = strtolower($authUser-&gt;role);
+// Rafi (operasional) diberi hak edit di chapter view
+<span class="bad">$isRafi = ($userRole === 'operasional' &amp;&amp; stripos($authUser-&gt;name, 'Rafi') !== false);</span>
+$canEdit = !in_array($userRole, ['marketing', 'administrator', 'operasional']) || $isRafi;</div>
+
+<p><span class="label-good">&#9989; SESUDAH</span> <i>Permission-based</i></p>
+<div class="code-block">$authUser = auth()-&gt;user();
+$userRole = strtolower($authUser-&gt;role);
+// Operasional dengan hak akses operasional_rafi diberi hak edit di chapter view
+<span class="good">$isRafi = ($userRole === 'operasional' &amp;&amp; $authUser-&gt;hasHakAkses('operasional_rafi'));</span>
+$canEdit = !in_array($userRole, ['marketing', 'administrator', 'operasional']) || $isRafi;</div>
+
+<hr>
+
+<h2>3. salesplan/index.blade.php</h2>
+<p class="file-path">resources/views/admin/Sales/salesplan/index.blade.php</p>
+
+<h3>Perubahan 1 — Admin View Flag (Baris ~386)</h3>
+<p><span class="label-bad">&#10060; SEBELUM</span> <i>Hardcode user ID 1 dan 13</i></p>
+<div class="code-block">$isAdminView = (
+    strtolower(auth()-&gt;user()-&gt;role) === 'administrator' ||
+    auth()-&gt;user()-&gt;hasAnyHakAkses(['spp_admin', 'sales_admin', 'cs_supervisor', 'sales_full_view']) ||
+    <span class="bad">auth()-&gt;id() == 1 ||
+    auth()-&gt;id() == 13</span>
+);</div>
+
+<p><span class="label-good">&#9989; SESUDAH</span> <i>Permission-based</i></p>
+<div class="code-block">$isAdminView = (
+    strtolower(auth()-&gt;user()-&gt;role) === 'administrator' ||
+    auth()-&gt;user()-&gt;hasAnyHakAkses([
+        'spp_admin', 'sales_admin', 'cs_supervisor',
+        <span class="good">'sales_full_view', 'sales_all_view', 'young_startup_admin'</span>
+    ])
+);</div>
+
+<h3>Perubahan 2 — Filter CS per Tim (Baris ~502)</h3>
+<p><span class="label-bad">&#10060; SEBELUM</span> <i>Hardcode user ID 1 dan 13</i></p>
+<div class="code-block">@if(
+    strtolower(auth()-&gt;user()-&gt;role) === 'administrator' ||
+    auth()-&gt;user()-&gt;hasAnyHakAkses(['spp_admin', 'sales_admin', 'cs_supervisor', 'sales_full_view']) ||
+    <span class="bad">(auth()-&gt;id() == 1) ||
+    ((auth()-&gt;user()-&gt;hasHakAkses('young_startup_admin') || auth()-&gt;id() == 13) &amp;&amp; $cs-&gt;hasHakAkses('young_startup_cs'))</span>
+)</div>
+
+<p><span class="label-good">&#9989; SESUDAH</span> <i>Permission-based</i></p>
+<div class="code-block">@if(
+    strtolower(auth()-&gt;user()-&gt;role) === 'administrator' ||
+    auth()-&gt;user()-&gt;hasAnyHakAkses([<span class="good">'spp_admin', 'sales_admin', 'cs_supervisor', 'sales_full_view', 'sales_all_view'</span>]) ||
+    <span class="good">(auth()-&gt;user()-&gt;hasHakAkses('young_startup_admin') &amp;&amp; $cs-&gt;hasHakAkses('young_startup_cs'))</span>
+)</div>
+
+<h3>Perubahan 3 — Filter Kelas Visibility (Baris ~513)</h3>
+<p><span class="label-bad">&#10060; SEBELUM</span></p>
+<div class="code-block"><span class="bad">@if(!(auth()-&gt;user()-&gt;hasHakAkses('young_startup_admin') || auth()-&gt;id() == 13))</span></div>
+
+<p><span class="label-good">&#9989; SESUDAH</span></p>
+<div class="code-block"><span class="good">@if(!auth()-&gt;user()-&gt;hasHakAkses('young_startup_admin'))</span></div>
+
+<h3>Perubahan 4 — Filter Kelas Options (Baris ~524-525)</h3>
+<p><span class="label-bad">&#10060; SEBELUM</span></p>
+<div class="code-block">((strtolower(auth()-&gt;user()-&gt;role) === 'administrator' || <span class="bad">auth()-&gt;id() == 1</span>)
+    &amp;&amp; !in_array($kelas-&gt;nama_kelas, [...])) ||
+((auth()-&gt;user()-&gt;hasHakAkses('young_startup_admin') || <span class="bad">auth()-&gt;id() == 13</span>)
+    &amp;&amp; $kelas-&gt;nama_kelas == 'Start-Up Muda Indonesia')</div>
+
+<p><span class="label-good">&#9989; SESUDAH</span></p>
+<div class="code-block">((strtolower(auth()-&gt;user()-&gt;role) === 'administrator' || <span class="good">auth()-&gt;user()-&gt;hasHakAkses('sales_all_view')</span>)
+    &amp;&amp; !in_array($kelas-&gt;nama_kelas, [...])) ||
+(<span class="good">auth()-&gt;user()-&gt;hasHakAkses('young_startup_admin')</span>
+    &amp;&amp; $kelas-&gt;nama_kelas == 'Start-Up Muda Indonesia')</div>
+
+<hr>
+
+<h2>Mapping Permission yang Digunakan</h2>
+<table>
+    <tr><th>Hardcode Lama</th><th>Permission Pengganti</th><th>Keterangan</th></tr>
+    <tr>
+        <td><code>stripos(name, 'Rafi')</code></td>
+        <td><code>hasHakAkses('operasional_rafi')</code></td>
+        <td>Akses operasional khusus (edit chapter view, tombol tambah)</td>
+    </tr>
+    <tr>
+        <td><code>auth()-&gt;id() == 1</code></td>
+        <td><code>hasHakAkses('sales_all_view')</code></td>
+        <td>Super-admin / akses penuh semua data</td>
+    </tr>
+    <tr>
+        <td><code>auth()-&gt;id() == 13</code></td>
+        <td><code>hasHakAkses('young_startup_admin')</code></td>
+        <td>Admin khusus kelas Start-Up Muda Indonesia</td>
+    </tr>
+</table>
+
+<hr>
+
+<h2>Catatan Penting</h2>
+<p>Pastikan user-user berikut sudah memiliki permission yang sesuai di kolom <code>hak_akses</code>:</p>
+
+<table>
+    <tr><th>User (sebelumnya di-hardcode)</th><th>Permission yang Harus Ada</th></tr>
+    <tr><td>User ID 1 (Linda)</td><td><code>sales_all_view</code>, <code>spp_admin</code>, <code>cs_supervisor</code></td></tr>
+    <tr><td>User ID 13</td><td><code>young_startup_admin</code></td></tr>
+    <tr><td>Rafi (operasional)</td><td><code>operasional_rafi</code></td></tr>
+</table>
+
+<div class="note">
+    <b>&#9888; Perhatian:</b> Jika user terkait belum memiliki permission di atas, tambahkan melalui:<br>
+    <b>Settings &gt; Users &amp; Roles &gt; Edit User</b> atau langsung via database SQL.
+</div>
+
+<hr>
+
+<h2>Manfaat Perubahan Ini</h2>
+<table>
+    <tr><th>No</th><th>Manfaat</th><th>Penjelasan</th></tr>
+    <tr><td>1</td><td><b>Tidak bergantung nama/ID</b></td><td>Jika user berganti, tidak perlu ubah kode program</td></tr>
+    <tr><td>2</td><td><b>Mudah dikelola</b></td><td>Semua akses diatur terpusat melalui permission flags</td></tr>
+    <tr><td>3</td><td><b>Konsisten</b></td><td>Seluruh codebase menggunakan pola yang sama (<code>hasHakAkses</code>)</td></tr>
+    <tr><td>4</td><td><b>Lebih aman</b></td><td>Tidak ada "magic number" atau string tersembunyi di logic</td></tr>
+</table>
+
+</body>
+</html>

@@ -254,9 +254,9 @@ class MarketingParticipantController extends Controller
             // Determine leads source based on creator
             $leadsSource = 'ADS';
             if ($participant->creator) {
-                if ($participant->creator->hasSubrole('activity_marketing')) {
+                if ($participant->creator->hasHakAkses('activity_marketing')) {
                     $leadsSource = 'Open House';
-                } elseif ($participant->creator->hasSubrole('activity_intake')) {
+                } elseif ($participant->creator->hasHakAkses('activity_intake')) {
                     $leadsSource = 'Sosial Media';
                 }
             }

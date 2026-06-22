@@ -1161,7 +1161,7 @@ class PesertaSmiController extends Controller
         $allPicNames = array_unique(array_merge($picsFromCsName, $picsFromUsers));
         
         // CS Pusat based on subrole cs_pusat
-        $whitelist = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
+        $whitelist = \App\Models\User::whereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
         $allPicNames = array_filter($allPicNames, function($name) use ($whitelist) {
             foreach($whitelist as $w) {
                 if (stripos($name, $w) !== false) return true;
@@ -1247,7 +1247,7 @@ class PesertaSmiController extends Controller
 
                 if ($chapterName) {
                     $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
-                    $excludeNames = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
+                    $excludeNames = \App\Models\User::whereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
 
                     $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
                         $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {
@@ -1722,14 +1722,15 @@ class PesertaSmiController extends Controller
 
                 if ($chapterName) {
                     $cleanChapter = str_replace('CHAPTER ', '', strtoupper($chapterName));
-                    $dbExcludeNames = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')
+                    $dbExcludeNames = \App\Models\User::whereJsonContains('hak_akses', 'cs_pusat')
                         ->orWhereIn('role', ['cs-mbc', 'operasional'])
                         ->orWhere(function($sq) {
-                            $sq->whereNotNull('subrole')->where('subrole', '!=', '[]');
+                            $sq->whereNotNull('hak_akses')->where('hak_akses', '!=', '[]');
                         })
+                        ->orWhereNotIn('role', ['chapter', 'reseller', 'agen'])
                         ->pluck('name')
                         ->toArray();
-                    $excludeNames = array_unique(array_merge($dbExcludeNames, ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan']));
+                    $excludeNames = array_unique($dbExcludeNames);
 
                     $q->orWhere(function ($sq) use ($chapterName, $cleanChapter, $excludeNames) {
                         $sq->whereHas('salesPlan.data', function ($tsq) use ($chapterName, $cleanChapter, $excludeNames) {

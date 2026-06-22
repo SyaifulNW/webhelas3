@@ -30,7 +30,7 @@ class RoleMiddleware
         }
 
         // Special case: allow cs_supervisor to access administrator routes
-        if (Auth::user()->hasSubrole('cs_supervisor') && in_array('administrator', $allowedRoles)) {
+        if (Auth::user()->hasHakAkses('cs_supervisor') && in_array('administrator', $allowedRoles)) {
             return $next($request);
         }
 

@@ -20,12 +20,12 @@ class Menu extends Model
             $menu = self::where('name', $name)->first();
             if ($menu) {
                 // Special case for settings menu for finance_access
-                if (in_array($name, ['settings', 'keuangan_besar']) && auth()->check() && auth()->user()->hasSubrole('finance_access')) {
+                if (in_array($name, ['settings', 'keuangan_besar']) && auth()->check() && auth()->user()->hasHakAkses('finance_access')) {
                     return true;
                 }
 
                 // Special case for keuangan_kecil
-                if ($name === 'keuangan_kecil' && auth()->check() && auth()->user()->hasAnySubrole(['finance_kecil', 'cs_supervisor'])) {
+                if ($name === 'keuangan_kecil' && auth()->check() && auth()->user()->hasAnyHakAkses(['finance_kecil', 'cs_supervisor'])) {
                     return true;
                 }
                 

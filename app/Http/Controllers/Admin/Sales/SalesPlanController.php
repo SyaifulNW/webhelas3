@@ -26,7 +26,7 @@ class SalesPlanController extends Controller
         $csFilter = $request->input('created_by');
         $typeFilter = $request->input('type'); // mbc or smi
 
-        if (auth()->check() && optional(auth()->user())->name == 'Agus Setyo') {
+        if (auth()->check() && auth()->user()->hasHakAkses('smi_class_only')) {
             $kelasFilter = 'Start-Up Muslim Indonesia';
         }
 
@@ -82,8 +82,8 @@ class SalesPlanController extends Controller
         $csList = User::orderBy('name', 'asc')->get();
 
         // Filter CS List for Admin Dropdown (Specific Request)
-        if (auth()->user()->isRole('administrator') || auth()->user()->hasAnySubrole(['cs_supervisor', 'sales_all_view'])) {
-            $csList = User::whereJsonContains('subrole', 'cs_pusat')
+        if (auth()->user()->isRole('administrator') || auth()->user()->hasAnyHakAkses(['cs_supervisor', 'sales_all_view'])) {
+            $csList = User::whereJsonContains('hak_akses', 'cs_pusat')
                 ->orderBy('name', 'asc')
                 ->get();
         } else {
@@ -149,8 +149,8 @@ class SalesPlanController extends Controller
 
 
         // Determine if user is exempt from created_by filter
-        $isExempt = auth()->user()->hasSubrole('exempt_transfer') || 
-            ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasSubrole('sales_all_view'));
+        $isExempt = auth()->user()->hasHakAkses('exempt_transfer') || 
+            ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasHakAkses('sales_all_view'));
 
         // Clone query logic untuk statistik agar menyertakan semua data (tidak terpotong pagination)
         $salesplanStats = SalesPlan::where('status', 'sudah_transfer')
@@ -182,7 +182,7 @@ class SalesPlanController extends Controller
             ->when(!$isAdmin && auth()->check() && !$isExempt, function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
+                    $excludeNames = User::whereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -246,7 +246,7 @@ class SalesPlanController extends Controller
             ->when(!$isAdmin && auth()->check() && !$isExempt, function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
+                    $excludeNames = User::whereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -306,7 +306,7 @@ class SalesPlanController extends Controller
             ->when(!$isAdmin && auth()->check() && !$isExempt, function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
+                    $excludeNames = User::whereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -758,8 +758,8 @@ class SalesPlanController extends Controller
 
         $userId = auth()->id();
         $isAdmin = in_array($userId, [1]);
-        $isExempt = auth()->user()->hasSubrole('exempt_transfer') || 
-            ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasSubrole('sales_all_view'));
+        $isExempt = auth()->user()->hasHakAkses('exempt_transfer') || 
+            ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && auth()->user()->hasHakAkses('sales_all_view'));
 
         $query = SalesPlan::with(['kelas'])
             ->when($kelasFilter, function ($query) use ($kelasFilter) {
@@ -782,7 +782,7 @@ class SalesPlanController extends Controller
             ->when(!$isAdmin && auth()->check() && !$isExempt, function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
+                    $excludeNames = User::whereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
                     $query->whereHas('data', function ($sub) use ($chapter, $excludeNames) {
                         $sub->where('kota_nama', 'like', "%$chapter%")
                             ->whereNotIn('created_by', $excludeNames)
@@ -809,7 +809,7 @@ class SalesPlanController extends Controller
         if ($csFilter) {
             $csUser = User::find($csFilter);
             $csName = $csUser ? $csUser->name : 'CS #' . $csFilter;
-        } elseif (!$isAdmin && !in_array(optional(auth()->user())->name, $exemptUsers)) {
+        } elseif (!$isAdmin && !$isExempt) {
             $csName = auth()->user()->name;
         }
 
@@ -908,8 +908,8 @@ class SalesPlanController extends Controller
 
             $userRole = strtolower($user->role ?? '');
             $isAdmin = in_array($userRole, ['administrator']);
-            $isExempt = $user->hasSubrole('exempt_transfer') || 
-                ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && $user->hasSubrole('sales_all_view'));
+            $isExempt = $user->hasHakAkses('exempt_transfer') || 
+                ($request->input('type') != 'smi' && $request->input('kelas') != 'Start-Up Muslim Indonesia' && $user->hasHakAkses('sales_all_view'));
 
             $query = SalesPlan::query();
 

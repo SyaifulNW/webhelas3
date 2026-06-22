@@ -640,7 +640,7 @@
                     </div>
                 </div>
             </div>
-        @elseif(request('section') == 'settings' && (in_array(Auth::user()->role, ['administrator', 'admin', 'hrd']) || auth()->user()->hasSubrole('hrd_settings')))
+        @elseif(request('section') == 'settings' && (in_array(Auth::user()->role, ['administrator', 'admin', 'hrd']) || auth()->user()->hasHakAkses('hrd_settings')))
             <!-- SECTION: PENGATURAN ABSENSI -->
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <div>

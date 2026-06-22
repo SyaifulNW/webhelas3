@@ -23,9 +23,10 @@ class DashboardManagerController extends Controller
         // 3. Program selesai
         $programSelesai = Inisiatif::where('status', 'done')->count();
 
-        // 4. Closing bulan ini dari Latifah & Tursia
+        // 4. Closing bulan ini dari CS Pusat & CS MBC/SMI
+        $managerCsNames = \App\Models\User::whereIn('role', ['cs-smi', 'cs-mbc'])->orWhereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
         $closingBulanIni = SalesPlan::whereMonth('created_at', now()->month)
-            ->whereIn('created_by', ['Latifah', 'Tursia'])
+            ->whereIn('created_by', $managerCsNames)
             ->count();
 
         return view('manager.dashboard', compact(

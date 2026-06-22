@@ -100,11 +100,11 @@ $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
 $nilaiRoas = $persenRoas; // This seems redundant with persenRoas, but keeping for consistency if needed elsewhere
 $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
-                ->orWhereJsonContains('subrole', 'activity_marketing')
+            $felmiUser = User::whereJsonContains('hak_akses', 'activity_marketing_offline')
+                ->orWhereJsonContains('hak_akses', 'activity_marketing')
                 ->first();
-            $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
-                ->orWhereJsonContains('subrole', 'activity_intake')
+            $nisaUser = User::whereJsonContains('hak_akses', 'activity_marketing_online')
+                ->orWhereJsonContains('hak_akses', 'activity_intake')
                 ->first();
 
             // 1. LEADS ADS (20%)
@@ -187,7 +187,7 @@ $nilaiManualPart = round(($persenManual / 100) * $bobotManual, 2);
     // ============================
     // 4. TOTAL NILAI
     // ============================
-    if ($user->hasSubrole('activity_marketing')) {
+    if ($user->hasHakAkses('activity_marketing')) {
         // --- LOGIK KHUSUS FELMI (EVENT MARKETING) ---
         // 1. Total Leads Baru (40%) - Target 100
         $leadsFelmiCount = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
@@ -240,7 +240,7 @@ $totalIntakeBobot = 0;
 $totalFelmiKpiScore = 0;
 $overallPerformanceScore = 0;
 
-if ($targetUser->hasSubrole('activity_marketing')) {
+if ($targetUser->hasHakAkses('activity_marketing')) {
 // 1. INTAKE RECAP
 $daysInMonth = Carbon::create($tahun, $bulanNum, 1)->daysInMonth;
 $daysInMonth = $daysInMonth ?: 30; // Fallback
@@ -514,9 +514,9 @@ $hariKerja++;
 }
 
         $activityQuery = Activity::with('kategori')->orderBy('categories_id');
-        if ($targetUser && $targetUser->hasSubrole('activity_intake')) {
+        if ($targetUser && $targetUser->hasHakAkses('activity_intake')) {
             $activityQuery->whereIn('categories_id', [6, 7, 11]);
-        } elseif ($targetUser && $targetUser->hasSubrole('activity_marketing')) {
+        } elseif ($targetUser && $targetUser->hasHakAkses('activity_marketing')) {
             $activityQuery->whereIn('categories_id', [8, 9, 10]);
         } else {
             $activityQuery->whereIn('categories_id', [1, 2, 3, 4, 5]);
@@ -600,11 +600,11 @@ $targetRoas = 10;
 $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
 $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-        $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
-            ->orWhereJsonContains('subrole', 'activity_marketing')
+        $felmiUser = User::whereJsonContains('hak_akses', 'activity_marketing_offline')
+            ->orWhereJsonContains('hak_akses', 'activity_marketing')
             ->first();
-        $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
-            ->orWhereJsonContains('subrole', 'activity_intake')
+        $nisaUser = User::whereJsonContains('hak_akses', 'activity_marketing_online')
+            ->orWhereJsonContains('hak_akses', 'activity_intake')
             ->first();
 
         // 1. LEADS ADS (20%)
@@ -629,7 +629,7 @@ $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 }
 
     // Default
-    if ($user->hasSubrole('activity_marketing')) {
+    if ($user->hasHakAkses('activity_marketing')) {
         // 1. Leads Felmi (40%)
         $leadsFelmiCount = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)->whereMonth('created_at', $bulan)->where('created_by', $userId)->count();
         $nilaiLeadsFelmi = round((min(($leadsFelmiCount / 100) * 100, 100) / 100) * 40, 2);
@@ -741,11 +741,11 @@ $targetRoas = 10;
 $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
 $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-        $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
-            ->orWhereJsonContains('subrole', 'activity_marketing')
+        $felmiUser = User::whereJsonContains('hak_akses', 'activity_marketing_offline')
+            ->orWhereJsonContains('hak_akses', 'activity_marketing')
             ->first();
-        $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
-            ->orWhereJsonContains('subrole', 'activity_intake')
+        $nisaUser = User::whereJsonContains('hak_akses', 'activity_marketing_online')
+            ->orWhereJsonContains('hak_akses', 'activity_intake')
             ->first();
 
         // 1. Leads ADS (20%)
@@ -785,7 +785,7 @@ $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
             'targetLeadsNisa' => $targetLeadsNisa,
             'nilaiLeadsNisa' => $nilaiLeadsNisa,
         ];
-} elseif ($user->hasSubrole('activity_marketing')) {
+} elseif ($user->hasHakAkses('activity_marketing')) {
 // --- KASH KHUSUS FELMI ---
 // 1. Intake Recap Score
 $daysInMonth = Carbon::create($tahun, $bulanNum, 1)->daysInMonth;
@@ -878,7 +878,7 @@ $extra = [
 ];
 } else {
 $leadsMBC = Data::whereYear('created_at', $tahun)->whereMonth('created_at', $bulanNum)->where('leads', 'like', '%Marketing%')->whereIn('created_by', $csMBC)->count();
-$targetLeadsMBC = ($user->hasSubrole('activity_intake')) ? 100 : 150;
+$targetLeadsMBC = ($user->hasHakAkses('activity_intake')) ? 100 : 150;
 $nilaiLeadsMBC = round((min(($leadsMBC / $targetLeadsMBC) * 100, 100) / 100) * 45, 2);
 
 $leadsSMI = Data::whereYear('created_at', $tahun)->whereMonth('created_at', $bulanNum)->where('leads', 'like', '%Marketing%')->whereIn('created_by', $csSMI)->count();

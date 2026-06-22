@@ -33,7 +33,7 @@ class AlumniController extends Controller
 
 
         // Hanya user dengan subrole 'alumni_admin' bisa lihat semua data alumni
-        if (!$user->hasSubrole('alumni_admin')) {
+        if (!$user->hasHakAkses('alumni_admin')) {
             $query->where('created_by', $user->name);
         }
 

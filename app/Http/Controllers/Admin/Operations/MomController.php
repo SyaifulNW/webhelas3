@@ -25,11 +25,7 @@ class MomController extends Controller
      */
     const MULTI_UNIT_ROLES = ['cs-mbc', 'cs-smi'];
 
-    /**
-     * User names (exact match) that may access the Helas Aesthetic Clinic panel.
-     * All other CS users only see Helas Corp.
-     */
-    const CLINIC_UNIT_NAMES = ['Yasmin'];
+
 
     /**
      * Resolve MoM permissions for the currently authenticated user.
@@ -44,8 +40,8 @@ class MomController extends Controller
     {
         $user = Auth::user();
         $role = strtolower(trim($user->role ?? ''));
-        $hasSupervisorAccess = $user->hasSubrole('cs_supervisor');
-        $hasClinicAccess = $user->hasSubrole('clinic_access');
+        $hasSupervisorAccess = $user->hasHakAkses('cs_supervisor');
+        $hasClinicAccess = $user->hasHakAkses('clinic_access');
 
         // Blocked roles – should never reach here if route middleware is applied
         if (in_array($role, self::BLOCKED_ROLES) || str_starts_with($role, 'chapter_')) {

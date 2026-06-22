@@ -67,8 +67,6 @@ class SettingController extends Controller
                 'marketing',
                 'cs-mbc',
                 'operasional',
-                'manager',
-                'hrd',
                 'produksi',
                 'advertising',
                 'reseller',
@@ -97,6 +95,7 @@ class SettingController extends Controller
             'roles'          => $roles,
             'takenChapters'  => $takenChapters,
             'isOperasional'  => $isOperasional,
+            'subroleMap' => \App\Models\User::SUBROLE_FLAGS,
         ]);
     }
 
@@ -124,9 +123,16 @@ class SettingController extends Controller
             'role'     => $validated['role'],
             'chapter'  => $request->chapter,
             'kategori' => $request->kategori ?? 'Pusat',
-            'subrole'  => $request->subrole,
+            'hak_akses'  => $request->hak_akses,
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
+
+        // Set named sub-roles (only for cs-mbc) dan sync permission flags
+        $newUser = \App\Models\User::where('email', $validated['email'])->first();
+        if ($newUser && strtolower($newUser->role) === 'cs-mbc' && $request->has('subrole')) {
+            $newUser->setSubroles($request->subrole ?? []);
+            $newUser->save();
+        }
 
         return redirect()->back()->with('success', 'User berhasil dibuat.');
     }
@@ -162,7 +168,7 @@ class SettingController extends Controller
             'role'     => $validated['role'],
             'chapter'  => $request->chapter,
             'kategori' => $request->kategori ?? 'Pusat',
-            'subrole'  => $request->subrole,
+            'hak_akses'  => $request->hak_akses,
         ];
 
         if ($request->filled('password')) {
@@ -173,6 +179,16 @@ class SettingController extends Controller
         $newName = $data['name'];
 
         $user->update($data);
+
+        // Set named sub-roles (only for cs-mbc) dan sync permission flags
+        if (strtolower($user->role) === 'cs-mbc' && $request->has('subrole')) {
+            $user->setSubroles($request->subrole ?? []);
+            $user->save();
+        } elseif (strtolower($user->role) !== 'cs-mbc') {
+            // Clear sub-roles if role changed away from cs-mbc
+            $user->subrole = null;
+            $user->save();
+        }
 
         if ($oldName !== $newName) {
             \App\Models\Mom::where('pic', $oldName)->update(['pic' => $newName]);

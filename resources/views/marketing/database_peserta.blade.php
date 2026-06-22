@@ -244,16 +244,18 @@
                             <td class="px-2 fw-bold text-primary text-center">
                                 @if($item->assigned_cs)
                                     @php
-                                        $csClasses = [
-                                            'Linda' => 'cs-badge-linda',
-                                            'Yasmin' => 'cs-badge-yasmin',
-                                            'Putri' => 'cs-badge-putri',
-                                            'Arifa' => 'cs-badge-arifa',
-                                            'Puput' => 'cs-badge-puput',
+                                        $colorSchemes = [
+                                            ['bg' => '#f3f0ff', 'fg' => '#7048e8'],
+                                            ['bg' => '#e6fcf5', 'fg' => '#0ca678'],
+                                            ['bg' => '#fff4e6', 'fg' => '#f76707'],
+                                            ['bg' => '#fff0f6', 'fg' => '#d6336c'],
+                                            ['bg' => '#e7f5ff', 'fg' => '#1c7ed6']
                                         ];
-                                        $csClass = $csClasses[$item->assigned_cs] ?? 'bg-soft-blue text-primary border-primary';
+                                        $hash = abs(crc32($item->assigned_cs));
+                                        $scheme = $colorSchemes[$hash % count($colorSchemes)];
+                                        $badgeStyle = "background-color: {$scheme['bg']} !important; color: {$scheme['fg']} !important; border-color: {$scheme['fg']} !important;";
                                     @endphp
-                                    <span class="badge cs-badge {{ $csClass }} px-2 py-1">
+                                    <span class="badge cs-badge px-2 py-1" style="{{ $badgeStyle }}">
                                         {{ $item->assigned_cs }}
                                     </span>
                                 @elseif($item->is_transferred)
@@ -601,14 +603,22 @@
                             // Update CS PENERIMA cell (always the last cell)
                             const csCell = row.cells[row.cells.length - 1];
                             if (csCell) {
-                                let csClass = 'bg-soft-blue text-primary border-primary';
-                                if (data.assigned_cs === 'Linda') csClass = 'cs-badge-linda';
-                                else if (data.assigned_cs === 'Yasmin') csClass = 'cs-badge-yasmin';
-                                else if (data.assigned_cs === 'Arifa') csClass = 'cs-badge-arifa';
-                                else if (data.assigned_cs === 'Puput') csClass = 'cs-badge-puput';
+                                const colorSchemes = [
+                                    { bg: '#f3f0ff', fg: '#7048e8' },
+                                    { bg: '#e6fcf5', fg: '#0ca678' },
+                                    { bg: '#fff4e6', fg: '#f76707' },
+                                    { bg: '#fff0f6', fg: '#d6336c' },
+                                    { bg: '#e7f5ff', fg: '#1c7ed6' }
+                                ];
+                                let hash = 0;
+                                for (let j = 0; j < data.assigned_cs.length; j++) {
+                                    hash = data.assigned_cs.charCodeAt(j) + ((hash << 5) - hash);
+                                }
+                                const scheme = colorSchemes[Math.abs(hash) % colorSchemes.length];
+                                const badgeStyle = `background-color: ${scheme.bg} !important; color: ${scheme.fg} !important; border-color: ${scheme.fg} !important;`;
 
                                 csCell.innerHTML = `
-                                    <span class="badge cs-badge ${csClass} px-2 py-1">
+                                    <span class="badge cs-badge px-2 py-1" style="${badgeStyle}">
                                         ${data.assigned_cs}
                                     </span>
                                 `;

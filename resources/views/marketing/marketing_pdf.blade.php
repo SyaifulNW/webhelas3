@@ -1,6 +1,6 @@
 @php
-    $isNisa = isset($targetUser) && $targetUser->hasAnySubrole(['activity_marketing_online', 'activity_intake']);
-    $isFelmi = isset($targetUser) && $targetUser->hasAnySubrole(['activity_marketing_offline', 'activity_marketing']);
+    $isNisa = isset($targetUser) && $targetUser->hasAnyHakAkses(['activity_marketing_online', 'activity_intake']);
+    $isFelmi = isset($targetUser) && $targetUser->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing']);
 @endphp
 <!DOCTYPE html>
 <html>

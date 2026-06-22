@@ -49,7 +49,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             }
 
             // Deteksi apakah ini Rafi (operasional)
-            $isRafi = $user->hasSubrole('operasional_rafi');
+            $isRafi = $user->hasHakAkses('operasional_rafi');
 
             // Set status_data: ADD OPS jika yang tambah adalah Operasional (Rafi)
             if ($isRafi) {
@@ -119,18 +119,19 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         $userRole = strtolower($user->role);
 
         // --- Admin MBC Khusus ---
-        $adminMbcIds = User::whereJsonContains('subrole', 'cs_supervisor')->pluck('id')->toArray();
-        $allowedCsNames = User::whereJsonContains('subrole', 'cs_pusat')->pluck('name')->toArray();
+        $adminMbcIds = User::whereJsonContains('hak_akses', 'cs_supervisor')->pluck('id')->toArray();
+        $allowedCsNames = User::whereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
 
         // --- Ambil daftar CS sesuai role ---
         $csQuery = \App\Models\User::query();
 
-        if (auth()->user()->hasSubrole('cs_supervisor')) {
+        if (auth()->user()->hasHakAkses('cs_supervisor')) {
             // Admin MBC hanya bisa lihat CS tertentu
             $csQuery->whereIn('name', $allowedCsNames);
         } elseif ($userRole === 'manager') {
-            // Manager hanya boleh lihat Latifah & Tursia
-            $csQuery->whereIn('name', ['Latifah', 'Tursia']);
+            // Manager hanya boleh lihat CS Pusat & CS MBC/SMI
+            $managerCsNames = User::whereIn('role', ['cs-smi', 'cs-mbc'])->orWhereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
+            $csQuery->whereIn('name', $managerCsNames);
         } elseif ($userRole === 'administrator' || $userRole === 'marketing' || $userRole === 'operasional') {
             // Administrator & Linda & Marketing boleh lihat daftar CS
             if ($userRole === 'marketing') {
@@ -203,29 +204,24 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // CS biasa → hanya datanya sendiri (Moved higher to capture absolute total correctly)
         $forceMyData = $request->input('view') === 'me';
         if ($userRole === 'marketing') {
-            if ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
+            if ($user->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing'])) {
                 $query->whereIn('leads', ['Event', 'Open House']);
-            } elseif ($user->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
+            } elseif ($user->hasAnyHakAkses(['activity_marketing_online', 'activity_intake'])) {
                 $query->whereIn('leads', ['Online', 'Sosmed']);
             } else {
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
             }
             $query->where('created_by_role', 'cs-mbc');
-        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && $user->name !== 'Agus Setyo') {
+        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnyHakAkses(['smi_class_only', 'cs_manager_smi'])) {
             $query->where('created_by', $user->name);
         }
 
         // Apply regional/role restrictions before calculating absolute total database
         // Chapter Role – filter by user's chapter city OR own created data, and exclude certain CS-MBC names
         if ($userRole === 'chapter') {
-            $dbExcludeNames = \App\Models\User::whereJsonContains('subrole', 'cs_pusat')
-                ->orWhereIn('role', ['cs-mbc', 'operasional'])
-                ->orWhere(function($sq) {
-                    $sq->whereNotNull('subrole')->where('subrole', '!=', '[]');
-                })
+            $excludeNames = \App\Models\User::whereNotIn('role', ['chapter', 'reseller', 'agen'])
                 ->pluck('name')
                 ->toArray();
-            $excludeNames = array_unique(array_merge($dbExcludeNames, ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan']));
             $query->where(function($q) use ($user, $excludeNames) {
                 $q->where('created_by', $user->name)
                   ->orWhere(function($subQ) use ($user, $excludeNames) {
@@ -239,15 +235,14 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $downlineNames = \App\Models\User::where('created_by', $user->id)->pluck('name')->toArray();
             $viewNames = array_merge([$user->name], $downlineNames);
             
-            if ($user->name === 'Tim Chapter Depok') {
+            if ($user->hasHakAkses('share_depok_leads')) {
                 $viewNames[] = 'AGUNG H. WIBOWO';
             }
             
             $query->whereIn('created_by', $viewNames);
         }
 
-        // Khusus Agus Setyo: Hanya kelas Start-Up Muslim/Muda Indonesia
-        if ($user->name === 'Agus Setyo') {
+        if ($user->hasHakAkses('smi_class_only')) {
             $query->whereHas('kelas', function($q) {
                 $q->where('nama_kelas', 'Start-Up Muda Indonesia')
                 ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
@@ -358,9 +353,10 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         //     $query->whereIn('created_by', $allowedCsNames);
         // }
 
-        // Manager → hanya bisa lihat data Latifah & Tursia
+        // Manager → hanya bisa lihat data CS Pusat & CS MBC/SMI
         if ($userRole === 'manager') {
-            $query->whereIn('created_by', ['Latifah', 'Tursia']);
+            $managerCsNames = User::whereIn('role', ['cs-smi', 'cs-mbc'])->orWhereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
+            $query->whereIn('created_by', $managerCsNames);
         }
 
         // Filter User
@@ -534,7 +530,8 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // Re-apply Permission/Ownership Logic to KPI Query
         // Manager
         if ($userRole === 'manager') {
-            $kpiQuery->whereIn('created_by', ['Latifah', 'Tursia']);
+            $managerCsNames = User::whereIn('role', ['cs-smi', 'cs-mbc'])->orWhereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
+            $kpiQuery->whereIn('created_by', $managerCsNames);
         }
         // Filter User (Dropdown)
         if (!empty($csFilter)) {
@@ -549,7 +546,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         }
         // Strict CS View
         // Strict CS View
-        if (($user->hasSubrole('spp_admin') && $forceMyData) || ($user->name === 'Linda' && $forceMyData) || (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnySubrole(['spp_admin', 'sales_admin']) && $user->name !== 'Agus Setyo' && $user->name !== 'Linda')) {
+        if (($user->hasHakAkses('spp_admin') && $forceMyData) || (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnyHakAkses(['spp_admin', 'sales_admin', 'smi_class_only', 'sales_full_view', 'cs_manager_smi']))) {
             $kpiQuery->where('created_by', $user->name);
         }
         
@@ -563,7 +560,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         } elseif (in_array($userRole, ['reseller', 'agen'])) {
             $downlineNames = \App\Models\User::where('created_by', $user->id)->pluck('name')->toArray();
             $viewNames = array_merge([$user->name], $downlineNames);
-            if ($user->name === 'Tim Chapter Depok') {
+            if ($user->hasHakAkses('share_depok_leads')) {
                 $viewNames[] = 'AGUNG H. WIBOWO';
             }
             $kpiQuery->whereIn('created_by', $viewNames);
@@ -571,7 +568,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // Agus Setyo
         // Marketing Role specific KPI filter
         if ($userRole === 'marketing') {
-            if ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
+            if ($user->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing'])) {
                 $kpiQuery->where('leads', 'Event');
             } else {
                 $kpiQuery->whereIn('leads', ['Marketing', 'Event']);
@@ -579,7 +576,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $kpiQuery->where('created_by_role', 'cs-mbc');
         }
 
-        if ($user->name === 'Agus Setyo') {
+        if ($user->hasHakAkses('smi_class_only')) {
             $kpiQuery->whereHas('kelas', function($q) {
                 $q->where('nama_kelas', 'Start-Up Muda Indonesia')
                 ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
@@ -1008,7 +1005,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                         // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
                         $authUser = Auth::user();
                         if (
-                            $authUser->hasSubrole('operasional_rafi') &&
+                            $authUser->hasHakAkses('operasional_rafi') &&
                             $data->status_data === 'CHAPTER'
                         ) {
                             $data->status_data = 'EDIT OPS';
@@ -1077,7 +1074,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
             $authUser = Auth::user();
             if (
-                $authUser->hasSubrole('operasional_rafi') &&
+                $authUser->hasHakAkses('operasional_rafi') &&
                 $data->status_data === 'CHAPTER'
             ) {
                 $data->status_data = 'EDIT OPS';
@@ -1150,7 +1147,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // Update status_data jika yang edit adalah Operasional (Rafi) dan data asli dari Chapter
         $authUser = Auth::user();
         if (
-            $authUser->hasSubrole('operasional_rafi') &&
+            $authUser->hasHakAkses('operasional_rafi') &&
             $data->status_data === 'CHAPTER'
         ) {
             $data->status_data = 'EDIT OPS';
@@ -1251,7 +1248,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         public function peserta_baru()
         {
             // Subrole 'alumni_admin' dapat melihat semua data tanpa filter
-            if (Auth::user()->hasSubrole('alumni_admin')) {
+            if (Auth::user()->hasHakAkses('alumni_admin')) {
                 $data = data::whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan'])->paginate(50);
             } else {
                 $data = data::whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan'])
@@ -1264,7 +1261,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         public function alumni()
         {
             // Subrole 'alumni_admin' dapat melihat semua data alumni tanpa filter
-            if (Auth::user()->hasSubrole('alumni_admin')) {
+            if (Auth::user()->hasHakAkses('alumni_admin')) {
                 $data = data::where('status_peserta', 'alumni')->paginate(50);
             } else {
                 $data = data::where('status_peserta', 'alumni')
@@ -1277,27 +1274,27 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
     private function filterKelasByUser($user)
     {
-        // Jika Administrator atau Fitra Jaya Saleh: tampil semua
-        if (strtolower($user->role) == 'administrator' || $user->name == 'Fitra Jaya Saleh') {
+        // Jika Administrator atau subrole view_all_classes / spp_admin / sales_full_view: tampil semua
+        if (strtolower($user->role) == 'administrator' || $user->hasAnyHakAkses(['view_all_classes', 'spp_admin', 'sales_full_view'])) {
             return Kelas::all();
         }
 
-        // Jika Tursia atau Latifah â†’ hanya Start-Up Muda Indonesia
-        if (in_array($user->name, ['Tursia', 'Latifah'])) {
+        // Jika subrole muda_class_only → hanya Start-Up Muda Indonesia
+        if ($user->hasHakAkses('muda_class_only')) {
             return Kelas::where('nama_kelas', 'Start-Up Muda Indonesia')->get();
         }
 
-        // Jika Mutiah â†’ hanya Sekolah Kaya
-        if ($user->name == 'Mutiah') {
+        // Jika subrole kaya_class_only → hanya Sekolah Kaya
+        if ($user->hasHakAkses('kaya_class_only')) {
             return Kelas::where('nama_kelas', 'Sekolah Kaya')->get();
         }
 
-        // Jika Shafa â†’ semua kecuali Start-Up Muda Indonesia
-        if ($user->name == 'Shafa') {
+        // Jika subrole no_muda_class → semua kecuali Start-Up Muda Indonesia
+        if ($user->hasHakAkses('no_muda_class')) {
             return Kelas::where('nama_kelas', '!=', 'Start-Up Muda Indonesia')->get();
         }
 
-        // Selain itu â†’ semua kecuali Sekolah Kaya dan Start-Up Muda Indonesia
+        // Selain itu → semua kecuali Sekolah Kaya dan Start-Up Muda Indonesia
         return Kelas::whereNotIn('nama_kelas', ['Sekolah Kaya', 'Start-Up Muda Indonesia'])->get();
     }
 
@@ -1470,7 +1467,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $query = Data::query();
 
             // Admin & Manager Logic
-            if (in_array($userRole, ['administrator', 'manager']) || $user->name === 'Agus Setyo') {
+            if (in_array($userRole, ['administrator', 'manager']) || $user->hasHakAkses('cs_manager_smi')) {
                 if (!empty($filterUser)) {
                     $query->where('created_by', $filterUser);
                 }
@@ -1479,8 +1476,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
                 $query->where('created_by', $user->name);
             }
 
-            // Agus Setyo Filter
-            if ($user->name === 'Agus Setyo') {
+            if ($user->hasHakAkses('smi_class_only')) {
                 $query->whereHas('kelas', function($q) {
                     $q->where('nama_kelas', 'Start-Up Muda Indonesia')
                     ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
@@ -1726,21 +1722,22 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // CS biasa -> hanya datanya sendiri
         $forceMyData = $request->input('view') === 'me';
         if ($userRole === 'marketing') {
-            if ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
+            if ($user->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing'])) {
                 $query->whereIn('leads', ['Event', 'Open House']);
-            } elseif ($user->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
+            } elseif ($user->hasAnyHakAkses(['activity_marketing_online', 'activity_intake'])) {
                 $query->whereIn('leads', ['Online', 'Sosmed']);
             } else {
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
             }
             $query->where('created_by_role', 'cs-mbc');
-        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && $user->name !== 'Agus Setyo') {
+        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnyHakAkses(['smi_class_only', 'cs_manager_smi'])) {
             $query->where('created_by', $user->name);
         }
 
         // Manager
         if ($userRole === 'manager') {
-            $query->whereIn('created_by', ['Latifah', 'Tursia']);
+            $managerCsNames = User::whereIn('role', ['cs-smi', 'cs-mbc'])->orWhereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
+            $query->whereIn('created_by', $managerCsNames);
         }
 
         // Filter User
@@ -1878,14 +1875,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
         // Chapter Role
         if ($userRole === 'chapter') {
-            $dbExcludeNames = User::whereJsonContains('subrole', 'cs_pusat')
-                ->orWhereIn('role', ['cs-mbc', 'operasional'])
-                ->orWhere(function($sq) {
-                    $sq->whereNotNull('subrole')->where('subrole', '!=', '[]');
-                })
+            $excludeNames = User::whereNotIn('role', ['chapter', 'reseller', 'agen'])
                 ->pluck('name')
                 ->toArray();
-            $excludeNames = array_unique(array_merge($dbExcludeNames, ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan']));
             $query->where(function($q) use ($user, $excludeNames) {
                 $q->where('created_by', $user->name)
                   ->orWhere(function($subQ) use ($user, $excludeNames) {
@@ -1897,14 +1889,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         } elseif (in_array($userRole, ['reseller', 'agen'])) {
             $downlineNames = User::where('created_by', $user->id)->pluck('name')->toArray();
             $viewNames = array_merge([$user->name], $downlineNames);
-            if ($user->name === 'Tim Chapter Depok') {
+            if ($user->hasHakAkses('share_depok_leads')) {
                 $viewNames[] = 'AGUNG H. WIBOWO';
             }
             $query->whereIn('created_by', $viewNames);
         }
 
-        // Khusus Agus Setyo
-        if ($user->name === 'Agus Setyo') {
+        if ($user->hasHakAkses('smi_class_only')) {
             $query->whereHas('kelas', function($q) {
                 $q->where('nama_kelas', 'Start-Up Muda Indonesia')
                 ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
@@ -1965,13 +1956,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
     {
         if (strtolower($identifier) === 'cs-mbc') {
             // Equal Rotator from users with cs_rotasi subrole
-            $sequence = \App\Models\User::whereJsonContains('subrole', 'cs_rotasi')
+            $sequence = \App\Models\User::whereJsonContains('hak_akses', 'cs_rotasi')
                 ->where('is_active', 1)
                 ->pluck('name')
                 ->toArray();
             
             if (empty($sequence)) {
-                $sequence = ['Linda', 'Shafa Zahra', 'Yasmin']; // Fallback
+                $sequence = \App\Models\User::where('role', 'cs-mbc')->where('is_active', 1)->pluck('name')->toArray();
             }
             
             // Get the last lead submitted by one of these CSs to find who was assigned last
@@ -2327,20 +2318,21 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         }
 
         if ($userRole === 'marketing') {
-            if ($user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
+            if ($user->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing'])) {
                 $query->whereIn('leads', ['Event', 'Open House']);
-            } elseif ($user->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
+            } elseif ($user->hasAnyHakAkses(['activity_marketing_online', 'activity_intake'])) {
                 $query->whereIn('leads', ['Online', 'Sosmed']);
             } else {
                 $query->whereIn('leads', ['Marketing', 'Ads', 'Sosmed', 'Zoom', 'Open House']);
             }
             $query->where('created_by_role', 'cs-mbc');
-        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && $user->name !== 'Agus Setyo') {
+        } elseif (!in_array($userRole, ['administrator', 'manager', 'chapter', 'reseller', 'agen', 'operasional']) && !$user->hasAnyHakAkses(['smi_class_only', 'cs_manager_smi'])) {
             $query->where('created_by', $user->name);
         }
 
         if ($userRole === 'manager') {
-            $query->whereIn('created_by', ['Latifah', 'Tursia']);
+            $managerCsNames = User::whereIn('role', ['cs-smi', 'cs-mbc'])->orWhereJsonContains('hak_akses', 'cs_pusat')->pluck('name')->toArray();
+            $query->whereIn('created_by', $managerCsNames);
         }
 
         $count = $query->count();

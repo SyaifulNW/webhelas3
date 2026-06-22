@@ -1,6 +1,6 @@
 @php
-    $isEkoSulis = isset($user) && $user->hasAnySubrole(['marketing_ads_manager', 'monitoring_marketing']);
-    $isFelmi = isset($user) && $user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing']);
+    $isEkoSulis = isset($user) && $user->hasAnyHakAkses(['marketing_ads_manager', 'monitoring_marketing']);
+    $isFelmi = isset($user) && $user->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing']);
 @endphp
 <!DOCTYPE html>
 <html>

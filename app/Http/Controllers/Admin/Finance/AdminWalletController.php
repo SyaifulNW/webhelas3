@@ -17,7 +17,7 @@ class AdminWalletController extends Controller
     {
         $this->middleware(function ($request, $next) {
             $user = auth()->user();
-            if ($user && ($user->role === 'administrator' || $user->hasSubrole('finance_access'))) {
+            if ($user && ($user->role === 'administrator' || $user->hasHakAkses('finance_access'))) {
                 return $next($request);
             }
             return redirect('/home')->with('error', 'Akses ditolak.');

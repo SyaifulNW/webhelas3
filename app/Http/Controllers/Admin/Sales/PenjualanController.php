@@ -137,7 +137,7 @@ class PenjualanController extends Controller
         // Semua CS & Sales (Marketing) & Chapter (Hanya yang Aktif)
         $staffUsers = User::whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'chapter', 'reseller', 'agen'])
             ->where('is_active', 1)
-            ->where('name', '!=', 'Fitra Jaya Saleh')
+            ->where('role', '!=', 'administrator')
             ->get();
             
         $salesDataPusat = [];
@@ -205,8 +205,7 @@ class PenjualanController extends Controller
                 $userCount = $m1tCount + $mbcCount;
             }
 
-            // Target per CS (Default 50 Juta, Shafa Zahra 5 Juta)
-            $defaultTarget = (stripos($user->name, 'Shafa') !== false) ? 5000000 : 50000000;
+            $defaultTarget = $user->hasHakAkses('low_sales_target') ? 5000000 : 50000000;
             $uTarget = ($bulan === 'all') ? $defaultTarget * 12 : $defaultTarget;
 
             $totalLeads = SalesPlan::where('created_by', $user->id)

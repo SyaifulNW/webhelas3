@@ -60,6 +60,12 @@ class HomeController extends Controller
             if ($role === 'administrator') {
                 return redirect()->route('administrator');
             }
+            if ($role === 'marketing') {
+                return redirect()->route('marketing');
+            }
+            if ($role === 'advertising') {
+                return redirect()->route('advertising');
+            }
             if ($role === 'operasional') {
                 return $this->operasionalDashboard($request);
             }
@@ -606,9 +612,9 @@ class HomeController extends Controller
         $activityQuery = Activity::orderBy('categories_id');
         
         $user = auth()->user();
-        if ($user && $user->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
+        if ($user && $user->hasAnyHakAkses(['activity_marketing_online', 'activity_intake'])) {
             $activityQuery->whereIn('categories_id', [6, 7]);
-        } elseif ($user && $user->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
+        } elseif ($user && $user->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing'])) {
             $activityQuery->whereHas('kategori', function($q) {
                 $q->where('nama', 'LIKE', '%INTAKE%');
             });
@@ -858,9 +864,9 @@ private function hitungTotalNilaiHasil($csId, $namaUserData, $bulan, $tahun, $ro
     // INTAKE / DAILY ACTIVITY (20%)
     $dayQuery = \App\Models\Activity::where('role', 'cs');
     $checkUser = \App\Models\User::find($csId);
-    if ($checkUser && $checkUser->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
+    if ($checkUser && $checkUser->hasAnyHakAkses(['activity_marketing_online', 'activity_intake'])) {
         $dayQuery->whereIn('categories_id', [6, 7]);
-    } elseif ($checkUser && $checkUser->hasAnySubrole(['activity_marketing_offline', 'activity_marketing'])) {
+    } elseif ($checkUser && $checkUser->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing'])) {
         $dayQuery->whereHas('kategori', function($q) { $q->where('nama', 'LIKE', '%INTAKE%'); });
     } else {
         $dayQuery->whereIn('categories_id', [1, 2, 3, 4, 5])

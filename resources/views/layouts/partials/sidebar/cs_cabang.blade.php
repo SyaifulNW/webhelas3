@@ -1,3 +1,12 @@
+@if ($userRole === 'cs-mbc')
+    <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('home') }}">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span><strong>DASHBOARD</strong></span>
+        </a>
+    </li>
+@endif
+
 @if (\App\Models\Menu::isActive('data_calon_peserta'))
     <li
         class="nav-item {{ request()->routeIs('admin.database.database') && request('view') == 'me' ? 'active' : '' }}">
@@ -91,15 +100,15 @@
         @else
             {{-- SALES PLAN MBC (LAINNYA) --}}
             @if (
-                !in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional', 'cs-mbc', 'agen']))
+                !in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional', 'agen']))
                 @if ($userRole === 'cs-mbc')
                     {{-- Simple link for CS-MBC (same as administrator) --}}
                     <li class="nav-item {{ request('type') == 'mbc' ? 'active' : '' }}">
                         <a class="nav-link"
                             href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}"
-                            title="DATA PESERTA MBC">
+                            title="PROSPEK MBC">
                             <i class="fas fa-fw fa-users"></i>
-                            <span><strong>DATA PESERTA MBC</strong></span>
+                            <span><strong>PROSPEK MBC</strong></span>
                         </a>
                     </li>
                 @else
@@ -116,7 +125,7 @@
                             class="collapse {{ request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia') ? 'show' : '' }}"
                             aria-labelledby="headingMBC" data-parent="#accordionSidebar">
                             <div class="bg-white py-2 collapse-inner rounded">
-                                @if (Auth::user()->hasSubrole('sales_all_view'))
+                                @if (Auth::user()->hasHakAkses('sales_all_view'))
                                     <a class="collapse-item {{ request('type') == 'mbc' && !request('kelas') ? 'active' : '' }}"
                                         href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}">DATA
                                         PESERTA ALL</a>
@@ -124,7 +133,7 @@
 
                                 <h6 class="collapse-header">Daftar Kelas MBC:</h6>
 
-                                @if (auth()->user()->hasSubrole('mbc_sekolah_kaya_only'))
+                                @if (auth()->user()->hasHakAkses('mbc_sekolah_kaya_only'))
                                     <a class="collapse-item {{ request('kelas') == 'Sekolah Kaya' ? 'active' : '' }}"
                                         href="{{ route('admin.salesplan.index', ['kelas' => 'Sekolah Kaya', 'type' => 'mbc']) }}">
                                         Sekolah Kaya
@@ -147,11 +156,11 @@
 
             {{-- SALES PLAN SMI / M1T (LAINNYA) --}}
             @if (in_array($userRole, ['cs-smi', 'cs-mbc']) ||
-                    Auth::user()->hasAnySubrole(['sales_all_view', 'exempt_transfer']))
+                    Auth::user()->hasAnyHakAkses(['sales_all_view', 'exempt_transfer']))
                 {{-- Operasional handled in its own block --}}
                 @if ($userRole === 'operasional')
                     {{-- Do nothing --}}
-                @elseif(Auth::user()->hasAnySubrole(['sales_all_view', 'cs_supervisor']))
+                @elseif(Auth::user()->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']))
                     {{-- 1. DATA PESERTA M1T (Sales Plan) --}}
                     @if ($userRole !== 'cs-mbc')
                         <li
@@ -181,7 +190,7 @@
                     </li>
 
                     {{-- PENARIKAN DOMPET (KHUSUS LINDA) --}}
-                    @if (Auth::user()->hasSubrole('sales_all_view'))
+                    @if (Auth::user()->hasHakAkses('sales_all_view'))
                         @php
                             $pendingWalletWD = \App\Models\WalletTransaction::where(
                                 'type',
@@ -205,7 +214,7 @@
                             </a>
                         </li>
                     @endif
-                @elseif(Auth::user()->hasSubrole('cs_pusat') && !Auth::user()->hasAnySubrole(['sales_all_view', 'cs_supervisor']))
+                @elseif(Auth::user()->hasHakAkses('cs_pusat') && !Auth::user()->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']))
                     <li
                         class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('peserta-smi.index') }}"
@@ -243,7 +252,7 @@
         @endif
 
         {{-- Menu Keuangan Linda --}}
-        @if (\App\Models\Menu::isActive('keuangan_besar') && Auth::user()->hasSubrole('finance_access'))
+        @if (\App\Models\Menu::isActive('keuangan_besar') && Auth::user()->hasHakAkses('finance_access'))
             <li
                 class="nav-item {{ request()->routeIs(['admin.keuangan.laba-rugi', 'admin.keuangan.kas', 'admin.keuangan.pengajuan-anggaran', 'admin.keuangan.zakat']) ? 'active' : '' }}">
                 <a class="nav-link collapsed" href="#" data-toggle="collapse"

@@ -300,7 +300,7 @@
         </td> --}}
     @endif
 
-    @if(in_array($userRole, ['administrator', 'manager', 'marketing', 'agen', 'operasional']) || auth()->user()->hasSubrole('spp_admin') || auth()->user()->name === 'Linda')
+    @if(in_array($userRole, ['administrator', 'manager', 'marketing', 'agen', 'operasional']) || auth()->user()->hasHakAkses('spp_admin'))
         <td>{{ $item->createdBy->name ?? $item->created_by }}</td>
 
 

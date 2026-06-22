@@ -26,9 +26,9 @@ class DailyController extends Controller
         
         $query = Activity::where('role', $activityRole);
         
-        if ($user->hasSubrole('activity_intake')) {
+        if ($user->hasHakAkses('activity_intake')) {
             $query->whereIn('categories_id', [6, 11]);
-        } elseif ($user->hasSubrole('activity_marketing')) {
+        } elseif ($user->hasHakAkses('activity_marketing')) {
             $query->whereIn('categories_id', [8, 9, 10]);
         } else {
             $categoryNames = [
@@ -98,8 +98,8 @@ class DailyController extends Controller
         $periodeInfo = [];
 
         if ($isCs) {
-            $hasFinance = $user->hasSubrole('finance_access');
-            $hasSales = $user->hasAnySubrole(['sales_all_view', 'cs_supervisor']);
+            $hasFinance = $user->hasHakAkses('finance_access');
+            $hasSales = $user->hasAnyHakAkses(['sales_all_view', 'cs_supervisor']);
 
             if ($hasFinance && $hasSales) {
                 $divisiList = ['Divisi Keuangan', 'Sales & Marketing'];
@@ -175,9 +175,9 @@ class DailyController extends Controller
         if (!$activities) {
             $query = Activity::where('role', $activityRole);
             
-            if ($user->hasSubrole('activity_intake')) {
+            if ($user->hasHakAkses('activity_intake')) {
                 $query->whereIn('categories_id', [6, 11]);
-            } elseif ($user->hasSubrole('activity_marketing')) {
+            } elseif ($user->hasHakAkses('activity_marketing')) {
                 $query->whereIn('categories_id', [8, 9, 10]);
             } else {
                 $categoryNames = [
@@ -353,9 +353,9 @@ class DailyController extends Controller
     
     $query = Activity::where('role', $activityRole);
     
-    if ($user->hasSubrole('activity_intake')) {
+    if ($user->hasHakAkses('activity_intake')) {
         $query->whereIn('categories_id', [6, 11]);
-    } elseif ($user->hasSubrole('activity_marketing')) {
+    } elseif ($user->hasHakAkses('activity_marketing')) {
         $query->whereIn('categories_id', [8, 9, 10]);
     } else {
         $categoryNames = [

@@ -22,7 +22,7 @@ class PenilaianCsController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $isSupervisor = $user->hasAnySubrole(['cs_supervisor', 'sales_all_view']);
+        $isSupervisor = $user->hasAnyHakAkses(['cs_supervisor', 'sales_all_view']);
         
         $csQuery = User::whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
                        ->where('id', '!=', 1)
@@ -42,7 +42,7 @@ class PenilaianCsController extends Controller
     public function managerIndex(Request $request)
     {
         $user = auth()->user();
-        $isSupervisor = $user->hasAnySubrole(['cs_supervisor', 'sales_all_view']);
+        $isSupervisor = $user->hasAnyHakAkses(['cs_supervisor', 'sales_all_view']);
         
         $csQuery = User::whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
                        ->where('id', '!=', 1)
@@ -206,13 +206,13 @@ class PenilaianCsController extends Controller
         // Determine View
         $viewName = 'admin.CS.penilaian-cs.index';
         
-        // Jika Agus Setyo login dan melihat datanya sendiri -> Tampilkan Self View
-        if ($namaUser === 'Agus Setyo' && optional(auth()->user())->name === 'Agus Setyo') {
+        // Jika target user login dan melihat datanya sendiri serta memiliki subrole cs_manager_smi -> Tampilkan Self View
+        if (isset($targetUser) && $targetUser->id === auth()->id() && $targetUser->hasHakAkses('cs_manager_smi')) {
             $viewName = 'admin.CS.penilaian-cs.self';
         }
 
         return view($viewName, compact(
-            'bulan','tahun','userId','daftarCs', 'namaUser',
+            'bulan','tahun','userId','daftarCs', 'namaUser', 'targetUser',
             'totalDatabase','totalClosing',
             'persenClosing','closingTarget','totalOmset','nilaiOmset','targetOmset',
             'countTertarik','countMauTransfer','countSudahTransfer','countNo','countCold',
@@ -274,7 +274,7 @@ public function store(Request $request)
         $csSMI = [];
         $csMBC = User::whereIn('role', ['administrator', 'cs-mbc'])->where('is_active', 1)->pluck('name')->toArray();
 
-        if (strtolower($userObj->role) === 'advertising') {
+        if (strtolower($targetUser->role) === 'advertising') {
             // --- LOGIK KHUSUS EKO SULIS (ADVERTISING) ---
             
             // 0. ROAS (30%)
@@ -293,11 +293,11 @@ public function store(Request $request)
             $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
             $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
-                ->orWhereJsonContains('subrole', 'activity_marketing')
+            $felmiUser = User::whereJsonContains('hak_akses', 'activity_marketing_offline')
+                ->orWhereJsonContains('hak_akses', 'activity_marketing')
                 ->first();
-            $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
-                ->orWhereJsonContains('subrole', 'activity_intake')
+            $nisaUser = User::whereJsonContains('hak_akses', 'activity_marketing_online')
+                ->orWhereJsonContains('hak_akses', 'activity_intake')
                 ->first();
 
             // 1. LEADS ADS (20%)
@@ -401,7 +401,7 @@ public function store(Request $request)
         $totalFelmiKpiScore = 0;
         $overallPerformanceScore = 0;
 
-        if ($targetUser->hasSubrole('activity_marketing')) {
+        if ($targetUser->hasHakAkses('activity_marketing')) {
             $kpiConfigs = [
                 ['nama' => 'Total Leads Baru/Bulan', 'target' => 100, 'bobot' => 40],
                 ['nama' => 'Entrepreneur Forum / E-Fest', 'target' => 50, 'bobot' => 30],
@@ -525,11 +525,11 @@ public function store(Request $request)
             $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
             $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            $felmiUser = User::whereJsonContains('subrole', 'activity_marketing_offline')
-                ->orWhereJsonContains('subrole', 'activity_marketing')
+            $felmiUser = User::whereJsonContains('hak_akses', 'activity_marketing_offline')
+                ->orWhereJsonContains('hak_akses', 'activity_marketing')
                 ->first();
-            $nisaUser = User::whereJsonContains('subrole', 'activity_marketing_online')
-                ->orWhereJsonContains('subrole', 'activity_intake')
+            $nisaUser = User::whereJsonContains('hak_akses', 'activity_marketing_online')
+                ->orWhereJsonContains('hak_akses', 'activity_intake')
                 ->first();
 
             // 1. LEADS ADS (20%)
@@ -571,7 +571,7 @@ public function store(Request $request)
             return $nilaiAkhirRoas + $nilaiLeadsAds + $nilaiLeadsFelmi + $nilaiLeadsNisa + $nilaiManualPart;
         }
 
-        if ($userObj->hasSubrole('activity_marketing')) {
+        if ($userObj->hasHakAkses('activity_marketing')) {
             // 1. Leads Felmi (40%)
             $leadsFelmiCount = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
                 ->whereMonth('created_at', $bulanNum)
@@ -739,7 +739,14 @@ public function store(Request $request)
         }
 
         // Ambil aktivitas dan hitung KPI
-        $activityQuery->whereIn('categories_id', [1, 2, 3, 4, 5]);
+        $activityQuery = Activity::with('kategori')->orderBy('categories_id');
+        if ($targetUser && $targetUser->hasHakAkses('activity_intake')) {
+            $activityQuery->whereIn('categories_id', [6, 7, 11]);
+        } elseif ($targetUser && $targetUser->hasHakAkses('activity_marketing')) {
+            $activityQuery->whereIn('categories_id', [8, 9, 10]);
+        } else {
+            $activityQuery->whereIn('categories_id', [1, 2, 3, 4, 5]);
+        }
         $activities = $activityQuery->get()->groupBy('categories_id');
 
         $categoryKpiWeights = [

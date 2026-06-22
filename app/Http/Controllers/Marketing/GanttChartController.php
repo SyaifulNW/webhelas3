@@ -66,7 +66,7 @@ class GanttChartController extends Controller
                 });
             }
             $programs = $query->get();
-        } elseif ($user->hasSubrole('gantt_cross_view')) {
+        } elseif ($user->hasHakAkses('gantt_cross_view')) {
             // User dengan subrole gantt_cross_view bisa lihat punya sendiri + orang lain yang diijinkan
             $programs = ProgramKerja::with([
                 'inisiatifs' => function ($sub) use ($user, $targetUser, $targetUserId) {
@@ -93,7 +93,7 @@ class GanttChartController extends Controller
             ->get();
         } else {
             // Selain admin & Linda/Yasmin -> lihat miliknya sendiri ATAU yang ditugaskan ke dia (PIC)
-            $isFelmi = $user->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']);
+            $isFelmi = $user->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline']);
 
             if ($isFelmi) {
                 // Felmi: KHUSUS yang dia jadi PIC saja

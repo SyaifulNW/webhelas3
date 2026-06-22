@@ -34,9 +34,13 @@ public function show($id, Request $request)
 
     // ✅ 4. Jika role Manager, hanya boleh akses CS tertentu
     if ($userRole === 'manager') {
-        $allowedCs = ['latifah', 'tursia', 'gunawan', 'puput'];
+        $allowedCs = User::whereJsonContains('hak_akses', 'cs_pusat')
+            ->orWhereIn('role', ['cs-smi', 'cs-mbc'])
+            ->pluck('name')
+            ->map(fn($n) => strtolower(trim($n)))
+            ->toArray();
         if (!in_array($csName, $allowedCs)) {
-            abort(403, 'Manager hanya dapat mengakses data milik Latifah, Tursia, Gunawan, dan Puput.');
+            abort(403, 'Manager hanya dapat mengakses data milik CS Pusat.');
         }
     }
 

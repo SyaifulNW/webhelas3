@@ -28,9 +28,6 @@
             <li class="nav-item">
                 <a class="nav-link" id="target-tab" data-toggle="tab" href="#target" role="tab">Target Omset</a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" id="menus-tab" data-toggle="tab" href="#menus-settings" role="tab">Menu & Sidebar</a>
-            </li>
             @endif
         </ul>
 
@@ -70,6 +67,11 @@
                                             <td>{{ $u->email }}</td>
                                             <td>
                                                 <span class="badge badge-info shadow-sm">{{ ucfirst($u->role) }}</span>
+                                                                                                @if($u->getSubroles())
+                                                                                                    @foreach($u->getSubroles() as $ns)
+                                                                                                        <span class="badge badge-{{ $ns === 'hrd' ? 'success' : 'warning' }} shadow-sm" style="font-size: 0.65rem;">{{ strtoupper($ns) }}</span>
+                                                                                                    @endforeach
+                                                                                                @endif
                                             </td>
                                             <td>
                                                 <div class="custom-control custom-switch">
@@ -244,6 +246,11 @@
                                                                     <td>
                                                                         <span
                                                                             class="badge badge-info shadow-sm">{{ ucfirst($u->role) }}</span>
+                                                                        @if($u->getSubroles())
+                                                                            @foreach($u->getSubroles() as $ns)
+                                                                                <span class="badge badge-{{ $ns === 'hrd' ? 'success' : 'warning' }} shadow-sm" style="font-size: 0.65rem;">{{ strtoupper($ns) }}</span>
+                                                                            @endforeach
+                                                                        @endif
                                                                     </td>
                                                                     <td>
                                                                         <div class="custom-control custom-switch">
@@ -409,117 +416,7 @@
             </div>
             @endif
 
-            @if (!$isOperasional)
-            {{-- TAB 3: MENU & SIDEBAR (Administrator only) --}}
-            <div class="tab-pane fade p-4 bg-white border border-top-0" id="menus-settings" role="tabpanel">
-                <div class="row">
-                    <!-- Global Menu Visibility -->
-                    <div class="col-lg-6 mb-4">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-header bg-dark text-white d-flex align-items-center">
-                                <i class="fas fa-eye mr-2"></i>
-                                <h6 class="mb-0 font-weight-bold">Status Menu Global</h6>
-                            </div>
-                            <div class="card-body p-0 d-flex flex-column">
-                                <div class="p-3 bg-light border-bottom text-muted small">
-                                    <i class="fas fa-info-circle mr-1"></i> Aktifkan atau nonaktifkan menu sidebar secara global untuk seluruh aplikasi.
-                                </div>
-                                <div class="table-responsive flex-grow-1">
-                                    <table class="table table-bordered table-hover mb-0">
-                                        <thead class="bg-secondary text-white">
-                                            <tr>
-                                                <th>Nama Menu</th>
-                                                <th>Label Menu</th>
-                                                <th class="text-center" style="width: 130px;">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($menus as $m)
-                                                <tr>
-                                                    <td class="font-weight-bold text-primary">{{ $m->name }}</td>
-                                                    <td>{{ $m->label }}</td>
-                                                    <td class="text-center">
-                                                        <div class="custom-control custom-switch">
-                                                            <input type="checkbox" class="custom-control-input menu-toggle"
-                                                                id="menuSwitch{{ $m->id }}" data-id="{{ $m->id }}"
-                                                                {{ $m->is_active ? 'checked' : '' }}>
-                                                            <label class="custom-control-label font-weight-bold" for="menuSwitch{{ $m->id }}">
-                                                                {{ $m->is_active ? 'Aktif' : 'Non-Aktif' }}
-                                                            </label>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Role-based Access Control -->
-                    <div class="col-lg-6 mb-4">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-user-shield mr-2"></i>
-                                    <h6 class="mb-0 font-weight-bold">Akses Menu per Role</h6>
-                                </div>
-                            </div>
-                            <div class="card-body p-0 d-flex flex-column">
-                                <div class="p-3 bg-light border-bottom">
-                                    <div class="row align-items-center">
-                                        <div class="col-sm-6 mb-2 mb-sm-0">
-                                            <span class="text-muted small"><i class="fas fa-info-circle mr-1"></i> Atur menu mana saja yang dapat diakses oleh masing-masing role pengguna.</span>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <div class="d-flex align-items-center justify-content-sm-end">
-                                                <label class="font-weight-bold mb-0 mr-2 text-dark" style="white-space: nowrap;"><small>Pilih Role:</small></label>
-                                                <select id="role-menu-select" class="form-control form-control-sm" style="max-width: 180px;">
-                                                    @foreach ($roles as $role)
-                                                        <option value="{{ $role }}">{{ ucfirst($role) }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="table-responsive flex-grow-1">
-                                    <table class="table table-bordered table-hover mb-0">
-                                        <thead class="bg-primary text-white">
-                                            <tr>
-                                                <th>Nama Menu</th>
-                                                <th class="text-center" style="width: 130px;">Akses</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="role-menu-tbody">
-                                            @foreach ($menus as $m)
-                                                @php
-                                                    $canAccess = \App\Models\Menu::hasRoleAccess($m->name, $roles[0] ?? 'administrator');
-                                                @endphp
-                                                <tr>
-                                                    <td class="font-weight-bold text-dark">{{ $m->label }}</td>
-                                                    <td class="text-center">
-                                                        <div class="custom-control custom-switch">
-                                                            <input type="checkbox" class="custom-control-input role-menu-toggle"
-                                                                id="roleMenuSwitch{{ $m->id }}" data-menu-id="{{ $m->id }}"
-                                                                {{ $canAccess ? 'checked' : '' }}>
-                                                            <label class="custom-control-label font-weight-bold" for="roleMenuSwitch{{ $m->id }}">
-                                                                {{ $canAccess ? 'Izinkan' : 'Blokir' }}
-                                                            </label>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
 
         </div>
     </div>
@@ -605,54 +502,29 @@
                             </div>
                         </div>
                         @if(!$isOperasional)
-                        <div class="form-group">
-                            <label class="font-weight-bold">Sub-Roles (Akses Khusus)</label>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="cs_supervisor" class="custom-control-input" id="subrole_supervisor_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_supervisor_new">CS Supervisor (Akses Admin)</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="sales_all_view" class="custom-control-input" id="subrole_sales_all_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_sales_all_new">Sales All View (Exempt CS)</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="gantt_cross_view" class="custom-control-input" id="subrole_gantt_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_gantt_new">Gantt Cross View</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="finance_access" class="custom-control-input" id="subrole_finance_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_finance_new">Akses Keuangan Besar</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="finance_kecil" class="custom-control-input" id="subrole_finance_kecil_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_finance_kecil_new">Akses Keuangan Kecil</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="clinic_access" class="custom-control-input" id="subrole_clinic_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_clinic_new">Akses Klinik (MoM)</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="cs_pusat" class="custom-control-input" id="subrole_cs_pusat_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_cs_pusat_new">CS Pusat</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="cs_rotasi" class="custom-control-input" id="subrole_cs_rotasi_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_cs_rotasi_new">CS Rotasi Lead</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="exempt_transfer" class="custom-control-input" id="subrole_exempt_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_exempt_new">Exempt Transfer (CEO/Owner)</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox mb-2">
-                                        <input type="checkbox" name="subrole[]" value="operasional_rafi" class="custom-control-input" id="subrole_rafi_new">
-                                        <label class="custom-control-label font-weight-normal" for="subrole_rafi_new">Operasional (Rafi)</label>
-                                    </div>
+                        {{-- Named Sub-Roles (hanya untuk CS-MBC) --}}
+                        <div class="form-group named-subrole-section" style="display: none;">
+                            <label class="font-weight-bold mb-1"><i class="fas fa-layer-group mr-1 text-primary"></i>Sub-Role CS-MBC</label>
+                            <small class="form-text text-muted mb-2">Pilih satu atau lebih sub-role. Permission otomatis diaktifkan.</small>
+                            @foreach($subroleMap as $subName => $flags)
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" name="subrole[]" value="{{ $subName }}" class="custom-control-input" id="subrole_{{ $subName }}_new">
+                                <label class="custom-control-label font-weight-bold" for="subrole_{{ $subName }}_new">
+                                    {{ strtoupper($subName) }}
+                                </label>
+                                <div class="text-muted" style="font-size: 0.75rem; margin-left: 1.5rem;">
+                                    @php
+                                        $menuLabels = [
+                                            'hrd' => 'SDM, Keuangan Kecil, Program Kerja',
+                                            'keuangan' => 'Keuangan Besar, Penarikan Dompet, SPP Peserta, SDM, Program Kerja',
+                                        ];
+                                    @endphp
+                                    {{ $menuLabels[$subName] ?? implode(', ', $flags) }}
                                 </div>
                             </div>
+                            @endforeach
+                            <hr class="my-3">
+                            <small class="text-muted">Izin detail (otomatis dari sub-role):</small>
                         </div>
                         @endif
                         <div class="form-group">
@@ -957,96 +829,12 @@
             container.find('.btn-add-chapter-toggle').show();
         });
 
-        
         @if(!$isOperasional)
-        @php
-            $rolePermissionsMap = [];
-            foreach ($roles as $r) {
-                $rolePermissionsMap[$r] = [];
-                foreach ($menus as $m) {
-                    $rolePermissionsMap[$r][$m->id] = \App\Models\Menu::hasRoleAccess($m->name, $r);
-                }
-            }
-        @endphp
-        const rolePermissions = @json($rolePermissionsMap);
+        // ─── Named Sub-Role: Show/Hide berdasarkan Role dropdown ───
+        $(document).on('change', '#addUserModal .role-select', function() {
+            var isCsMbc = $(this).val() === 'cs-mbc';
+            $('#addUserModal .named-subrole-section').toggle(isCsMbc);
+        });
         @endif
-
-
-        // AJAX Toggle Status Menu Global
-        $(document).on('change', '.menu-toggle', function() {
-            const id = $(this).data('id');
-            const active = $(this).is(':checked') ? 1 : 0;
-            const label = $(this).next('label');
-            label.text(active ? 'Aktif' : 'Non-Aktif');
-
-            $.ajax({
-                url: "{{ route('admin.settings.menus.toggle') }}",
-                method: 'POST',
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    id: id,
-                    active: active
-                },
-                success: function(response) {
-                    if (!response.success) {
-                        Swal.fire('Gagal!', 'Gagal mengubah status menu', 'error');
-                        location.reload();
-                    }
-                },
-                error: function() {
-                    Swal.fire('Error!', 'Terjadi kesalahan sistem', 'error');
-                    location.reload();
-                }
-            });
-        });
-
-        // Change Role Menu View
-        $('#role-menu-select').on('change', function() {
-            const selectedRole = $(this).val();
-            const permissions = rolePermissions[selectedRole] || {};
-            
-            $('.role-menu-toggle').each(function() {
-                const menuId = $(this).data('menu-id');
-                const canAccess = permissions[menuId] !== undefined ? permissions[menuId] : true;
-                
-                $(this).prop('checked', canAccess);
-                $(this).next('label').text(canAccess ? 'Izinkan' : 'Blokir');
-            });
-        });
-
-        // AJAX Update Role Menu Access
-        $(document).on('change', '.role-menu-toggle', function() {
-            const menuId = $(this).data('menu-id');
-            const active = $(this).is(':checked') ? 1 : 0;
-            const role = $('#role-menu-select').val();
-            const label = $(this).next('label');
-            
-            label.text(active ? 'Izinkan' : 'Blokir');
-
-            if (rolePermissions[role]) {
-                rolePermissions[role][menuId] = active === 1;
-            }
-
-            $.ajax({
-                url: "{{ route('admin.settings.role-menus.update') }}",
-                method: 'POST',
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    role: role,
-                    menu_id: menuId,
-                    active: active
-                },
-                success: function(response) {
-                    if (!response.success) {
-                        Swal.fire('Gagal!', 'Gagal memperbarui akses menu', 'error');
-                        location.reload();
-                    }
-                },
-                error: function() {
-                    Swal.fire('Error!', 'Terjadi kesalahan sistem', 'error');
-                    location.reload();
-                }
-            });
-        });
     </script>
 @endsection

@@ -20,7 +20,7 @@ class PengajuanAnggaranController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $isLinda = $user->hasSubrole('finance_access');
+        $isLinda = $user->hasHakAkses('finance_access');
         $isAdmin = strtolower($user->role) === 'administrator';
 
         $sortBy = $request->get('sort_by', 'tanggal_pengajuan');
@@ -121,7 +121,7 @@ class PengajuanAnggaranController extends Controller
     public function exportPDF(Request $request)
     {
         $user = Auth::user();
-        $isLinda = $user->hasSubrole('finance_access');
+        $isLinda = $user->hasHakAkses('finance_access');
         $isAdmin = strtolower($user->role) === 'administrator';
 
         $month = $request->get('month', date('m'));
@@ -163,7 +163,7 @@ class PengajuanAnggaranController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        $isLinda = $user->hasSubrole('finance_access');
+        $isLinda = $user->hasHakAkses('finance_access');
         $isAdmin = strtolower($user->role) === 'administrator';
 
         if ($isAdmin && !$isLinda) {
@@ -218,11 +218,10 @@ class PengajuanAnggaranController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $user = Auth::user();
-        $isLinda = $user->hasSubrole('finance_access');
+        $isLinda = $user->hasHakAkses('finance_access');
 
-        // Only Linda can approve/reject (Administrator is view-only for monitoring)
         if (!$isLinda) {
-            return redirect()->back()->with('error', 'Hanya Keuangan (Linda) yang dapat melakukan tindakan ini.');
+            return redirect()->back()->with('error', 'Hanya Keuangan yang dapat melakukan tindakan ini.');
         }
 
         $request->validate([
@@ -342,9 +341,9 @@ class PengajuanAnggaranController extends Controller
         ]);
 
         $user = Auth::user();
-        $isLinda = $user->hasSubrole('finance_access');
+        $isLinda = $user->hasHakAkses('finance_access');
         if (!$isLinda) {
-            return redirect()->back()->with('error', 'Hanya Linda yang dapat mengganti foto ini.');
+            return redirect()->back()->with('error', 'Hanya Staff Keuangan yang dapat mengganti foto ini.');
         }
 
         $anggaran = PengajuanAnggaran::findOrFail($id);
@@ -403,7 +402,7 @@ class PengajuanAnggaranController extends Controller
         $anggaran = PengajuanAnggaran::findOrFail($id);
 
         $user = Auth::user();
-        $isLinda = $user->hasSubrole('finance_access');
+        $isLinda = $user->hasHakAkses('finance_access');
         $isAdmin = strtolower($user->role) === 'administrator';
 
         if ($isAdmin && !$isLinda) {
@@ -477,7 +476,7 @@ class PengajuanAnggaranController extends Controller
         ]);
 
         $user = Auth::user();
-        $isLinda = $user->hasSubrole('finance_access');
+        $isLinda = $user->hasHakAkses('finance_access');
         $isAdmin = strtolower($user->role) === 'administrator';
 
         // Authorization: only the requester can edit
@@ -544,7 +543,7 @@ class PengajuanAnggaranController extends Controller
     {
         $pengajuan = PengajuanAnggaran::findOrFail($id);
         $user = Auth::user();
-        $isLinda = $user->hasSubrole('finance_access');
+        $isLinda = $user->hasHakAkses('finance_access');
         $isAdmin = strtolower($user->role) === 'administrator';
 
         // Authorization check

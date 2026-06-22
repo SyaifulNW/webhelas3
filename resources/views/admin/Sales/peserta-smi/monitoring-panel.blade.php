@@ -122,10 +122,14 @@
                 </div>
                 <div class="col-md-2">
                     <label class="text-xxs font-weight-bold text-dark mb-1">CS Penanggung Jawab</label>
+                    @php
+                        $csNames = \App\Models\User::whereIn('role', ['cs-smi', 'cs-mbc'])->orWhereJsonContains('subrole', 'cs_pusat')->pluck('name');
+                    @endphp
                     <select class="form-control form-control-sm border bg-light rounded-lg font-weight-bold text-xs h-35">
                         <option value="all">Semua CS</option>
-                        <option value="Linda">Linda</option>
-                        <option value="Yasmin">Yasmin</option>
+                        @foreach($csNames as $name)
+                            <option value="{{ $name }}">{{ $name }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -226,7 +230,7 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-xxs mr-1 rounded-circle bg-secondary" style="width: 20px; height: 20px;"></div>
-                                        <span class="text-xs">{{ $item->cs_name ?? 'Linda' }}</span>
+                                        <span class="text-xs">{{ $item->cs_name ?? '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="font-weight-bold">Rp 1.500.000</td>

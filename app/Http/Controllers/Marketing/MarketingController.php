@@ -28,7 +28,7 @@ class MarketingController extends Controller
         if ($isAdministrator) {
             $marketingUsers = \App\Models\User::whereIn('role', ['marketing'])->where('is_active', 1)->get();
             if (!$selectedMarketingUserId && $marketingUsers->isNotEmpty()) {
-                $selectedMarketingUserId = $marketingUsers->first(fn($u) => $u->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']))->id ?? $marketingUsers->first()->id;
+                $selectedMarketingUserId = $marketingUsers->first(fn($u) => $u->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline']))->id ?? $marketingUsers->first()->id;
             }
             $targetUser = \App\Models\User::find($selectedMarketingUserId);
             $query = MarketingPerformance::where('user_id', $selectedMarketingUserId);
@@ -53,7 +53,7 @@ class MarketingController extends Controller
         $performances = $query->orderBy('tanggal', 'asc')->get();
 
         // Sync Real Closing for Felmi
-        if ($targetUser && $targetUser->hasAnySubrole(['activity_marketing', 'activity_marketing_offline'])) {
+        if ($targetUser && $targetUser->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline'])) {
             foreach ($performances as $perf) {
                 $perfDate = \Carbon\Carbon::parse($perf->tanggal);
                 $closingCount = \App\Models\SalesPlan::where('status', 'sudah_transfer')
@@ -74,7 +74,7 @@ class MarketingController extends Controller
 
         // Seed example data if empty to match requirements for first time
         if ($performances->isEmpty() && !request()->has('bulan')) {
-             if ($targetUser && $targetUser->hasAnySubrole(['activity_marketing_online', 'activity_intake'])) {
+             if ($targetUser && $targetUser->hasAnyHakAkses(['activity_marketing_online', 'activity_intake'])) {
                  MarketingPerformance::create([
                      'user_id' => $selectedMarketingUserId,
                      'event_name' => 'E- Forum',
@@ -85,7 +85,7 @@ class MarketingController extends Controller
                      'target_closing' => 10,
                      'status' => 'Terlaksana',
                  ]);
-             } elseif ($targetUser && $targetUser->hasAnySubrole(['activity_marketing', 'activity_marketing_offline'])) {
+             } elseif ($targetUser && $targetUser->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline'])) {
                  MarketingPerformance::create([
                      'user_id' => $selectedMarketingUserId,
                      'event_name' => 'Zoom',
@@ -214,7 +214,7 @@ class MarketingController extends Controller
         $performances = $query->orderBy('tanggal', 'asc')->get();
 
         // Sync Real Closing for Felmi in PDF
-        if ($targetUser && $targetUser->hasAnySubrole(['activity_marketing', 'activity_marketing_offline'])) {
+        if ($targetUser && $targetUser->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline'])) {
             foreach ($performances as $perf) {
                 $perfDate = \Carbon\Carbon::parse($perf->tanggal);
                 $closingCount = \App\Models\SalesPlan::where('status', 'sudah_transfer')

@@ -18,8 +18,8 @@
 
     $authUser = auth()->user();
     $userRole = strtolower($authUser->role);
-    // Rafi (operasional) diberi hak edit di chapter view
-    $isRafi = ($userRole === 'operasional' && stripos($authUser->name, 'Rafi') !== false);
+    // Operasional dengan hak akses operasional_rafi diberi hak edit di chapter view
+    $isRafi = ($userRole === 'operasional' && $authUser->hasHakAkses('operasional_rafi'));
     $canEdit  = !in_array($userRole, ['marketing', 'administrator', 'operasional']) || $isRafi;
 
     static $chapterUsers = null;

@@ -3,7 +3,7 @@
 @section('content')
 @php
     $user = Auth::user();
-    $canEdit = strtolower($user->role) !== 'administrator' || stripos($user->name, 'Linda') !== false;
+    $canEdit = strtolower($user->role) !== 'administrator' || $user->hasHakAkses('finance_access');
 @endphp
 
 <div class="container-fluid">

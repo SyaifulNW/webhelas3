@@ -754,8 +754,8 @@
                                 'marketing',
                                 'operasional',
                             ]) ||
-                            $user->hasSubrole('spp_admin') ||
-                            $user->name === 'Linda'
+                            $user->hasHakAkses('spp_admin') ||
+                            $user->hasHakAkses('spp_admin')
                         ) {
                             $csList = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'customer_service'])
                                 ->where('is_active', 1)
@@ -1121,8 +1121,8 @@
                     <div class="d-flex align-items-center">
                         @if (
                             !in_array($userRole, ['administrator', 'manager', 'marketing']) &&
-                                !($userRole === 'operasional' && stripos(auth()->user()->name, 'Rafi') === false) &&
-                                !((auth()->user()->hasSubrole('spp_admin') || auth()->user()->name === 'Linda') && request('view') !== 'me'))
+                                !($userRole === 'operasional' && !auth()->user()->hasHakAkses('operasional_rafi')) &&
+                                !((auth()->user()->hasHakAkses('spp_admin')) && request('view') !== 'me'))
                             @php
                                 $slugName =
                                     $userRole === 'chapter' && !empty(auth()->user()->chapter)
@@ -1150,7 +1150,7 @@
 
                         @if (
                             !in_array($userRole, ['chapter', 'reseller', 'agen']) &&
-                                !(auth()->user()->role === 'operasional' && stripos(auth()->user()->name, 'Rafi') !== false) &&
+                                !(auth()->user()->role === 'operasional' && auth()->user()->hasHakAkses('operasional_rafi')) &&
                                 !($userRole === 'administrator' && request('view_type') == 'chapter'))
                             <button type="button" id="btnLihatJadwalZoomHariIni"
                                 class="btn btn-info d-flex align-items-center gap-2 px-3 shadow-sm rounded-pill ml-2"
@@ -4727,8 +4727,7 @@
         $(document).on('submit', '.delete-form', function(e) {
             @php
                 $userName = auth()->user()->name;
-                $userRole = strtolower(auth()->user()->role);
-                $isTargetUser = ((auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings']) || in_array($userName, ['Linda', 'Yasmin'])) && $userRole === 'cs-mbc') || $userRole === 'administrator';
+                $isTargetUser = ((auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'sales_full_view'])) && $userRole === 'cs-mbc') || $userRole === 'administrator';
             @endphp
 
             @if ($isTargetUser)

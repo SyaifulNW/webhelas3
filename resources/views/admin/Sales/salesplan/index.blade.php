@@ -335,7 +335,7 @@
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">
-        {{ (auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_admin']) || in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra'])) ? 'DATA PESERTA' : 'PROSPEK' }} 
+        {{ (request()->has('embed') || auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_admin', 'sales_full_view'])) ? 'DATA PESERTA' : 'PROSPEK' }} 
         @if(request('type') == 'mbc' || ($isCsMbc && request('type') != 'smi'))
             MBC
         @endif
@@ -347,7 +347,7 @@
     <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-            <li class="breadcrumb-item">{{ (auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_admin']) || in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra'])) ? 'DATA PESERTA' : 'PROSPEK' }}</li>
+            <li class="breadcrumb-item">{{ (request()->has('embed') || auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_admin', 'sales_full_view'])) ? 'DATA PESERTA' : 'PROSPEK' }}</li>
             @if($kelasFilter)
             <li class="breadcrumb-item active">{{ $kelasFilter == 'Start-Up Muslim Indonesia' ? 'M1T' : $kelasFilter }}</li>
             @endif
@@ -361,27 +361,16 @@
 </div>
 @endif
 
-@if($salesplans->isEmpty())
+@if(!request()->has('embed') && $salesplans->isEmpty())
 <div class="alert alert-info">
     Tidak ada data yang sesuai dengan filter.
 </div>
-@else
-{{-- tampilkan tabel atau isi salesplans --}}
 @endif
 
 <div class="container">
 @php
     $isSmiClass = ($kelasFilter == 'Start-Up Muda Indonesia' || $kelasFilter == 'Start-Up Muslim Indonesia');
     $targetOmset = 50000000; // Rp 50.000.000
-    $groupedByCS = $salesplans->groupBy('created_by');
-
-    $namaCS = [
-        1 => 'Administrator',
-        2 => 'Linda',
-        3 => 'Yasmin',
-        10 => 'Qiyya',
-        6 => 'Shafa',
-    ];
 
     // Hitung total keseluruhan awal (akan dihitung ulang di loop untuk akurasi tabel)
     $totalSeluruhCS = 0;
@@ -392,7 +381,7 @@
 
 <!-- Filter Container -->
 @php
-    $isAdminView = (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnySubrole(['spp_admin', 'sales_admin', 'cs_supervisor']) || auth()->id() == 1 || auth()->id() == 13 || (auth()->user()->name == 'Linda' && empty($isRestrictedView)));
+    $isAdminView = (strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnyHakAkses(['spp_admin', 'sales_admin', 'cs_supervisor', 'sales_full_view', 'sales_all_view', 'young_startup_admin']));
     $isCsMbc = (strtolower(auth()->user()->role) === 'cs-mbc');
 @endphp
 @if($isAdminView || $isCsMbc)
@@ -508,7 +497,7 @@
     <select name="created_by" id="cs_filter" class="form-select filter-select">
         <option value="">-- Semua Tim --</option>
         @foreach($csList as $cs)
-            @if(strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnySubrole(['spp_admin', 'sales_admin', 'cs_supervisor']) || (auth()->id() == 1) || ((auth()->user()->hasSubrole('young_startup_admin') || auth()->id() == 13) && $cs->name === 'Puput') || (auth()->user()->name == 'Linda'))
+            @if(strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasAnyHakAkses(['spp_admin', 'sales_admin', 'cs_supervisor', 'sales_full_view', 'sales_all_view']) || (auth()->user()->hasHakAkses('young_startup_admin') && $cs->hasHakAkses('young_startup_cs')))
                 <option value="{{ $cs->id }}" {{ request('created_by') == $cs->id ? 'selected' : '' }}>
                     {{ $cs->name }}
                 </option>
@@ -519,7 +508,7 @@
 @endif
 
 @if($kelasFilter != 'Start-Up Muslim Indonesia')
-@if(!(auth()->user()->hasSubrole('young_startup_admin') || auth()->id() == 13))
+@if(!auth()->user()->hasHakAkses('young_startup_admin'))
 {{-- ✅ Filter Kelas --}}
 <div class="filter-group">
     <label for="kelas_filter" class="filter-label" title="Kelas"><i class="fas fa-chalkboard-teacher text-success"></i></label>
@@ -530,9 +519,9 @@
                 @continue
             @endif
             @if(
-                ((strtolower(auth()->user()->role) === 'administrator' || auth()->id() == 1) && !in_array($kelas->nama_kelas, ['Start-Up Muda Indonesia', 'Sekolah Kaya', 'Start-Up Muslim Indonesia'])) ||
-                ((auth()->user()->hasSubrole('young_startup_admin') || auth()->id() == 13) && $kelas->nama_kelas == 'Start-Up Muda Indonesia') ||
-                (auth()->user()->hasSubrole('spp_admin') || auth()->user()->name == 'Linda') ||
+                ((strtolower(auth()->user()->role) === 'administrator' || auth()->user()->hasHakAkses('sales_all_view')) && !in_array($kelas->nama_kelas, ['Start-Up Muda Indonesia', 'Sekolah Kaya', 'Start-Up Muslim Indonesia'])) ||
+                (auth()->user()->hasHakAkses('young_startup_admin') && $kelas->nama_kelas == 'Start-Up Muda Indonesia') ||
+                auth()->user()->hasHakAkses('spp_admin') ||
                 (strtolower(auth()->user()->role) === 'cs-mbc')
             )
                 <option value="{{ $kelas->nama_kelas }}" {{ request('kelas') == $kelas->nama_kelas ? 'selected' : '' }}>
@@ -737,24 +726,23 @@
         }
     }
 @endphp
-@if(strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor']) && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
+@php
+    // Pre-calculate status counts (always available)
+    $countTertarik = $salesplans->where('status', 'tertarik')->count();
+    $countMauTransfer = $salesplans->where('status', 'mau_transfer')->count();
+    $countNo = $salesplans->where('status', 'no')->count();
+    $countSudahTransfer = (strtolower(auth()->user()->role) === 'administrator') ? (method_exists($pesertaTransfer ?? collect(), 'total') ? $pesertaTransfer->total() : ($pesertaTransfer ?? collect())->count()) : $salesplans->where('status', 'sudah_transfer')->count();
+    $countCold = $salesplans->where('status', 'cold')->count();
+    $totalSalesplan = $countTertarik + $countMauTransfer + $countNo + $countSudahTransfer + $countCold;
+    $targetSalesplan = 30;
+    $selisihTarget = $targetSalesplan - $totalSalesplan;
+@endphp
+@if(!request()->has('embed') && strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_full_view']))
     <div class="card shadow-lg border-0 rounded-lg mb-4">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0"><i class="fas fa-chart-line"></i> Daftar PROSPEK</h5>
         </div>
         <div class="card-body">
-     @php
-    $countTertarik = $salesplans->where('status', 'tertarik')->count();
-    $countMauTransfer = $salesplans->where('status', 'mau_transfer')->count();
-    $countNo = $salesplans->where('status', 'no')->count();
-    $countSudahTransfer = (strtolower(auth()->user()->role) === 'administrator') ? (method_exists($pesertaTransfer, 'total') ? $pesertaTransfer->total() : $pesertaTransfer->count()) : $salesplans->where('status', 'sudah_transfer')->count();
-    $countCold = $salesplans->where('status', 'cold')->count();
-
-    $totalSalesplan = $countTertarik + $countMauTransfer + $countNo + $countSudahTransfer + $countCold;
-
-    $targetSalesplan = 30;
-    $selisihTarget = $targetSalesplan - $totalSalesplan;
-@endphp
 
 @if(!in_array($userRole, ['reseller', 'chapter']))
 <div class="card shadow-sm border-0 mb-3">
@@ -1054,7 +1042,7 @@ $(document).ready(function() {
 
 </div>
 
-            @if(!auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor']) && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
+            @if(!auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_full_view']))
             <div class="table-responsive table-scroll">
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="text-white" style="background-color:#25799E;">
@@ -1897,7 +1885,7 @@ $(document).ready(function() {
     </script>
 
 
-@if(strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor']) && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
+@if(strtolower(Auth::user()->role) !== 'administrator' && !auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_full_view']))
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <span class="badge bg-warning text-white p-2 me-2 fs-6" style="font-size: 13px">
@@ -1928,7 +1916,7 @@ $(document).ready(function() {
 @if(true) 
 
 
-@if($pesertaTransfer->isNotEmpty())
+@if(request()->has('embed') || $pesertaTransfer->isNotEmpty())
 <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
     <h4 class="fw-bold m-0">
         Daftar Peserta / {{ $kelasFilter }}
@@ -1937,7 +1925,7 @@ $(document).ready(function() {
         @endif
     </h4>
 
-    @if($kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || ((auth()->user()->hasAnySubrole(['spp_admin', 'hrd_settings', 'cs_supervisor']) || in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra'])) && (request('type') == 'mbc' || request('type') == 'smi')))
+    @if($kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || ((auth()->user()->hasAnyHakAkses(['spp_admin', 'hrd_settings', 'cs_supervisor', 'sales_full_view']) || auth()->user()->hasHakAkses('spp_admin')) && (request('type') == 'mbc' || request('type') == 'smi')))
     <div class="d-flex gap-3 align-items-center">
         {{-- Filter Bulan (SMI Bawah) --}}
         <div class="d-flex align-items-center gap-2">
@@ -2121,7 +2109,7 @@ $(document).ready(function() {
     @empty
         <tr>
             <td colspan="{{ ($isCsMbc || $kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || request('type') == 'mbc') ? 8 : 5 }}" style="text-align: center; padding: 15px; color: #999;">
-                Prospek belum ada
+                Belum ada data peserta
             </td>
         </tr>
     @endforelse

@@ -2,7 +2,7 @@
 
 @section('content')
     @php
-        $isLinda = stripos(Auth::user()->name, 'Linda') !== false;
+        $isLinda = Auth::user()->hasHakAkses('finance_access');
         $isAdmin = strtolower(Auth::user()->role) === 'administrator';
         // $canManage is for Linda who manages/approves all requests
         $canManage = $isLinda;

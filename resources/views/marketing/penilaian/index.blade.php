@@ -44,8 +44,8 @@
 </style>
 
 @php
-    $isEkoSulis = isset($targetUser) && $targetUser->hasAnySubrole(['marketing_ads_manager', 'monitoring_marketing']);
-    $isFelmi = isset($targetUser) && $targetUser->hasAnySubrole(['activity_marketing_offline', 'activity_marketing']);
+    $isEkoSulis = isset($targetUser) && $targetUser->hasAnyHakAkses(['marketing_ads_manager', 'monitoring_marketing']);
+    $isFelmi = isset($targetUser) && $targetUser->hasAnyHakAkses(['activity_marketing_offline', 'activity_marketing']);
     $isAdminOrManager = in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'admin']);
     $mainColClass = ($isFelmi && !$isAdminOrManager) ? 'col-lg-12' : 'col-lg-6';
 @endphp

@@ -76,13 +76,14 @@ Route::get('/', function () {
 
         // Redirect berdasarkan role — berlaku untuk semua user, bukan nama spesifik
         if ($role === 'administrator') return redirect()->route('administrator');
-        if ($role === 'manager') return redirect()->route('manager');
+        if ($role === 'marketing') return redirect()->route('marketing');
+        if ($role === 'advertising') return redirect()->route('advertising');
 
         if (in_array($role, ['chapter', 'reseller', 'agen']) || str_starts_with($role, 'chapter_')) {
             return redirect()->route('home');
         }
 
-        // Role lainnya (marketing, cs, dll) diarahkan ke home
+        // Role lainnya (cs, dll) diarahkan ke home
         return redirect('/home');
     }
     return view('welcome');

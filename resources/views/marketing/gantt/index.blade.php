@@ -10,7 +10,7 @@
     @php
         $userRole = strtolower(Auth::user()->role);
         $userName = Auth::user()->name;
-        $isFelmi = stripos($userName, 'Felmi') !== false;
+        $isFelmi = Auth::user()->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline']);
         $isMonitoringChapter = ($viewRole === 'chapter');
         $isReadOnly = ($userRole === 'administrator') || $isFelmi;
         

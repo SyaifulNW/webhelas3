@@ -153,19 +153,8 @@
         </div>
 
         @php
-            $isCsPusat = $user->hasAnySubrole(['spp_admin', 'cs_supervisor', 'cs_pusat']) || 
+            $isCsPusat = $user->hasAnyHakAkses(['spp_admin', 'cs_supervisor', 'cs_pusat']) || 
                          in_array(strtolower($user->role ?? ''), ['administrator', 'marketing', 'manager']);
-            
-            // Fallback hardcode name check
-            if (!$isCsPusat) {
-                $csNames = ['Yasmin', 'Linda', 'Shafa'];
-                foreach ($csNames as $csName) {
-                    if (stripos($user->name ?? '', $csName) !== false) {
-                        $isCsPusat = true;
-                        break;
-                    }
-                }
-            }
         @endphp
 
         @if($isCsPusat)

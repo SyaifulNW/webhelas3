@@ -1,5 +1,5 @@
 @php
-    $isEkoSulis = Auth::user()->hasAnySubrole(['monitoring_marketing', 'marketing_ads_manager']);
+    $isEkoSulis = Auth::user()->hasAnyHakAkses(['monitoring_marketing', 'marketing_ads_manager']);
 @endphp
 
 {{-- Dashboard --}}
@@ -81,7 +81,7 @@
         </li>
     @endif
 
-    @if (auth()->user()->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']) || strtolower(auth()->user()->role) === 'administrator')
+    @if (auth()->user()->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline']) || strtolower(auth()->user()->role) === 'administrator')
         <li class="nav-item {{ request()->routeIs('marketing-participants.index') ? 'active' : '' }}">
             <a class="nav-link text-white" href="{{ route('marketing-participants.index') }}">
                 <i class="fas fa-users-rectangle me-2"></i>
@@ -90,7 +90,7 @@
         </li>
     @endif
 
-    @if (auth()->user()->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']))
+    @if (auth()->user()->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline']))
         <div class="sidebar-premium-heading">
             <i class="fas fa-layer-group me-1"></i> MANAJEMEN KERJA
         </div>
@@ -108,7 +108,7 @@
         </li>
     @endif
 
-    @if (!auth()->user()->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']))
+    @if (!auth()->user()->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline']))
         <li class="nav-item {{ request()->routeIs('marketing.penilaian.index') ? 'active' : '' }}">
             <a class="nav-link text-white" href="{{ route('marketing.penilaian.index') }}">
                 <i class="fas fa-fw fa-star me-2"></i>
@@ -117,7 +117,7 @@
         </li>
     @endif
 
-    @if (!auth()->user()->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']))
+    @if (!auth()->user()->hasAnyHakAkses(['activity_marketing', 'activity_marketing_offline']))
         <li class="nav-item {{ request()->routeIs('marketing.penilaian.kpi_sosmed') ? 'active' : '' }}">
             <a class="nav-link text-white" href="{{ route('marketing.penilaian.kpi_sosmed') }}">
                 <i class="fas fa-fw fa-hashtag me-2"></i>
@@ -126,12 +126,4 @@
         </li>
     @endif
 
-    @if (!auth()->user()->hasAnySubrole(['activity_marketing', 'activity_marketing_offline']))
-        <li class="nav-item {{ request()->routeIs('admin.dailyactivity.index') ? 'active' : '' }}">
-            <a class="nav-link text-white" href="{{ route('admin.dailyactivity.index') }}">
-                <i class="fas fa-fw fa-calendar-check me-2"></i>
-                <span>Daily Activity</span>
-            </a>
-        </li>
-    @endif
 @endif
